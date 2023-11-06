@@ -22,9 +22,9 @@ L2 -- Limited amount of data uploaded to --> ddos
 
 ### Use Cases data flow 
 ##### Example
-Research question: ? 
-
-Parameters that will be analyzed to answer the question: Chl-a, cDOM (example)
+* Research question: ? 
+* Parameters that will be analyzed to answer the question: Chl-a, cDOM (example)
+* Jupyter Notebook for this question: ?
 
 ```mermaid
 flowchart TB
@@ -42,7 +42,7 @@ flowchart TB
   function --> analyze
   result
  analyze --> result 
-nve --> discharge
+
 ``` 
 
 
