@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "aquainfra"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+xarray = {extras = ["complete"], version = "^2023.12.0"}
+netCDF4 = "1.5.8"
+movingpandas = "^0.17.2"
+hvplot = "^0.9.1"
+ipykernel = "^6.29.0"
+geoviews = "^1.11.0"
+
+[tool.poetry.group.dev.dependencies]
+black = {extras = ["jupyter"], version = "^23.1.0"}
+pytest = "^6.2.5"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
