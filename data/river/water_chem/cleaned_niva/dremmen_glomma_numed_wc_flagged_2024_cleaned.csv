@@ -377,7 +377,7 @@ sample_date,station_id,station_code,station_name,DOC_mg/L C,outlier_DOC_mg/L C,F
 2012-06-15,40352,DRA1,Drammenselva v/Krokstadelva,,,,,12.0,False,150.0,False,1.0,False,,,2.7597686311,False,3.1,False,335.0,False,,,,,2.62,False,,
 2012-06-25,40352,DRA1,Drammenselva v/Krokstadelva,,,,,7.0,False,180.0,False,1.0,False,,,2.67419441,False,3.1,False,350.0,False,,,,,1.23,False,,
 2012-07-03,40352,DRA1,Drammenselva v/Krokstadelva,,,,,7.0,False,175.0,False,3.0,False,,,2.6314072994,False,3.2,False,350.0,False,,,,,0.94,False,,
-2012-08-07,40352,DRA1,Drammenselva v/Krokstadelva,,,,,15.0,False,455.0,False,226.0,True,,,6.1613439206,False,10.6,True,1130.0,False,,,,,,True,,
+2012-08-07,40352,DRA1,Drammenselva v/Krokstadelva,,,,,15.0,False,455.0,False,,True,,,6.1613439206,False,10.6,True,1130.0,False,,,,,,True,,
 2012-09-11,40352,DRA1,Drammenselva v/Krokstadelva,,,,,12.0,False,190.0,False,1.0,False,,,2.67419441,False,3.3,False,425.0,False,,,,,0.9,False,,
 2012-10-09,40352,DRA1,Drammenselva v/Krokstadelva,,,,,11.0,False,200.0,False,2.0,False,,,2.9737041839,False,3.3,False,405.0,False,,,,,1.2,False,,
 2012-11-06,40352,DRA1,Drammenselva v/Krokstadelva,,,,,9.0,False,320.0,False,3.0,False,,,3.4657559554,False,4.1,False,530.0,False,,,,,2.9,False,,

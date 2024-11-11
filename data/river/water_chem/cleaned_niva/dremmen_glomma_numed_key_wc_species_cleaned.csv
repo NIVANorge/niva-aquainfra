@@ -377,7 +377,7 @@ sample_date,station_id,station_code,station_name,Farge_mg Pt/l,DIN_mg/l,PO4-P_µ
 2012-06-15,40352,DRA1,Drammenselva v/Krokstadelva,,162.0,1.0,2.7597686311,3.1,335.0,,,2.62
 2012-06-25,40352,DRA1,Drammenselva v/Krokstadelva,,187.0,1.0,2.67419441,3.1,350.0,,,1.23
 2012-07-03,40352,DRA1,Drammenselva v/Krokstadelva,,182.0,3.0,2.6314072994,3.2,350.0,,,0.94
-2012-08-07,40352,DRA1,Drammenselva v/Krokstadelva,,470.0,226.0,6.1613439206,10.6,1130.0,,,
+2012-08-07,40352,DRA1,Drammenselva v/Krokstadelva,,470.0,,6.1613439206,10.6,1130.0,,,
 2012-09-11,40352,DRA1,Drammenselva v/Krokstadelva,,202.0,1.0,2.67419441,3.3,425.0,,,0.9
 2012-10-09,40352,DRA1,Drammenselva v/Krokstadelva,,211.0,2.0,2.9737041839,3.3,405.0,,,1.2
 2012-11-06,40352,DRA1,Drammenselva v/Krokstadelva,,329.0,3.0,3.4657559554,4.1,530.0,,,2.9
