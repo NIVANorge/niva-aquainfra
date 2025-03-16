@@ -32,7 +32,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,1992-07-06 00:00:00,,,1.0,False,,,,,330.0,False,,,,,9.0,False,1.39,False,,,,,185.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1992-08-10 00:00:00,,,2.0,False,,,,,282.0,False,,,,,5.0,False,2.11,False,,,,,123.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1992-09-03 00:00:00,,,1.0,False,,,,,293.0,False,,,,,6.0,False,1.84,False,,,,,160.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1992-10-07 00:00:00,,,0.5,False,,,,,335.0,False,,,,,4.0,False,0.68,False,,,,,203.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1992-10-07 00:00:00,,,0.5,False,,,,,335.0,False,,,,,4.0,False,,False,,,,,203.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1992-11-13 00:00:00,,,3.0,False,,,,,1005.0,False,,,,,7.0,False,2.51,False,,,,,893.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1992-12-01 00:00:00,,,1.0,False,,,,,355.0,False,,,,,3.0,False,0.89,False,,,,,294.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1993-01-13 00:00:00,,,1.0,False,,,,,415.0,False,,,,,4.0,False,1.23,False,,,,,308.0,False
@@ -60,8 +60,8 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,1994-11-07 00:00:00,,,0.5,False,,,3.1,False,520.0,False,,,,,4.0,False,1.27,False,,,,,358.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1994-12-07 00:00:00,,,0.5,False,,,3.1,False,405.0,False,,,,,3.0,False,0.82,False,,,,,291.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-01-16 00:00:00,,,0.5,False,,,,,430.0,False,,,,,4.0,False,1.43,False,,,,,307.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1995-02-13 00:00:00,,,0.5,False,2.4,False,,,440.0,False,,,,,4.0,False,0.68,False,,,,,328.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1995-03-16 00:00:00,,,1.0,False,2.3,False,2.8,False,440.0,False,,,,,4.0,False,0.68,False,,,,,328.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1995-02-13 00:00:00,,,0.5,False,2.4,False,,,440.0,False,,,,,4.0,False,,False,,,,,328.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1995-03-16 00:00:00,,,1.0,False,2.3,False,2.8,False,440.0,False,,,,,4.0,False,,False,,,,,328.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-04-13 00:00:00,,,2.0,False,2.8,False,3.5,False,685.0,False,,,,,7.0,False,5.42,False,,,,,533.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-05-08 00:00:00,,,2.0,False,2.7,False,4.5,False,400.0,False,,,,,7.0,False,4.27,False,,,,,288.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-02 00:00:00,,,9.0,False,,,4.0,False,685.0,False,,,,,21.0,False,18.2,True,,,,,,False
@@ -75,8 +75,8 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-18 00:00:00,,,3.0,False,2.7,False,3.9,False,485.0,False,,,,,11.0,False,3.3,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-20 00:00:00,,,2.0,False,2.8,False,4.0,False,480.0,False,,,,,8.0,False,2.6,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-22 00:00:00,,,2.0,False,2.8,False,3.8,False,465.0,False,,,,,7.0,False,3.3,False,,,,,,False
-40352,DRA1,Drammenselva v/Krokstadelva,1995-06-24 00:00:00,,,1.0,False,1.1,False,3.8,False,470.0,False,,,,,7.0,False,2.0,False,,,,,,False
-40352,DRA1,Drammenselva v/Krokstadelva,1995-06-26 00:00:00,,,0.5,False,1.1,False,3.7,False,460.0,False,,,,,6.0,False,2.1,False,,,,,,False
+40352,DRA1,Drammenselva v/Krokstadelva,1995-06-24 00:00:00,,,1.0,False,,False,3.8,False,470.0,False,,,,,7.0,False,2.0,False,,,,,,False
+40352,DRA1,Drammenselva v/Krokstadelva,1995-06-26 00:00:00,,,0.5,False,,False,3.7,False,460.0,False,,,,,6.0,False,2.1,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-28 00:00:00,,,2.0,False,2.6,False,3.8,False,445.0,False,,,,,6.0,False,2.1,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-06-30 00:00:00,,,1.0,False,2.5,False,3.6,False,415.0,False,,,,,6.0,False,2.0,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,1995-07-05 00:00:00,,,1.0,False,,,3.7,False,425.0,False,,,,,6.0,False,3.4,False,,,,,,False
@@ -144,10 +144,10 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,1998-09-15 00:00:00,,,3.0,False,2.7,False,,,500.0,False,,,,,9.0,False,3.04,False,,,,,282.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1998-10-14 00:00:00,,,0.9,False,2.4,False,,,420.0,False,,,,,4.0,False,0.78,False,,,,,239.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1998-11-15 00:00:00,,,1.0,False,2.8,False,,,510.0,False,,,,,4.0,False,1.21,False,,,,,325.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1998-12-15 00:00:00,,,0.7,False,2.6,False,,,425.0,False,,,,,3.0,False,0.67,False,,,,,304.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1999-02-09 00:00:00,,,1.8,False,2.5672266336,False,2.33,False,476.0,False,,,,,,,0.5,False,,,,,423.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1999-02-23 00:00:00,,,0.47,False,2.3532910808,False,2.27,False,353.0,False,,,,,,,0.5,False,,,,,312.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1999-03-16 00:00:00,,,0.47,False,2.139355528,False,2.28,False,393.0,False,,,,,,,0.5,False,,,,,304.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1998-12-15 00:00:00,,,0.7,False,2.6,False,,,425.0,False,,,,,3.0,False,,False,,,,,304.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1999-02-09 00:00:00,,,1.8,False,2.5672266336,False,2.33,False,476.0,False,,,,,,,,False,,,,,423.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1999-02-23 00:00:00,,,0.47,False,2.3532910808,False,2.27,False,353.0,False,,,,,,,,False,,,,,312.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1999-03-16 00:00:00,,,0.47,False,2.139355528,False,2.28,False,393.0,False,,,,,,,,False,,,,,304.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-04-29 00:00:00,,,3.2,False,2.5672266336,False,3.61,False,421.0,False,,,,,,,3.2,False,,,,,305.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-05-20 00:00:00,,,0.97,False,2.5672266336,False,3.44,False,403.0,False,,,,,,,0.8,False,,,,,261.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-05-25 00:00:00,,,5.3,False,2.5672266336,False,2.9,False,367.0,False,,,,,,,2.4,False,,,,,222.0,False
@@ -157,11 +157,11 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,1999-06-22 00:00:00,,,1.8,False,2.3532910808,False,3.18,False,374.0,False,,,,,,,1.73,False,,,,,228.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-06-29 00:00:00,,,2.9,False,3.4229688448,False,4.82,False,653.0,False,,,,,,,20.6,True,,,,,398.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-07-26 00:00:00,,,0.5,False,2.3532910808,False,3.39,False,317.0,False,,,,,,,0.9,False,,,,,187.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1999-08-30 00:00:00,,,0.5,False,2.3532910808,False,3.6,False,373.0,False,,,,,,,0.5,False,,,,,196.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1999-08-30 00:00:00,,,0.5,False,2.3532910808,False,3.6,False,373.0,False,,,,,,,,False,,,,,196.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-09-28 00:00:00,,,2.0,False,2.3532910808,False,4.09,False,447.0,False,,,,,,,2.5,False,,,,,274.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-10-26 00:00:00,,,5.0,False,3.4229688448,False,3.55,False,577.0,False,,,,,,,4.6,False,,,,,343.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,1999-11-30 00:00:00,,,4.3,False,2.5672266336,False,3.58,False,524.0,False,,,,,,,0.7,False,,,,,293.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,1999-12-16 00:00:00,,,0.52,False,2.7811621864,False,3.03,False,453.0,False,,,,,,,0.5,False,,,,,286.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,1999-12-16 00:00:00,,,0.52,False,2.7811621864,False,3.03,False,453.0,False,,,,,,,,False,,,,,286.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-01-26 00:00:00,,,1.8,False,2.9950977392,False,2.44,False,412.0,False,,,,,,,0.9,False,,,,,297.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-02-23 00:00:00,,,1.8,False,2.7811621864,False,2.33,False,379.0,False,,,,,,,0.9,False,,,,,288.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-03-30 00:00:00,,,1.8,False,2.3532910808,False,2.5,False,402.0,False,,,,,,,1.1,False,,,,,284.0,False
@@ -172,7 +172,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2000-05-22 00:00:00,,,2.0,False,2.5672266336,False,2.65,False,489.0,False,,,,,,,1.1,False,,,,,395.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-05-30 00:00:00,,,3.0,False,2.9950977392,False,3.3,False,536.0,False,,,,,,,2.5,False,,,,,302.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-06-05 00:00:00,,,2.0,False,3.209033292,False,2.9,False,485.0,False,,,,,,,0.8,False,,,,,270.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2000-06-14 00:00:00,,,3.0,False,2.9950977392,False,3.3,False,468.0,False,,,,,,,0.5,False,,,,,,False
+40352,DRA1,Drammenselva v/Krokstadelva,2000-06-14 00:00:00,,,3.0,False,2.9950977392,False,3.3,False,468.0,False,,,,,,,,False,,,,,,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-06-21 00:00:00,,,2.0,False,2.7811621864,False,2.9,False,429.0,False,,,,,,,1.2,False,,,,,253.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-06-27 00:00:00,,,3.0,False,2.7811621864,False,3.3,False,476.0,False,,,,,,,1.6,False,,,,,230.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-07-18 00:00:00,,,3.0,False,2.7811621864,False,3.5,False,351.0,False,,,,,,,2.0,False,,,,,217.0,False
@@ -182,7 +182,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2000-11-30 00:00:00,,,5.0,False,3.8508399504,False,4.4,False,518.0,False,,,,,,,4.4,False,,,,,332.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2000-12-17 00:00:00,,,2.0,False,3.8508399504,False,4.1,False,427.0,False,,,,,,,1.6,False,,,,,294.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-01-26 00:00:00,,,1.0,False,3.6369043976,False,3.6,False,421.0,False,,,,,,,1.2,False,,,,,215.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2001-02-22 00:00:00,,,2.0,False,3.4229688448,False,2.5,False,411.0,False,,,,,,,0.6,False,,,,,303.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2001-02-22 00:00:00,,,2.0,False,3.4229688448,False,2.5,False,411.0,False,,,,,,,,False,,,,,303.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-03-27 00:00:00,,,3.0,False,3.209033292,False,2.7,False,390.0,False,,,,,,,0.9,False,,,,,292.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-04-26 00:00:00,,,8.0,False,4.9205177144,False,4.6,False,604.0,False,,,,,,,10.7,False,,,,,404.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-05-03 00:00:00,,,2.0,False,3.8508399504,False,4.1,False,519.0,False,,,,,,,3.9,False,,,,,321.0,False
@@ -195,13 +195,13 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2001-06-18 00:00:00,,,4.0,False,3.4229688448,False,3.3,False,387.0,False,,,,,,,1.9,False,,,,,226.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-06-25 00:00:00,,,3.0,False,3.209033292,False,3.3,False,324.0,False,,,,,,,2.4,False,,,,,164.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-07-30 00:00:00,,,2.0,False,1.6259102013,False,3.2,False,324.0,False,,,,,,,1.3,False,,,,,184.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2001-08-27 00:00:00,,,3.0,False,1.4333682038,False,3.9,False,380.0,False,,,,,,,1.3,False,,,,,181.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2001-08-27 00:00:00,,,3.0,False,,False,3.9,False,380.0,False,,,,,,,1.3,False,,,,,181.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-09-24 00:00:00,,,1.0,False,2.139355528,False,4.1,False,349.0,False,,,,,,,1.9,False,,,,,203.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-10-29 00:00:00,,,2.0,False,2.9950977392,False,3.8,False,283.0,False,,,,,,,0.8,False,,,,,256.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-11-22 00:00:00,,,7.0,False,2.7811621864,False,3.3,False,344.0,False,,,,,,,1.3,False,,,,,282.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2001-12-17 00:00:00,,,3.0,False,2.9950977392,False,3.7,False,437.0,False,,,,,,,3.8,False,,,,,321.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2002-01-28 00:00:00,,,3.0,False,2.5672266336,False,2.7,False,400.0,False,,,,,,,1.0,False,,,,,368.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2002-02-25 00:00:00,,,8.0,False,2.5672266336,False,2.6,False,450.0,False,,,,,,,0.6,False,,,,,412.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2002-02-25 00:00:00,,,8.0,False,2.5672266336,False,2.6,False,450.0,False,,,,,,,,False,,,,,412.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2002-03-18 00:00:00,,,1.0,False,4.0647755032,False,2.5,False,450.0,False,,,,,,,0.9,False,,,,,291.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2002-04-29 00:00:00,,,8.0,False,2.5672266336,False,3.2,False,415.0,False,,,,,,,2.3,False,,,,,251.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2002-05-07 00:00:00,,,2.0,False,2.9950977392,False,3.6,False,478.0,False,,,,,,,1.8,False,,,,,271.0,False
@@ -218,7 +218,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2002-10-30 00:00:00,,,2.0,False,2.7811621864,False,3.5,False,571.0,False,,,,,,,1.3,False,,,,,427.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2002-11-26 00:00:00,,,22.0,True,2.5672266336,False,3.0,False,411.0,False,,,,,,,0.8,False,,,,,304.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2003-01-27 00:00:00,,,1.0,False,2.5672266336,False,3.1,False,470.0,False,,,,,,,0.9,False,,,,,367.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2003-02-24 00:00:00,,,1.0,False,2.139355528,False,2.4,False,399.0,False,,,,,,,0.06,False,,,,,270.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2003-02-24 00:00:00,,,1.0,False,2.139355528,False,2.4,False,399.0,False,,,,,,,,False,,,,,270.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2003-03-24 00:00:00,,,1.0,False,2.9950977392,False,3.2,False,570.0,False,,,,,,,2.8,False,,,,,411.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2003-04-24 00:00:00,,,1.0,False,2.9950977392,False,4.3,False,593.0,False,,,,,,,3.9,False,,,,,423.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2003-05-06 00:00:00,,,4.0,False,2.7811621864,False,4.3,False,523.0,False,,,,,,,2.4,False,,,,,410.0,False
@@ -237,7 +237,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2003-11-24 00:00:00,,,1.0,False,2.5672266336,False,3.3,False,385.0,False,,,,,,,0.8,False,,,,,340.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2003-12-22 00:00:00,,,1.0,False,2.3532910808,False,3.2,False,420.0,False,,,,,,,1.4,False,,,,,343.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-01-07 00:00:00,,,1.0,False,2.6100137442,False,2.9,False,370.0,False,,,,,2.0,False,0.95,False,,,,,267.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2004-02-04 00:00:00,,,1.0,False,2.4388653019,False,2.7,False,350.0,False,,,,,4.0,False,0.33,False,,,,,265.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2004-02-04 00:00:00,,,1.0,False,2.4388653019,False,2.7,False,350.0,False,,,,,4.0,False,,False,,,,,265.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-03-07 00:00:00,,,1.0,False,2.3532910808,False,2.5,False,380.0,False,,,,,4.0,False,1.23,False,,,,,252.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-04-12 00:00:00,,,3.0,False,2.9309170734,False,3.3,False,465.0,False,,,,,8.0,False,5.8,False,,,,,324.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-05-10 00:00:00,,,6.0,False,2.5672266336,False,3.2,False,395.0,False,,,,,11.0,False,10.4,False,,,,,206.0,False
@@ -252,7 +252,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2004-10-10 00:00:00,,,1.0,False,2.6955879653,False,3.9,False,475.0,False,,,,,4.0,False,1.28,False,,,,,294.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-11-04 00:00:00,,,1.0,False,2.823949297,False,3.6,False,445.0,False,,,,,4.0,False,1.59,False,,,,,305.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2004-12-08 00:00:00,,,1.0,False,2.823949297,False,3.4,False,465.0,False,,,,,5.0,False,1.2,False,,,,,321.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2005-01-07 00:00:00,,,1.0,False,2.5672266336,False,2.7,False,360.0,False,,,,,3.0,False,0.65,False,,,,,248.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2005-01-07 00:00:00,,,1.0,False,2.5672266336,False,2.7,False,360.0,False,,,,,3.0,False,,False,,,,,248.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2005-02-02 00:00:00,,,1.0,False,2.6314072994,False,2.5,False,405.0,False,,,,,3.0,False,1.04,False,,,,,284.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2005-03-02 00:00:00,,,1.0,False,2.4388653019,False,2.2,False,355.0,False,,,,,3.0,False,0.75,False,,,,,243.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2005-04-06 00:00:00,,,2.0,False,2.6100137442,False,2.6,False,460.0,False,,,,,6.0,False,2.77,False,,,,,307.0,False
@@ -267,8 +267,8 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2005-09-01 00:00:00,,,1.0,False,2.2035361938,False,3.1,False,325.0,False,,,,,5.0,False,1.17,False,,,,,185.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2005-10-05 00:00:00,,,1.0,False,2.3105039702,False,2.9,False,350.0,False,,,,,6.0,False,0.97,False,,,,,195.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2005-11-02 00:00:00,,,2.0,False,3.2304268473,False,3.9,False,660.0,False,,,,,9.0,False,2.34,False,,,,,525.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2005-12-06 00:00:00,,,1.0,False,2.7597686311,False,2.9,False,475.0,False,,,,,4.0,False,0.65,False,,,,,305.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2006-01-04 00:00:00,,,1.0,False,2.67419441,False,2.8,False,400.0,False,,,,,5.0,False,0.69,False,,,,,303.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2005-12-06 00:00:00,,,1.0,False,2.7597686311,False,2.9,False,475.0,False,,,,,4.0,False,,False,,,,,305.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2006-01-04 00:00:00,,,1.0,False,2.67419441,False,2.8,False,400.0,False,,,,,5.0,False,,False,,,,,303.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2006-02-08 00:00:00,,,1.0,False,2.6314072994,False,2.7,False,435.0,False,,,,,4.0,False,0.79,False,,,,,313.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2006-03-09 00:00:00,,,1.0,False,2.5886201889,False,2.4,False,430.0,False,,,,,4.0,False,1.01,False,,,,,337.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2006-04-04 00:00:00,,,2.0,False,2.6528008547,False,2.6,False,770.0,False,,,,,5.0,False,1.06,False,,,,,618.0,False
@@ -319,7 +319,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2008-11-05 00:00:00,,,1.0,False,2.8453428522,False,3.1,False,410.0,False,,,,,5.0,False,0.87,False,,,,,258.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2008-12-04 00:00:00,,,1.0,False,2.9523106286,False,3.1,False,410.0,False,,,,,3.0,False,0.88,False,,,,,280.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2009-01-08 00:00:00,,,2.0,False,2.8667364075,False,2.8,False,435.0,False,,,,,9.0,False,0.77,False,,,,,253.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2009-02-04 00:00:00,,,1.0,False,2.7169815206,False,2.6,False,410.0,False,,,,,4.0,False,0.48,False,,,,,237.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2009-02-04 00:00:00,,,1.0,False,2.7169815206,False,2.6,False,410.0,False,,,,,4.0,False,,False,,,,,237.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2009-03-04 00:00:00,,,1.0,False,2.7597686311,False,2.6,False,440.0,False,,,,,5.0,False,0.8,False,,,,,298.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2009-04-01 00:00:00,,,2.0,False,2.8667364075,False,2.6,False,465.0,False,,,,,6.0,False,3.3,False,,,,,288.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2009-05-06 00:00:00,,,2.0,False,2.823949297,False,3.2,False,400.0,False,,,,,6.0,False,1.9,False,,,,,244.0,False
@@ -335,8 +335,8 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2009-11-04 00:00:00,,,5.0,False,3.7224786187,False,4.3,False,730.0,False,,,,,9.0,False,4.56,False,,,,,485.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2009-12-02 00:00:00,,,2.0,False,3.2304268473,False,3.6,False,510.0,False,,,,,5.0,False,1.22,False,,,,,252.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2010-01-07 00:00:00,,,1.0,False,2.9950977392,False,3.0,False,405.0,False,,,,,5.0,False,0.86,False,,,,,284.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2010-02-03 00:00:00,,,1.0,False,2.7597686311,False,2.5,False,380.0,False,,,,,7.0,False,0.53,False,,,,,267.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2010-03-03 00:00:00,,,1.0,False,2.8025557417,False,2.5,False,410.0,False,,,,,4.0,False,0.66,False,,,,,288.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2010-02-03 00:00:00,,,1.0,False,2.7597686311,False,2.5,False,380.0,False,,,,,7.0,False,,False,,,,,267.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2010-03-03 00:00:00,,,1.0,False,2.8025557417,False,2.5,False,410.0,False,,,,,4.0,False,,False,,,,,288.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2010-04-06 00:00:00,,,4.0,False,3.5727237318,False,3.3,False,705.0,False,,,,,9.0,False,3.4,False,,,,,564.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2010-05-07 00:00:00,,,1.0,False,2.9523106286,False,3.6,False,435.0,False,,,,,5.0,False,2.46,False,,,,,273.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2010-05-14 00:00:00,,,1.0,False,2.9309170734,False,3.3,False,415.0,False,,,,,6.0,False,1.6,False,,,,,237.0,False
@@ -368,7 +368,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2011-12-06 00:00:00,,,1.0,False,3.0806719603,False,3.1,False,430.0,False,,,,,8.0,False,0.86,False,,,,,281.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-01-03 00:00:00,,,1.0,False,3.1662461814,False,3.1,False,445.0,False,,,,,5.0,False,0.71,False,,,,,297.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-02-02 00:00:00,,,2.0,False,2.8667364075,False,2.6,False,405.0,False,,,,,5.0,False,0.89,False,,,,,259.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2012-03-06 00:00:00,,,1.0,False,2.8667364075,False,2.7,False,395.0,False,,,,,2.0,False,0.69,False,,,,,260.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2012-03-06 00:00:00,,,1.0,False,2.8667364075,False,2.7,False,395.0,False,,,,,2.0,False,,False,,,,,260.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-04-10 00:00:00,,,1.0,False,2.6955879653,False,2.8,False,390.0,False,,,,,6.0,False,1.22,False,,,,,244.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-05-08 00:00:00,,,1.0,False,2.8453428522,False,3.5,False,430.0,False,,,,,7.0,False,1.03,False,,,,,240.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-05-15 00:00:00,,,2.0,False,2.7597686311,False,3.3,False,410.0,False,,,,,5.0,False,2.12,False,,,,,250.0,False
@@ -382,9 +382,9 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2012-10-09 00:00:00,,,2.0,False,2.9737041839,False,3.3,False,405.0,False,,,,,4.0,False,1.2,False,,,,,211.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-11-06 00:00:00,,,3.0,False,3.4657559554,False,4.1,False,530.0,False,,,,,5.0,False,2.9,False,,,,,329.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2012-12-04 00:00:00,,,2.0,False,3.1448526262,False,3.2,False,450.0,False,,,,,3.0,False,2.06,False,,,,,270.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2013-01-08 13:45:00,,,1.0,False,2.9950977392,False,2.9,False,395.0,False,,,,,3.0,False,0.58,False,,,,,257.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2013-01-08 13:45:00,,,1.0,False,2.9950977392,False,2.9,False,395.0,False,,,,,3.0,False,,False,,,,,257.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-02-05 00:00:00,,,,,,,,,,,,,,,,,,,,,,,,
-40352,DRA1,Drammenselva v/Krokstadelva,2013-02-05 11:00:00,,,1.0,False,2.9309170734,False,2.6,False,395.0,False,,,,,4.0,False,0.57,False,,,,,264.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2013-02-05 11:00:00,,,1.0,False,2.9309170734,False,2.6,False,395.0,False,,,,,4.0,False,,False,,,,,264.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-03-05 11:00:00,,,1.0,False,2.8453428522,False,2.4,False,390.0,False,,,,,3.0,False,1.12,False,,,,,251.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-04-04 00:00:00,,,,,,,,,,,,,,,,,,,,,,,,
 40352,DRA1,Drammenselva v/Krokstadelva,2013-04-04 10:30:00,,,2.0,False,2.7811621864,False,2.8,False,440.0,False,,,,,5.0,False,1.37,False,,,,,288.0,False
@@ -404,7 +404,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2013-07-03 08:30:00,,,4.0,False,2.9095235181,False,4.3,False,450.0,False,,,,,8.0,False,3.22,False,,,,,273.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-08-06 08:30:00,,,2.0,False,2.3532910808,False,3.6,False,380.0,False,,,,,6.0,False,0.92,False,,,,,199.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-09-10 00:00:00,,,,,,,,,,,,,,,,,,,,,,,,
-40352,DRA1,Drammenselva v/Krokstadelva,2013-09-10 10:00:00,,,1.0,False,2.1821426386,False,3.5,False,365.0,False,,,,,9.0,False,0.46,False,,,,,192.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2013-09-10 10:00:00,,,1.0,False,2.1821426386,False,3.5,False,365.0,False,,,,,9.0,False,,False,,,,,192.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-10-08 00:00:00,,,,,,,,,,,,,,,,,,,,,,,,
 40352,DRA1,Drammenselva v/Krokstadelva,2013-10-08 07:30:00,,,1.0,False,2.2463233044,False,3.3,False,375.0,False,,,,,5.0,False,1.02,False,,,,,182.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2013-11-05 15:00:00,,,4.0,False,3.3160010684,False,4.5,False,565.0,False,,,,,10.0,False,4.54,False,,,,,369.0,False
@@ -428,7 +428,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2015-01-07 12:25:00,,,1.0,False,3.3384000000000005,False,3.2,False,405.0,False,,,,,4.0,False,1.51,False,,,,,244.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2015-02-18 09:50:00,,,1.0,False,2.9104000000000005,False,2.5,False,370.0,False,,,,,3.0,False,0.8,False,,,,,239.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2015-03-11 08:25:00,,,4.0,False,3.4882,False,2.9,False,520.0,False,,,,,7.0,False,3.07,False,,,,,334.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2015-04-07 11:00:00,,,2.0,False,3.2956000000000003,False,3.1,False,480.0,False,,,,,1.0,False,1.72,False,,,,,321.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2015-04-07 11:00:00,,,2.0,False,3.2956000000000003,False,3.1,False,480.0,False,,,,,,False,1.72,False,,,,,321.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2015-05-05 10:00:00,,,1.0,False,2.889,False,3.1,False,390.0,False,,,,,4.0,False,2.01,False,,,,,198.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2015-05-13 10:00:00,,,1.0,False,2.9318000000000004,False,3.3,False,445.0,False,,,,,2.0,False,1.35,False,,,,,255.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2015-05-26 09:30:00,,,1.0,False,3.0388,False,3.1,False,425.0,False,,,,,5.0,False,1.05,False,,,,,214.0,False
@@ -473,9 +473,9 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2017-10-03 14:50:00,,,4.0,False,3.0388,False,5.4,False,400.0,False,4.0,False,,,11.0,False,4.09,False,0.205936,False,0.019634,False,312.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2017-11-06 14:30:00,,,4.0,False,3.4026000000000005,False,4.8,False,500.0,False,3.0,False,,,8.0,False,1.42,False,0.168136,False,0.015676,False,320.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2017-12-05 14:40:00,,,2.0,False,2.9318000000000004,False,3.2,False,370.0,False,2.0,False,,,7.0,False,1.4,False,0.123322,False,0.0111118,False,227.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2018-01-02 11:00:00,,,1.0,False,3.103,False,2.9,False,360.0,False,1.0,False,,,3.0,False,0.45,False,0.111968,False,0.010006,False,247.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2018-01-02 11:00:00,,,1.0,False,3.103,False,2.9,False,360.0,False,1.0,False,,,3.0,False,,False,0.111968,False,0.010006,False,247.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2018-02-06 09:30:00,,,1.0,False,2.7392000000000003,False,2.5,False,365.0,False,3.0,False,,,3.0,False,0.7,False,0.098078,False,0.008802,False,231.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2018-03-06 09:00:00,,,1.0,False,2.7606,False,2.6,False,390.0,False,2.0,False,,,3.0,False,0.59,False,0.093564,False,0.007674,False,238.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2018-03-06 09:00:00,,,1.0,False,2.7606,False,2.6,False,390.0,False,2.0,False,,,3.0,False,,False,0.093564,False,0.007674,False,238.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2018-04-03 09:30:00,,,1.0,False,2.7606,False,2.3,False,395.0,False,2.0,False,,,4.0,False,0.86,False,0.087616,False,0.0070922,False,315.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2018-05-08 07:30:00,,,3.0,False,2.996,False,3.5,False,440.0,False,2.0,False,,,8.0,False,3.79,False,0.142024,False,0.013546,False,258.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2018-05-15 07:30:00,,,4.0,False,2.9104000000000005,False,3.1,False,350.0,False,2.0,False,,,7.0,False,4.68,False,0.124478,False,0.011484,False,182.0,False
@@ -522,7 +522,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2020-11-02 12:50:00,,,5.0,False,3.745,False,4.5,False,610.0,False,7.0,False,,,11.0,False,4.09,False,0.18106,False,0.017424,False,502.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2020-12-07 13:15:00,,,3.0,False,3.5096,False,3.5,False,490.0,False,3.0,False,,,7.0,False,2.23,False,0.136174,False,0.0125018,False,415.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2021-01-21 10:30:00,21.0,False,1.0,False,3.25,False,3.6,False,380.0,False,,,2.5,False,3.0,False,0.82,False,0.125428,False,0.01127,False,274.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2021-02-02 15:00:00,9.0,False,2.0,False,3.32,False,3.4,False,460.0,False,,,3.3,False,5.0,False,0.96,False,0.121924,False,0.010594,False,292.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2021-02-02 15:00:00,,False,2.0,False,3.32,False,3.4,False,460.0,False,,,3.3,False,5.0,False,0.96,False,0.121924,False,0.010594,False,292.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2021-03-02 08:30:00,16.0,False,2.0,False,3.14,False,2.9,False,400.0,False,,,4.8,False,5.0,False,1.89,False,0.106028,False,0.00912,False,306.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2021-04-06 11:30:00,15.0,False,3.0,False,3.2,False,3.5,False,480.0,False,,,4.8,False,5.0,False,2.42,False,0.133744,False,0.012508,False,394.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2021-05-03 09:00:00,25.0,False,2.0,False,2.98,False,3.6,False,350.0,False,,,3.3,False,5.0,False,4.37,False,0.1352038,False,0.012582,False,272.0,False
@@ -539,7 +539,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2021-12-06 10:50:00,21.0,False,2.0,False,3.29,False,3.4,False,390.0,False,,,2.9,False,4.0,False,1.31,False,0.12561,False,0.01126,False,240.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2022-01-10 11:40:00,18.0,False,2.0,False,3.02,False,2.8,False,350.0,False,,,2.0,False,3.0,False,0.8,False,0.106546,False,0.00921,False,309.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2022-02-07 09:20:00,16.0,False,1.0,False,2.86,False,2.6,False,360.0,False,,,3.0,False,4.0,False,0.77,False,0.096402,False,0.008482,False,272.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2022-03-07 11:15:00,14.0,False,1.0,False,2.58,False,2.5,False,330.0,False,,,3.0,False,3.0,False,0.4,False,0.0868,False,0.007348,False,271.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2022-03-07 11:15:00,14.0,False,1.0,False,2.58,False,2.5,False,330.0,False,,,3.0,False,3.0,False,,False,0.0868,False,0.007348,False,271.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2022-04-04 11:30:00,16.0,False,3.0,False,2.78,False,2.6,False,350.0,False,,,2.0,False,4.0,False,0.97,False,0.101018,False,0.008814,False,303.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2022-05-02 10:30:00,19.0,False,1.0,False,2.69,False,3.1,False,370.0,False,,,4.0,False,4.0,False,0.92,False,0.108796,False,0.009006,False,303.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2022-05-16 09:30:00,16.0,False,1.0,False,2.6,False,2.8,False,290.0,False,,,3.0,False,4.0,False,0.98,False,0.100022,False,0.008306,False,234.0,False
@@ -563,7 +563,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40352,DRA1,Drammenselva v/Krokstadelva,2023-06-05 12:00:00,21.0,False,2.0,False,3.2,False,3.6,False,360.0,False,,,4.7,False,5.9,False,2.26,False,0.13505,False,0.011782,False,202.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2023-06-12 11:00:00,21.0,False,3.0,False,3.26,False,3.8,False,350.0,False,,,4.9,False,6.8,False,3.24,False,0.141808,False,0.012526,False,172.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2023-06-26 09:00:00,18.0,False,1.0,False,2.65,False,3.4,False,310.0,False,,,3.7,False,5.2,False,1.4,False,0.12281,False,0.010514,False,83.0,False
-40352,DRA1,Drammenselva v/Krokstadelva,2023-07-03 11:15:00,17.0,False,3.0,False,2.77,False,3.5,False,330.0,False,,,6.5,False,6.0,False,2.72,False,0.119868,False,0.009284,False,48.0,False
+40352,DRA1,Drammenselva v/Krokstadelva,2023-07-03 11:15:00,17.0,False,3.0,False,2.77,False,3.5,False,330.0,False,,,6.5,False,6.0,False,2.72,False,0.119868,False,0.009284,False,,False
 40352,DRA1,Drammenselva v/Krokstadelva,2023-08-06 12:30:00,20.0,False,1.0,False,2.68,False,3.6,False,320.0,False,,,3.9,False,4.5,False,1.6,False,0.137718,False,0.01178,False,142.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2023-08-11 10:00:00,33.0,False,23.0,True,3.66,False,4.6,False,340.0,False,,,,,33.0,True,,,,,,,143.0,False
 40352,DRA1,Drammenselva v/Krokstadelva,2023-08-11 10:10:00,32.0,False,22.0,True,3.6,False,4.7,False,340.0,False,,,,,33.0,True,,,,,,,140.0,False
@@ -608,7 +608,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,1991-06-17 00:00:00,,,1.0,False,,,,,192.0,False,,,,,6.0,False,2.28,False,,,,,,False
 40355,NUM1,Numedalslågen v/E18,1991-07-10 00:00:00,,,2.0,False,,,,,186.0,False,,,,,4.0,False,1.31,False,,,,,,False
 40355,NUM1,Numedalslågen v/E18,1991-08-14 00:00:00,,,2.0,False,,,,,416.0,False,,,,,5.0,False,2.13,False,,,,,,False
-40355,NUM1,Numedalslågen v/E18,1991-09-18 00:00:00,,,2.0,False,,,,False,297.0,False,,,,,4.0,False,0.31,False,,,,,,False
+40355,NUM1,Numedalslågen v/E18,1991-09-18 00:00:00,,,2.0,False,,,,False,297.0,False,,,,,4.0,False,,False,,,,,,False
 40355,NUM1,Numedalslågen v/E18,1991-10-17 00:00:00,,,10.0,False,,,,False,855.0,False,,,,,20.0,False,8.74,False,,,,,,False
 40355,NUM1,Numedalslågen v/E18,1991-11-14 00:00:00,,,21.0,False,,,,,884.0,False,,,,,39.0,False,20.6,False,,,,,,False
 40355,NUM1,Numedalslågen v/E18,1991-12-17 00:00:00,,,3.0,False,,,,,497.0,False,,,,,6.0,False,0.96,False,,,,,,False
@@ -666,8 +666,8 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,1996-04-18 00:00:00,,,14.0,False,3.1,False,,,710.0,False,,,,,24.0,False,19.3,False,,,,,548.0,False
 40355,NUM1,Numedalslågen v/E18,1996-05-15 00:00:00,,,2.0,False,2.6,False,,,475.0,False,,,,,13.0,False,4.41,False,,,,,258.0,False
 40355,NUM1,Numedalslågen v/E18,1996-06-17 00:00:00,,,2.0,False,1.1,False,,,300.0,False,,,,,12.0,False,1.52,False,,,,,111.0,False
-40355,NUM1,Numedalslågen v/E18,1996-07-17 00:00:00,,,1.0,False,0.9,False,,,275.0,False,,,,,4.0,False,1.69,False,,,,,95.0,False
-40355,NUM1,Numedalslågen v/E18,1996-08-15 00:00:00,,,1.0,False,0.42,False,,,255.0,False,,,,,5.0,False,1.9,False,,,,,108.0,False
+40355,NUM1,Numedalslågen v/E18,1996-07-17 00:00:00,,,1.0,False,,False,,,275.0,False,,,,,4.0,False,1.69,False,,,,,95.0,False
+40355,NUM1,Numedalslågen v/E18,1996-08-15 00:00:00,,,1.0,False,,False,,,255.0,False,,,,,5.0,False,1.9,False,,,,,108.0,False
 40355,NUM1,Numedalslågen v/E18,1996-09-17 00:00:00,,,2.0,False,2.4,False,,,495.0,False,,,,,6.0,False,1.36,False,,,,,285.0,False
 40355,NUM1,Numedalslågen v/E18,1996-10-14 00:00:00,,,3.0,False,3.2,False,,,550.0,False,,,,,8.0,False,1.73,False,,,,,347.0,False
 40355,NUM1,Numedalslågen v/E18,1996-11-15 00:00:00,,,4.0,False,3.8,False,,,565.0,False,,,,,13.0,False,2.99,False,,,,,387.0,False
@@ -713,7 +713,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,2000-03-30 00:00:00,,,2.9,False,2.139355528,False,2.45,False,321.0,False,,,,,,,1.9,False,,,,,226.0,False
 40355,NUM1,Numedalslågen v/E18,2000-04-27 00:00:00,,,4.4,False,4.278711056,False,5.29,False,385.0,False,,,,,,,4.9,False,,,,,200.0,False
 40355,NUM1,Numedalslågen v/E18,2000-05-30 00:00:00,,,14.0,False,4.7065821616,False,4.6,False,918.0,False,,,,,,,16.3,False,,,,,691.0,False
-40355,NUM1,Numedalslågen v/E18,2000-06-28 00:00:00,,,3.0,False,2.3532910808,False,2.3,False,80.0,False,,,,,,,1.4,False,,,,,97.0,False
+40355,NUM1,Numedalslågen v/E18,2000-06-28 00:00:00,,,3.0,False,2.3532910808,False,2.3,False,,False,,,,,,,1.4,False,,,,,97.0,False
 40355,NUM1,Numedalslågen v/E18,2000-07-18 00:00:00,,,3.0,False,2.7811621864,False,4.2,False,248.0,False,,,,,,,2.4,False,,,,,133.0,False
 40355,NUM1,Numedalslågen v/E18,2000-08-30 00:00:00,,,3.0,False,4.0647755032,False,5.4,False,788.0,False,,,,,,,6.4,False,,,,,215.0,False
 40355,NUM1,Numedalslågen v/E18,2000-09-26 00:00:00,,,4.0,False,2.9950977392,False,3.2,False,331.0,False,,,,,,,2.0,False,,,,,178.0,False
@@ -960,7 +960,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,2020-01-13 12:40:00,,,2.0,False,3.7022,False,4.3,False,400.0,False,2.0,False,,,7.0,False,3.8,False,0.16336,False,0.016022,False,252.0,False
 40355,NUM1,Numedalslågen v/E18,2020-02-03 14:00:00,,,10.0,False,4.2158,False,4.3,False,460.0,False,4.0,False,,,11.0,False,6.58,False,0.175162,False,0.01783,False,297.0,False
 40355,NUM1,Numedalslågen v/E18,2020-03-02 14:20:00,,,8.0,False,4.0232,False,3.4,False,530.0,False,2.0,False,,,11.0,False,4.31,False,0.1283578,False,0.012778,False,366.0,False
-40355,NUM1,Numedalslågen v/E18,2020-04-13 11:45:00,,,3.0,False,3.0602,False,3.8,False,260.0,False,2.0,False,,,5.0,False,0.5,False,0.167016,False,0.017308,False,154.0,False
+40355,NUM1,Numedalslågen v/E18,2020-04-13 11:45:00,,,3.0,False,3.0602,False,3.8,False,260.0,False,2.0,False,,,5.0,False,,False,0.167016,False,0.017308,False,154.0,False
 40355,NUM1,Numedalslågen v/E18,2020-05-04 09:20:00,,,3.0,False,2.9532,False,4.6,False,270.0,False,2.0,False,,,5.0,False,1.66,False,0.191648,False,0.019796,False,119.0,False
 40355,NUM1,Numedalslågen v/E18,2020-06-02 07:45:00,,,2.0,False,2.6536,False,4.4,False,180.0,False,3.0,False,,,5.0,False,2.81,False,0.141292,False,0.013724,False,73.0,False
 40355,NUM1,Numedalslågen v/E18,2020-07-06 13:00:00,,,7.0,False,3.2528,False,4.7,False,240.0,False,5.0,False,,,14.0,False,10.8,False,0.173868,False,0.0168018,False,67.0,False
@@ -970,7 +970,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,2020-11-02 11:30:00,,,14.0,False,4.708000000000001,False,6.8,False,530.0,False,5.0,False,,,25.0,False,6.26,False,0.289232,False,0.029256,False,335.0,False
 40355,NUM1,Numedalslågen v/E18,2020-12-07 12:15:00,,,5.0,False,4.494000000000001,False,3.7,False,480.0,False,4.0,False,,,11.0,False,3.59,False,0.170254,False,0.016972,False,323.0,False
 40355,NUM1,Numedalslågen v/E18,2021-01-20 10:30:00,21.0,False,4.0,False,3.57,False,3.4,False,440.0,False,,,6.5,False,8.0,False,3.25,False,0.1155,False,0.010938,False,310.0,False
-40355,NUM1,Numedalslågen v/E18,2021-02-04 14:30:00,5.0,False,3.0,False,3.42,False,3.0,False,480.0,False,,,5.1,False,6.0,False,2.15,False,0.109646,False,0.010508,False,277.0,False
+40355,NUM1,Numedalslågen v/E18,2021-02-04 14:30:00,,False,3.0,False,3.42,False,3.0,False,480.0,False,,,5.1,False,6.0,False,2.15,False,0.109646,False,0.010508,False,277.0,False
 40355,NUM1,Numedalslågen v/E18,2021-03-01 15:00:00,23.0,False,6.0,False,4.07,False,4.6,False,840.0,False,,,8.5,False,11.0,False,6.61,False,0.145604,False,0.0136798,False,440.0,False
 40355,NUM1,Numedalslågen v/E18,2021-04-06 10:30:00,46.0,False,4.0,False,3.92,False,5.1,False,420.0,False,,,4.8,False,8.0,False,4.56,False,0.2237,False,0.02289,False,278.0,False
 40355,NUM1,Numedalslågen v/E18,2021-05-03 08:15:00,32.0,False,3.0,False,3.42,False,4.3,False,340.0,False,,,3.9,False,6.0,False,1.88,False,0.182324,False,0.018882,False,154.0,False
@@ -999,7 +999,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40355,NUM1,Numedalslågen v/E18,2023-04-10 11:00:00,18.0,False,13.0,False,4.4,False,3.0,False,410.0,False,,,20.0,False,20.0,False,9.16,False,0.10904,False,0.010468,False,267.0,False
 40355,NUM1,Numedalslågen v/E18,2023-05-02 12:00:00,48.0,False,4.0,False,4.39,False,6.2,False,470.0,False,,,4.9,False,7.6,False,3.01,False,0.23468,False,0.0257036,False,259.0,False
 40355,NUM1,Numedalslågen v/E18,2023-06-05 14:20:00,36.0,False,4.0,False,3.06,False,4.6,False,270.0,False,,,6.3,False,9.5,False,4.45,False,0.205204,False,0.021844,False,100.0,False
-40355,NUM1,Numedalslågen v/E18,2023-07-02 15:50:00,17.0,False,10.0,False,2.91,False,3.1,False,210.0,False,,,11.0,False,15.0,False,9.92,False,0.113968,False,0.010204,False,4.0,False
+40355,NUM1,Numedalslågen v/E18,2023-07-02 15:50:00,17.0,False,10.0,False,2.91,False,3.1,False,210.0,False,,,11.0,False,15.0,False,9.92,False,0.113968,False,0.010204,False,,False
 40355,NUM1,Numedalslågen v/E18,2023-08-06 13:00:00,30.0,False,3.0,False,2.85,False,4.3,False,250.0,False,,,6.3,False,7.3,False,3.6,False,0.17664,False,0.01679,False,56.0,False
 40355,NUM1,Numedalslågen v/E18,2023-09-03 14:45:00,42.0,False,4.0,False,3.22,False,5.7,False,240.0,False,,,7.0,False,9.1,False,4.16,False,0.230182,False,0.022118,False,,
 40355,NUM1,Numedalslågen v/E18,2023-10-01 11:00:00,46.0,False,3.0,False,3.64,False,5.9,False,310.0,False,,,5.4,False,7.0,False,2.25,False,0.252656,False,0.024408,False,,
@@ -1026,7 +1026,7 @@ station_id,station_code,station_name,sample_date,Farge_mg Pt/l,outlier_Farge_mg 
 40356,GLO1,Glomma v/Sarpefossen,1990-07-19 00:00:00,,,2.0,False,,,3.82,False,461.0,False,,,,,12.0,False,5.8,False,,,,,,False
 40356,GLO1,Glomma v/Sarpefossen,1990-08-15 00:00:00,,,1.0,False,,,2.69,False,329.0,False,,,,,6.0,False,1.4,False,,,,,,False
 40356,GLO1,Glomma v/Sarpefossen,1990-09-07 00:00:00,,,2.0,False,,,2.68,False,321.0,False,,,,,7.0,False,2.5,False,,,,,,False
-40356,GLO1,Glomma v/Sarpefossen,1990-10-16 00:00:00,,,2.0,False,,,0.9,False,431.0,False,,,,,7.0,False,1.4,False,,,,,,False
+40356,GLO1,Glomma v/Sarpefossen,1990-10-16 00:00:00,,,2.0,False,,,,False,431.0,False,,,,,7.0,False,1.4,False,,,,,,False
 40356,GLO1,Glomma v/Sarpefossen,1990-11-13 00:00:00,,,2.0,False,,,2.82,False,471.0,False,,,,,7.0,False,2.3,False,,,,,,False
 40356,GLO1,Glomma v/Sarpefossen,1990-12-12 00:00:00,,,1.0,False,,,3.89,False,483.0,False,,,,,7.0,False,1.4,False,,,,,,False
 40356,GLO1,Glomma v/Sarpefossen,1991-01-07 00:00:00,,,25.0,False,,,3.8,False,1200.0,False,,,,,42.0,False,24.8,False,,,,,,False
