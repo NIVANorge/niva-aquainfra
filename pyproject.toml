@@ -2,17 +2,19 @@
 name = "aquainfra"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [""]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-xarray = {extras = ["complete"], version = "^2023.12.0"}
-netCDF4 = "1.5.8"
+xarray = {extras = ["complete"], version = "^2025.4.0"}
+netCDF4 = "1.7.2"
 movingpandas = "^0.17.2"
 hvplot = "^0.9.1"
 ipykernel = "^6.29.0"
 geoviews = "^1.11.0"
+rise = "^5.7.1"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = "^23.1.0"}
