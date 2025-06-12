@@ -14,7 +14,7 @@ parameter_id,parameter_name,unit
 9,TOTN,µg/l
 4762,TOTN_EF_usikker,µg/l
 11,TOTP,µg/l
-400,TOTP/F,µg/l P
+400,TOTP_F,µg/l P
 582,TOTP_P,µg/l P
 1241,TSM,mg/l
 3476,UV-Abs. 254nm,Abs/cm
