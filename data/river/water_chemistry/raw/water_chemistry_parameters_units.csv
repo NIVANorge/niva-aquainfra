@@ -1,0 +1,19 @@
+parameter_id,parameter_name,unit
+1539,DOC,mg/l C
+288,Color,mg Pt/l
+8,NH4_N,µg/l
+7,NO3_N,µg/l
+12,TRP,µg/l
+572,POC,µg/l C
+396,SPM,mg/l
+3297,Si,mg/l
+258,SiO2,mg/l
+257,TOC,mg/l
+9,TOTN,µg/l
+4762,TOTN_EF_usikker,µg/l
+11,TOTP,µg/l
+400,TDP,µg/l P
+582,PP,µg/l P
+1241,TSM,mg/l
+3476,UV_Abs_254nm,Abs/cm
+3479,UV_Abs_410nm,Abs/cm
