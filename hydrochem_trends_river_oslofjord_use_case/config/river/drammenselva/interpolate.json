@@ -1,0 +1,141 @@
+{
+  "input": {
+    "waterchem_file": "../data/processed/river/cleaned_riverchem_40352.nc",
+    "discharge_file": "../data/processed/river/Q_daily_mean_Drammenselva_Mjondalen_bru_12_534_0_cleaned.nc",
+    "wc_time_col": "sample_date",
+    "q_time_col": "time",
+    "wc_station_col": "station_name",
+    "q_station_col": "station_name",
+    "discharge_var": "discharge"
+  },
+  "paths": {
+    "fig_all_methods_dir": "../output/figures/river/daily_estimates/drammenselva/all_methods",
+    "fig_selected_dir": "../output/figures//river/daily_estimates/drammenselva/selected",
+    "output_dir": "../output/daily_estimates"
+  },
+  "rename_maps": {
+    "wc": {
+      "Drammenselva": "Drammenselva"
+    },
+    "q": {
+      "Mjondalen bru": "Drammenselva"
+    }
+  },
+  "meta": {
+    "station_name": { "value": "Drammenselva" },
+    "latitude":     { "value": 59.75257593 },
+    "longitude":    { "value": 10.00789751 }
+  },
+  "drop_columns": ["latitude", "longitude", "station_id", "station_code", "station_type"],
+  "chem_variables": [
+    "DOC","Color","NH4-N","NO3-N","TRP","POC","SPM","SiO2",
+    "TOC","TOTN","TDP","PP","TOTP","TSM","UV_Abs_254nm",
+    "UV_Abs_410nm","TOC_calc","DIN","DON"
+  ],
+  "pars_metadata": [
+    {"parameter_name":"DOC","unit":"mg/l C"},
+    {"parameter_name":"Color","unit":"mg Pt/l"},
+    {"parameter_name":"NH4-N","unit":"µg/l"},
+    {"parameter_name":"NO3-N","unit":"µg/l"},
+    {"parameter_name":"TRP","unit":"µg/l"},
+    {"parameter_name":"POC","unit":"mg/l"},
+    {"parameter_name":"SPM","unit":"mg/l"},
+    {"parameter_name":"SiO2","unit":"mg/l"},
+    {"parameter_name":"TOC","unit":"mg/l"},
+    {"parameter_name":"TOTN","unit":"µg/l"},
+    {"parameter_name":"TDP","unit":"µg/l P"},
+    {"parameter_name":"PP","unit":"µg/l P"},
+    {"parameter_name":"TOTP","unit":"µg/l"},
+    {"parameter_name":"TSM","unit":"mg/l"},
+    {"parameter_name":"UV_Abs_254nm","unit":"Abs/cm"},
+    {"parameter_name":"UV_Abs_410nm","unit":"Abs/cm"},
+    {"parameter_name":"TOC_calc","unit":"mg/l"},
+    {"parameter_name":"DIN","unit":"µg/l"},
+    {"parameter_name":"DON","unit":"µg/l"}
+  ],
+  "standard_name_map": {
+    "DOC":"Dissolved Organic Carbon",
+    "Color":"Water Color",
+    "NH4-N":"Ammonium-N",
+    "NO3-N":"Nitrate-N",
+    "TRP":"Total Reactive Phosphorus",
+    "POC":"Particulate Organic Carbon",
+    "SPM":"Suspended Particulate Matter",
+    "SiO2":"Silicate",
+    "TOC":"Total Organic Carbon",
+    "TOTN":"Total Nitrogen",
+    "TDP":"Total Dissolved Phosphorus",
+    "PP":"Particulate Phosphorus",
+    "TOTP":"Total Phosphorus",
+    "TSM":"Total Suspended Matter",
+    "UV_Abs_254nm":"Ultraviolet Absorbance 254nm",
+    "UV_Abs_410nm":"Ultraviolet Absorbance 410nm",
+    "TOC_calc":"Total Organic Carbon Calculated",
+    "DIN":"Dissolved Inorganic Nitrogen",
+    "DON":"Dissolved Organic Nitrogen"
+  },
+  "var_comments": {
+    "DOC":         { "Drammenselva": "Monthly median interpolation; gaps filled from annual GAM." },
+    "Color":       { "Drammenselva": "Annual GAM interpolation." },
+    "NH4-N":       { "Drammenselva": "Monthly median interpolation; gaps filled from annual GAM." },
+    "NO3-N":       { "Drammenselva": "Linear interpolation; gaps filled from annual GAM." },
+    "TRP":         { "Drammenselva": "Linear interpolation." },
+    "POC":         { "Drammenselva": "Linear interpolation." },
+    "SPM":         { "Drammenselva": "Linear interpolation." },
+    "SiO2":        { "Drammenselva": "Linear interpolation." },
+    "TOC":         { "Drammenselva": "Monthly median interpolation; gaps filled from annual GAM." },
+    "TOTN":        { "Drammenselva": "Linear interpolation." },
+    "TDP":         { "Drammenselva": "Linear interpolation." },
+    "PP":          { "Drammenselva": "Linear interpolation." },
+    "TOTP":        { "Drammenselva": "Linear interpolation; gaps filled from monthly regression." },
+    "TSM":         { "Drammenselva": "Linear interpolation." },
+    "UV_Abs_254nm":{ "Drammenselva": "Annual GAM interpolation." },
+    "UV_Abs_410nm":{ "Drammenselva": "Annual GAM interpolation." },
+    "TOC_calc":    { "Drammenselva": "Annual GAM interpolation." },
+    "DIN":         { "Drammenselva": "Linear interpolation; gaps filled from annual GAM." },
+    "DON":         { "Drammenselva": "Linear interpolation; gaps filled from annual GAM." }
+  },
+  "interpolation": {
+    "linear": { "max_gap": 90, "method": "linear", "order": null },
+    "gam":    { "n_splines_xy": [10, 20], "lam_grid": null }
+  },
+  "selection": {
+    "candidate_suffixes": ["annual_gam","monthly_regres","monthly_interp"],
+    "fallback_method": "linear_interp",
+    "r2_threshold": 0.8,
+    "z_score_limit": 3,
+    "tolerance": 50,
+    "extreme_ratio_limit": 2.0
+  },
+  "output": {
+    "time_name": "date",
+    "file_prefix": "daily_water_chemistry_modeled_"
+  },
+  "global_metadata_config": {
+    "naming_authority": "no.niva",
+    "project": "AquaINFRA",
+    "iso_topic_category": "inlandWaters",
+    "featureType": "timeSeries",
+    "spatial_representation": "point",
+    "creator_type": "institution",
+    "creator_institution": "Norwegian Institute for Water Research (NIVA)",
+    "institution": "Norwegian Institute for Water Research (NIVA)",
+    "institution_short_name": "NIVA",
+    "creator_name": "Areti Balkoni",
+    "creator_email": "areti.balkoni@niva.no",
+    "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
+    "data_owner": "Norwegian Institute for Water Research",
+    "processing_level": "Harmonized, gap-filled, and interpolated daily time series",
+    "Conventions": "CF-1.7, ACDD-1.3",
+    "publisher_name": "Norwegian Institute for Water Research",
+    "publisher_email": "miljoinformatikk@niva.no",
+    "publisher_institution": "Norwegian Institute for Water Research",
+    "publisher_url": "https://niva.no",
+    "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
+    "keywords": "GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+    "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
+    "history": "Water chemistry and discharge data harmonized. Daily time series estimated using multiple interpolation methods: linear, GAM (Generalized Additive Models), monthly medians, and regression models. Fallback methods applied for missing values.",
+    "date_created": "2025-07-08T10:00:45Z"
+  },
+  "processed_namespace_uuid": "a23b7946-1a42-4d4a-bb0d-cf5a6cfb5670"
+}

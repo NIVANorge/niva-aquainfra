@@ -1,0 +1,136 @@
+{
+  "input": {
+    "file": "../data/raw/river/raw_riverchem_40355_18-06-2025.nc",
+    "time_col": "sample_date"
+  },
+  "paths": {
+    "fig_dir": "../output/figures/river/quality_control",
+    "output_dir": "../data/processed/river"
+  },
+  "meta": {
+    "station_name": { "value": "Numedalslågen v/E18" },
+    "station_type": { "value": "Elv" },
+    "station_id":   { "from_col": "station_id" },
+    "station_code": { "from_col": "station_code"},
+    "latitude":     { "from_col": "latitude" },
+    "longitude":    { "from_col": "longitude" }
+  },
+  "reconstruction_config": {
+    "TOTN": {
+      "fallback": "TOTN_EF_usikker",
+      "units": "µg/l",
+      "preserve_as": "TOTN_orig"
+    },
+    "SiO2": {
+      "compute_from": "Si",
+      "formula": "Si * 2.14",
+      "units": "mg/l",
+      "preserve_as": "SiO2_orig",
+      "calc_temp_var": "SiO2_calc"
+    }
+  },
+  "derivation_config": [
+    { "operation": "scale", "target": "POC", "factor": 0.001 },
+    { "operation": "sum", "target": "TOC_calc", "sources": ["POC", "DOC"] },
+    { "operation": "fill_from_other", "target": "TDP", "expression": "TOTP - PP", "condition": "TDP.isna() & PP.notna()", "requires": ["TDP", "PP", "TOTP"] },
+    { "operation": "fill_from_other", "target": "PP", "expression": "TOTP - TDP", "condition": "PP.isna() & TDP.notna()", "requires": ["TDP", "PP", "TOTP"] },
+    { "operation": "rowwise_sum", "target": "DIN", "sources": ["NO3-N", "NH4-N"], "only_when_all_present": true },
+    { "operation": "difference", "target": "DON", "expression": "TOTN - DIN", "requires": ["TOTN", "DIN"] },
+    { "operation": "mask_date_before", "target": "TOC", "file_contains": "40355", "date_column": "sample_date", "before": "1998-01-01" },
+    { "operation": "mask_date_before", "target": "DOC", "file_contains": "40355", "date_column": "sample_date", "before": "2016-01-01" }
+  ],
+  "plot_config": [
+    { "type": "scatter", "x": "TOC", "y": "TOC_calc", "xlabel": "TOC", "ylabel": "TOC_calc", "title": "TOC vs TOC_calc", "unit": "mg/l", "required": ["TOC", "TOC_calc"], "subplot": [0, 0] },
+    { "type": "line", "columns": ["TOC", "DOC", "POC", "TOC_calc"], "labels": ["TOC", "DOC", "POC", "TOC_calc"], "title": "TOC, DOC, POC, TOC_calc", "unit": "mg/l", "required": ["TOC", "DOC", "POC", "TOC_calc"], "subplot": [0, 1] },
+    { "type": "line", "columns": ["TDP", "PP", "TOTP"], "labels": ["TDP", "PP", "TOTP"], "title": "TDP, PP, TOTP", "unit": "µg/l", "required": ["TDP", "PP", "TOTP"], "subplot": [1, 0] },
+    { "type": "line", "columns": ["NO3-N", "NH4-N", "DIN"], "labels": ["NO3", "NH4-N", "DIN"], "title": "NO3, NH4-N, DIN", "unit": "µg/l", "required": ["NO3-N", "NH4-N", "DIN"], "subplot": [1, 1] },
+    { "type": "line", "columns": ["TOTN", "DIN", "DON"], "labels": ["TOTN", "DIN", "DON"], "title": "TOTN, DIN, DON", "unit": "µg/l", "required": ["TOTN", "DIN", "DON"], "subplot": [2, 0] }
+  ],
+  "outlier_config": { "lower_quantile": 0.0005, "upper_quantile": 0.99 },
+  "pars_metadata": [
+    {"parameter_name":"DOC","unit":"mg/l C"},
+    {"parameter_name":"Color","unit":"mg Pt/l"},
+    {"parameter_name":"NH4-N","unit":"µg/l"},
+    {"parameter_name":"NO3-N","unit":"µg/l"},
+    {"parameter_name":"TRP","unit":"µg/l"},
+    {"parameter_name":"POC","unit":"mg/l"},
+    {"parameter_name":"POC_calc","unit":"mg/l"},
+    {"parameter_name":"TOC_calc","unit":"mg/l"},
+    {"parameter_name":"SPM","unit":"mg/l"},
+    {"parameter_name":"SiO2","unit":"mg/l"},
+    {"parameter_name":"TOC","unit":"mg/l"},
+    {"parameter_name":"TOTN","unit":"µg/l"},
+    {"parameter_name":"TOTP","unit":"µg/l"},
+    {"parameter_name":"TDP","unit":"µg/l P"},
+    {"parameter_name":"DIN","unit":"µg/l"},
+    {"parameter_name":"DON","unit":"µg/l"},
+    {"parameter_name":"PP","unit":"µg/l P"},
+    {"parameter_name":"TSM","unit":"mg/l"},
+    {"parameter_name":"UV_Abs_254nm","unit":"Abs/cm"},
+    {"parameter_name":"UV_Abs_410nm","unit":"Abs/cm"}
+  ],
+  "standard_name_map": {
+    "DOC":"Dissolved Organic Carbon",
+    "Color":"Water Color",
+    "NH4-N":"Ammonium-N",
+    "NO3-N":"Nitrate-N",
+    "TRP":"Total Reactive Phosphorus",
+    "POC":"Particulate Organic Carbon",
+    "TOC_calc":"Total Organic Carbon Calculated",
+    "SPM":"Suspended Particulate Matter",
+    "SiO2":"Silicate",
+    "TOC":"Total Organic Carbon",
+    "TOTN":"Total Nitrogen",
+    "TOTP":"Total Phosphorus",
+    "TDP":"Total Dissolved Phosphorus",
+    "DIN":"Dissolved Inorganic Nitrogen",
+    "DON":"Dissolved Organic Nitrogen",
+    "PP":"Particulate Phosphorus",
+    "TSM":"Total Suspended Matter",
+    "UV_Abs_254nm":"Ultraviolet Absorbance 254nm",
+    "UV_Abs_410nm":"Ultraviolet Absorbance 410nm"
+  },
+  "var_comments": {
+    "TOTN":"TOTN is reconstructed using Eurofins data (TOTN_EF_usikker), which are considered more uncertain than NIVA data. However, due to gaps in NIVA data from 2017–2021, Eurofins measurements were included to ensure completeness.",
+    "SiO2":"SiO2 is reconstructed from Si using a conversion factor of 2.14 (based on molecular weights). Different methods were used (photometric vs ICP-MS), but results are expected to be comparable.",
+    "TOC_calc":"TOC_calc is computed as POC + DOC, for comparison with lab-reported TOC. It is often more accurate due to rounding errors and turbidity effects in TOC analysis.",
+    "DIN":"DIN is calculated as NO3-N + NH4-N, only when both values are available.",
+    "DON":"DON is calculated as TOTN - DIN, only where both TOTN and DIN are available.",
+    "PP":"PP is computed as TOTP - TDP for the period 2017–2020.",
+    "TDP":"TDP is computed as TOTP - PP for the period 2021–2024.",
+    "TRP":"TRP includes both Soluble Reactive Phosphorus (SRP) and Particulate Reactive Phosphorus (PRP) fractions."
+  },
+  "global_metadata_config": {
+    "summary": "Cleaned long-term water chemistry monitoring at station Numedalslågen v/E18 (code: NUM1)",
+    "summary_no": "Rensede, langsiktige vannkjemiske målinger ved stasjon Numedalslågen v/E18 (kode: NUM1)",
+    "date_created": "2025-07-08T10:00:45Z",
+    "naming_authority":"no.niva",
+    "project":"AquaINFRA",
+    "iso_topic_category":"inlandWaters",
+    "featureType":"timeSeries",
+    "spatial_representation":"point",
+    "creator_type":"institution",
+    "creator_institution":"Norwegian Institute for Water Research (NIVA)",
+    "institution":"Norwegian Institute for Water Research (NIVA)",
+    "institution_short_name":"NIVA",
+    "creator_name":"Areti Balkoni",
+    "creator_email":"areti.balkoni@niva.no",
+    "creator_url":"https://www.niva.no/en/employees/areti-balkoni",
+    "data_owner":"Norwegian Institute for Water Research",
+    "processing_level":"Harmonized and cleaned",
+    "Conventions":"CF-1.7, ACDD-1.3",
+    "publisher_name":"Norwegian Institute for Water Research",
+    "publisher_email":"miljoinformatikk@niva.no",
+    "publisher_institution":"Norwegian Institute for Water Research",
+    "publisher_url":"https://niva.no",
+    "license":"http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
+    "keywords":"GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+    "keywords_vocabulary":"GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
+    "history":"Harmonized and cleaned using percentile-based filtering",
+    "toc_calc_notes":"Lab-reported TOC values may underestimate total organic carbon in turbid samples due to the lack of stirring in the autosampler, causing particles to settle. TOC and DOC are rounded to 0.1 mg/L, adding further uncertainty, while POC is reported to the nearest µg/L. Therefore, TOC_calc (POC + DOC) is often more reliable than lab-reported TOC, but all results should be interpreted considering analytical uncertainties."
+  },
+  "processed_namespace_uuid": "a23b7946-1a42-4d4a-bb0d-cf5a6cfb5670",
+  "output": {
+    "time_name": "sample_date"
+  }
+}
