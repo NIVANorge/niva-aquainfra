@@ -1,0 +1,1 @@
+Plots either longitude or latitude on x-axis and measurement value of specified parameter on y-axis. 
