@@ -1,1 +1,0 @@
-This Rscript plots a simple timeseries plot with date on x-axis and value measurements on y-axis for the specified parameter (only one input is possible).
