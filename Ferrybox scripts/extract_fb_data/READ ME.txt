@@ -1,0 +1,1 @@
+The Rscript extracts raw Ferrybox data from the niva thredds website. The script can choose the period, boundary area and specific parameters. The dataframe will be saved as csv file if specified
