@@ -1,0 +1,12 @@
+name: niva-aquainfra
+channels:
+  - conda-forge
+dependencies:
+  - libnetcdf
+  - xarray
+  - netCDF4
+  - movingpandas
+  - hvplot
+  - ipykernel
+  - geoviews
+  - rise
