@@ -10,13 +10,13 @@ The two other scripts can be run as desired. The **netcdf_coords_value_point_plo
 
 ## Docker
 
-The environment for the R scripts can also be created using docker in addition to the above binder environment.
+The environment for the R scripts can also be created using docker
 
 ```bash
 # build
 docker build . -t ferry-rscripts
 # run one command
-docker run -it ferry-rscripts
+docker run ferry-rscripts
 # run an interactive session to execute several scripts
 docker run -it --entrypoint /bin/bash ferry-rscripts
 ```
