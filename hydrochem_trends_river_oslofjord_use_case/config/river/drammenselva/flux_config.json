@@ -1,0 +1,144 @@
+{
+  "wc_interp_data_path":  "cleaned_riverchem_40352.nc",
+  "q_cleaned_data_path": "Q-daily.nc",
+  "q_station_rename_map": {
+      "Mjondalen bru": "Drammenselva",
+      "Solbergfoss": "Glomma",
+      "Holmfoss": "Numedalslagen"
+  },
+
+  "date_col": "date",
+  "station_col": "Drammenselva",
+  "discharge_col": "discharge",
+
+  "columns_to_drop": ["latitude", "longitude", "station_id", "station_code", "station_type"],
+
+  "river_coords": {"lat": 59.75257593, "lon": 10.00789751},
+  "river": "Drammenselva",
+
+  "flux_metadata": {
+    "parameter_name": [
+      "DOC",
+      "Color",
+      "NH4-N",
+      "NO3-N",
+      "TRP",
+      "POC",
+      "POC_calc",
+      "TOC_calc",
+      "SPM",
+      "SiO2",
+      "TOC",
+      "TOTN",
+      "TOTP",
+      "TDP",
+      "DIN",
+      "DON",
+      "PP",
+      "TSM",
+      "UV_Abs_254nm",
+      "UV_Abs_410nm"
+    ],
+    "unit": [
+      "tonnes",
+      "undefined",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "tonnes",
+      "undefined",
+      "undefined"
+    ]
+  },
+
+  "flux_par_name_col": "parameter_name",
+  "flux_unit_col": "unit",
+
+  "standard_name_map": {
+      "DOC": "Dissolved Organic Carbon",
+      "Color": "Water Color",
+      "NH4-N": "Ammonium-N",
+      "NO3-N": "Nitrate-N",
+      "TRP": "Total Reactive Phosphorus",
+      "POC": "Particulate Organic Carbon",
+      "TOC_calc": "Total Organic Carbon Calculated",
+      "SPM": "Suspended Particulate Matter",
+      "SiO2": "Silicate",
+      "TOC": "Total Organic Carbon",
+      "TOTN": "Total Nitrogen",
+      "TOTP": "Total Phosphorus",
+      "TDP": "Total Dissolved Phosphorus",
+      "DIN": "Dissolved Inorganic Nitrogen",
+      "DON": "Dissolved Organic Nitrogen",
+      "PP": "Particulate Phosphorus",
+      "TSM": "Total Suspended Matter",
+      "UV_Abs_254nm": "Ultraviolet Absorbance 254nm",
+      "UV_Abs_410nm": "Ultraviolet Absorbance 410nm"
+  },
+
+  "var_comments": {
+      "Color": {
+      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Glomma": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      },
+      "UV_Abs_254nm": {
+      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Glomma": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      },
+      "UV_Abs_410nm": {
+      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Glomma": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively.",
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      }
+      },
+
+  "global_metadata_config": {
+      "naming_authority": "no.niva",
+      "project": "AquaINFRA",
+      "iso_topic_category": "inlandWaters",
+      "featureType": "timeSeries",
+      "spatial_representation": "point",
+      "creator_type": "institution",
+      "creator_institution": "Norwegian Institute for Water Research (NIVA)",
+      "institution": "Norwegian Institute for Water Research (NIVA)",
+      "institution_short_name": "NIVA",
+      "creator_name": "Areti Balkoni",
+      "creator_email": "areti.balkoni@niva.no",
+      "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
+      "data_owner": "Norwegian Institute for Water Research",
+      "Conventions": "CF-1.7, ACDD-1.3",
+      "publisher_name": "Norwegian Institute for Water Research",
+      "publisher_email": "miljoinformatikk@niva.no",
+      "publisher_institution": "Norwegian Institute for Water Research",
+      "publisher_url": "https://niva.no",
+      "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
+      "keywords": "GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+      "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
+      "comment": ["Parameters like 'UV_Abs_254nm', 'UV_Abs_410nm', and 'Color' (measured in Abs/cm or mg Pt/l),",
+      "are not mass concentrations. Fluxes for these variables do NOT represent actual",
+      "mass transport (e.g., in tonnes). They are included only as proxies to show how ",
+      "such parameters may vary with river discharge. Interpret these qualitatively, not quantitatively."]
+
+  },
+
+  "processed_namespace_uuid": "a23b7946-1a42-4d4a-bb0d-cf5a6cfb5670",
+
+  "int_encoding": {"dtype": "int32", "_FillValue": -9999},
+
+  "plots_output_dir": "../../figures/wc_fluxes",
+  "output_dir": "../../data/river/water_chemistry/fluxes"
+}
