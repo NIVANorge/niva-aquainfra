@@ -1,0 +1,25 @@
+{
+  "display_names": {
+    "DIN": "DIN",
+    "PO4-P": "TRP",  
+    "SiO2": "SiO2",
+    "TOC": "TOC",
+    "TOTN": "Total N",
+    "TOTP/F": "TDP",
+    "TOTP_P": "Particulate P",
+    "TOTP": "Total P",
+    "TSM": "TSM",
+    "UV-Abs. 410nm": "UV-Abs. 410nm", 
+    "UV-Abs. 254nm" : "UV-Abs. 254nm" 
+  },
+  "flux_folder": "../data/river/fluxes",
+  "site_li": ["Drammenselva", "Glomma", "Numedalslagen"],
+  "output_dir": "../plots/rivers/",
+  
+  "colors": {
+        "Drammenselva": "tab:blue",
+        "Glomma": "tab:green",
+        "Numedalslagen": "tab:orange"
+    }
+
+}
