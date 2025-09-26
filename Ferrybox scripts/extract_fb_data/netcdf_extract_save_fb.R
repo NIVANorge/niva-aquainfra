@@ -4,7 +4,7 @@
 # 
 # List of required packages 
 required_packages <- c("dplyr","tidyverse", 
-                       "tidyr","ncdf4")
+                       "tidyr","ncdf4", "lubridate")
 
 # Install missing packages
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
@@ -174,4 +174,5 @@ df_all <- df_ferrybox(parameters = c("temperature", "salinity", "oxygen_sat", "c
 
 # close file
 nc_close(fb_nc)
+
 
