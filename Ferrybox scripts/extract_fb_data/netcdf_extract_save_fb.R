@@ -162,7 +162,7 @@ df_ferrybox <- function(parameters, time_index, lon_min = NULL, lon_max = NULL,
     # Returns path
     attr(df_combined, "saved_csv_path") <- file_path
   } else {
-    message('Wish to save as CSV file, enter save_csv = "Yes" eller TRUE.')
+    message('Wish to save as CSV file, enter save_csv = "Yes" or TRUE.')
   }
   
   return(df_combined)
@@ -171,9 +171,7 @@ df_ferrybox <- function(parameters, time_index, lon_min = NULL, lon_max = NULL,
 
 df_all <- df_ferrybox(parameters = c("temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"), time_index = time_index,
                       save_csv = "no") 
-# test with unavailable parameter
-df_all <- df_ferrybox(parameters = c("salinity","Nitrogen"), time_index = time_index)
-
 
 # close file
 nc_close(fb_nc)
+
