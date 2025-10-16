@@ -25,5 +25,8 @@ COPY coordinate_plot/ coordinate_plot/
 COPY extract_fb_data/ extract_fb_data/
 COPY time_series/ time_series/
 
-ENTRYPOINT ["Rscript"]
-CMD ["extract_fb_data/netcdf_extract_save_fb.R"]
+# Add an entrypoint that can deal with CLI arguments that contain spaces:
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD []
