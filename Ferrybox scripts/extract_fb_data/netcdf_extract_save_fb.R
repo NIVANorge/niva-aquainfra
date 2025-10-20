@@ -1,3 +1,14 @@
+args <- commandArgs(trailingOnly = TRUE)
+print(paste0('R Command line args: ', args))
+url             = args[1] # e.g. "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+start_date      = args[2] # e.g. "2023-01-01"
+end_date        = args[3] # e.g. "2023-12-31"
+out_result_path = args[4] # path where output CSV will be written
+
+out_file_name = basename(out_result_path)
+out_dir_name = dirname(out_result_path)
+
+
 # R script for extracting Ferrybox data (MS Color Fantasy, Oslo–Kiel) 
 # from THREDDS netCDF server and saving as dataframe
 # THREDDS catalog: https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html
@@ -10,7 +21,7 @@ invisible(lapply(required_packages, function(p)
   suppressPackageStartupMessages(library(p, character.only = TRUE))))
 
 # --- Open THREDDS dataset ---
-url <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+#url <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
 fb_nc <- tryCatch(nc_open(url), error = function(e) 
   stop("Could not open THREDDS dataset: ", conditionMessage(e)))
 
@@ -29,7 +40,8 @@ get_time_index <- function(start_date = NULL, end_date = NULL) {
 }
 
 # Example: extract data for 2023
-time_index <- get_time_index("2023-01-01", "2023-12-31")
+#time_index <- get_time_index("2023-01-01", "2023-12-31")
+time_index <- get_time_index(start_date, end_date)
 
 # --- Identify available variables ---
 all_vars   <- names(fb_nc$var)
