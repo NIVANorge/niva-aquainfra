@@ -54,7 +54,7 @@ print(param_vars)
 df_ferrybox <- function(parameters, time_index,
                         lon_min = NULL, lon_max = NULL,
                         lat_min = NULL, lat_max = NULL,
-                        save_csv = TRUE, out_dir = out_dir_name, out_name = out_file_name) {
+                        save_csv = FALSE, out_dir = NULL, out_name = NULL) {
   invalid_params <- setdiff(parameters, param_vars)
   if (length(invalid_params)) {
     stop("Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
@@ -112,19 +112,41 @@ df_ferrybox <- function(parameters, time_index,
     dplyr::filter(dplyr::between(longitude, lon_min, lon_max),
                   dplyr::between(latitude,  lat_min,  lat_max))
   
-  # Save as CSV if requested
+ # --- Save as CSV if requested ---
   if (isTRUE(save_csv)) {
-    if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-    param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse="_"))
-    stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-    file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
-    file_path <- file.path(out_dir, file_name)
+    # If out_dir is NULL or empty → use default folder (creates data folder in current environment and saves)
+    if (is.null(out_dir) || out_dir == "") {
+      out_dir <- "data/out"
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse="_"))
+      stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+      file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
+      file_path <- file.path(out_dir, file_name)
+      
+      # If specified user path, check if .csv or folder
+    } else if (grepl("\\.csv$", out_dir, ignore.case = TRUE)) {
+      # Filename
+      file_path <- out_dir
+      dir_to_create <- dirname(file_path)
+      if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
+      
+    } else {
+      # If the user provided folder 
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse="_"))
+      stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+      file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
+      file_path <- file.path(out_dir, file_name)
+    }
+    
     utils::write.csv(df_combined, file_path, row.names = FALSE)
     message("Saved CSV: ", file_path)
     attr(df_combined, "saved_csv_path") <- file_path
+    
   } else {
-    message('To save as CSV, set save_csv=TRUE (written to ', out_dir, ').')
+    message('To save as CSV, set save_csv=TRUE.')
   }
+  
   df_combined
 }
 
@@ -140,3 +162,4 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
