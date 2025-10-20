@@ -1,14 +1,3 @@
-args <- commandArgs(trailingOnly = TRUE)
-print(paste0('R Command line args: ', args))
-url             = args[1] # e.g. "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-start_date      = args[2] # e.g. "2023-01-01"
-end_date        = args[3] # e.g. "2023-12-31"
-out_result_path = args[4] # path where output CSV will be written
-
-out_file_name = basename(out_result_path)
-out_dir_name = dirname(out_result_path)
-
-
 # R script for extracting Ferrybox data (MS Color Fantasy, Oslo–Kiel) 
 # from THREDDS netCDF server and saving as dataframe
 # THREDDS catalog: https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html
@@ -19,7 +8,48 @@ new_packages <- required_packages[!(required_packages %in% installed.packages()[
 if (length(new_packages)) install.packages(new_packages)
 invisible(lapply(required_packages, function(p) 
   suppressPackageStartupMessages(library(p, character.only = TRUE))))
+args <- commandArgs(trailingOnly = TRUE)
+print(paste0("R Command line args: ", paste(args, collapse = " | ")))
 
+# Helper: treat NA/"" as NULL
+as_null_if_blank <- function(x) {
+  if (is.null(x) || length(x) == 0 || is.na(x) || (is.character(x) && trimws(x) == "")) return(NULL)
+  x
+}
+
+if (length(args) >= 4) {
+  url             <- args[1]
+  start_date      <- args[2]
+  end_date        <- args[3]
+  out_result_path <- args[4]
+} else {
+  message("No CLI args detected → using interactive defaults.")
+  url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+  start_date      <- "2023-01-01"
+  end_date        <- "2023-12-31"
+  out_result_path <- "data/out/ferrybox_default.csv"
+}
+
+# Normalize optional blanks to NULL (so get_time_index() behaves)
+start_date <- as_null_if_blank(start_date)
+end_date   <- as_null_if_blank(end_date)
+
+# Derive out_dir/out_name from out_result_path (file or folder)
+is_csv_target <- !is.null(out_result_path) && grepl("\\.csv$", out_result_path, ignore.case = TRUE)
+if (is_csv_target) {
+  out_dir  <- dirname(out_result_path)
+  out_name <- basename(out_result_path)
+} else {
+  out_dir  <- out_result_path %||% "data/out"
+  out_name <- NULL
+}
+
+message("URL:   ", url)
+message("START: ", start_date %||% "<full range>")
+message("END:   ", end_date %||% "<full range>")
+message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
+
+                 
 # --- Open THREDDS dataset ---
 #url <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
 fb_nc <- tryCatch(nc_open(url), error = function(e) 
@@ -31,9 +61,14 @@ time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
 
 # --- Helper function: filter time range ---
 get_time_index <- function(start_date = NULL, end_date = NULL) {
-  if (xor(is.null(start_date), is.null(end_date))) 
-    stop("Please specify both start and end date.")
+if (!is.null(start_date) && is.na(start_date)) start_date <- NULL
+  if (!is.null(end_date)   && is.na(end_date))   end_date   <- NULL
+
+  if (xor(is.null(start_date), is.null(end_date)))
+    stop("Please specify both start and end date (or neither).")
+
   if (is.null(start_date)) return(seq_along(time_converted))
+
   start_date <- as.POSIXct(paste0(start_date, " 00:00:00"), tz = "UTC")
   end_date   <- as.POSIXct(paste0(end_date,   " 23:59:59"), tz = "UTC")
   which(time_converted >= start_date & time_converted <= end_date)
@@ -157,9 +192,12 @@ df_all <- df_ferrybox(
   parameters = c("temperature", "salinity", "oxygen_sat",
                  "chlorophyll", "turbidity", "fdom"),
   time_index = time_index,
-  save_csv   = FALSE
+  save_csv   = TRUE,
+  out_dir    = out_dir,
+  out_name   = out_name
 )
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
