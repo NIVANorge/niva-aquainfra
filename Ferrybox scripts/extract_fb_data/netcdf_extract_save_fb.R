@@ -40,6 +40,13 @@ parameters = c("temperature", "salinity", "oxygen_sat",
                "chlorophyll", "turbidity", "fdom")
 message(paste("Using hard-coded parameter set:", paste(parameters, collapse=", ")))
 
+# Future: Let users pass bbox:
+lon_min = NULL
+lon_max = NULL
+lat_min = NULL
+lat_max = NULL
+message(paste("Using no specified bounding box"))
+
 # Normalize optional blanks to NULL
 start_date <- as_null_if_blank(start_date)
 end_date   <- as_null_if_blank(end_date)
@@ -183,6 +190,10 @@ df_ferrybox <- function(parameters, time_index,
 df_all <- df_ferrybox(
   parameters = parameters,
   time_index = time_index,
+  lon_min    = lon_min,
+  lon_max    = lon_max,
+  lat_min    = lat_min,
+  lat_max    = lat_max,
   save_csv   = TRUE,
   out_dir    = out_dir,
   out_name   = out_name
