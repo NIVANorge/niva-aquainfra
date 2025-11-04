@@ -42,6 +42,12 @@ if (length(args) >= 4) {
   }
   parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
 
+  # CLI arguments can only be strings, so converting here:
+  if (lon_min == "null") lon_min <- NULL
+  if (lon_max == "null") lon_max <- NULL
+  if (lat_min == "null") lat_min <- NULL
+  if (lat_max == "null") lat_max <- NULL
+
 } else {
   message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
