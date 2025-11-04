@@ -30,6 +30,10 @@ if (length(args) >= 4) {
   end_date        <- args[3]
   out_result_path <- args[4]
   parameters      <- args[5]
+  lon_min         <- args[6]
+  lon_max         <- args[7]
+  lat_min         <- args[8]
+  lat_max         <- args[9]
 
   # Split/define parameter set:
   if (is.character(parameters) && trimws(parameters) == "") {
@@ -46,18 +50,19 @@ if (length(args) >= 4) {
   out_result_path <- "data/out/ferrybox_default.csv"
   parameters      <- c("temperature", "salinity", "oxygen_sat",
                        "chlorophyll", "turbidity", "fdom")
+  lon_min <- NULL
+  lon_max <- NULL
+  lat_min <- NULL
+  lat_max <- NULL
 }
-
-# Future: Let users pass bbox:
-lon_min = NULL
-lon_max = NULL
-lat_min = NULL
-lat_max = NULL
-message(paste("Using no specified bounding box"))
 
 # Normalize optional blanks to NULL
 start_date <- as_null_if_blank(start_date)
 end_date   <- as_null_if_blank(end_date)
+lon_min    <- as_null_if_blank(lon_min)
+lon_max    <- as_null_if_blank(lon_max)
+lat_min    <- as_null_if_blank(lat_min)
+lat_max    <- as_null_if_blank(lat_max)
 
 # Derive out_dir/out_name from out_result_path (file or folder)
 is_csv_target <- !is.null(out_result_path) && grepl("\\.csv$", out_result_path, ignore.case = TRUE)
@@ -74,6 +79,7 @@ message("START: ", start_date %||% "<full range>")
 message("END:   ", end_date %||% "<full range>")
 message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
 message("PARAM  ", paste(parameters, collapse=", ")))
+message("BBOX   ", paste(c(lon_min, lon_max, lat_min, lat_max), collapse=", "))
 
 
 # --- Open THREDDS dataset ----------------------------------------------------
