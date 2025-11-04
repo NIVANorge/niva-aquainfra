@@ -13,7 +13,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# Tested 2025-11-????
+# Tested 2025-11-04
 curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -25,8 +25,8 @@ curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
     }
 }'; date
 
-# Tested 2025-11-????
-curl -X POST https://${PYSERVER}/processes/netcdf_extract_save_fb/execution \
+# Fails: I don't have valid bbox yet with which to test...
+curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
@@ -67,7 +67,7 @@ class NivaFerryboxProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "niva_ferrybox:20251104"
+            self.image_name = "ferry-rscripts:20251104"
             self.script_name = 'netcdf_extract_save_fb.R'
 
 
@@ -206,7 +206,6 @@ class NivaFerryboxProcessor(BaseProcessor):
         }
 
         return 'application/json', outputs
-
 
 
 
