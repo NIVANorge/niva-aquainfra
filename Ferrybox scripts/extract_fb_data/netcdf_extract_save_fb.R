@@ -89,15 +89,21 @@ get_time_index <- function(start_date = NULL, end_date = NULL) {
 time_index <- get_time_index(start_date, end_date)
 
 # --- Variables ---------------------------------------------------------------
+# Check which variables are contained in the NetCDF and are valid/available
+# (i.e. don't match the exclusion pattern):
 all_vars   <- names(fb_nc$var)
-param_vars <- all_vars[!grepl("_qc|latitude|longitude|trajectory_name|time", all_vars)]
-print(param_vars)
+message(paste("Variables present in NetCDF:", paste(all_vars, collapse=", ")))
+not_contain <- "_qc|latitude|longitude|trajectory_name|time" # exclusion pattern
+param_vars <- all_vars[!grepl(not_contain, all_vars)]
+message(paste("Variables present in NetCDF, valid for usage:", paste(param_vars, collapse=", ")))
 
 # --- Main extraction ---------------------------------------------------------
-df_ferrybox <- function(parameters, time_index,
+df_ferrybox <- function(parameters, param_vars, time_index,
                         lon_min = NULL, lon_max = NULL,
                         lat_min = NULL, lat_max = NULL,
                         save_csv = FALSE, out_dir = NULL, out_name = NULL) {
+
+  # Check if variables passed by users are present in the netcdf and valid/available:
   invalid_params <- setdiff(parameters, param_vars)
   if (length(invalid_params)) {
     stop("Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
@@ -189,6 +195,7 @@ df_ferrybox <- function(parameters, time_index,
 # --- Example run (works both in RStudio and CLI) -----------------------------
 df_all <- df_ferrybox(
   parameters = parameters,
+  param_vars = param_vars,
   time_index = time_index,
   lon_min    = lon_min,
   lon_max    = lon_max,
