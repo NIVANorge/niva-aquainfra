@@ -29,18 +29,24 @@ if (length(args) >= 4) {
   start_date      <- args[2]
   end_date        <- args[3]
   out_result_path <- args[4]
+  parameters      <- args[5]
+
+  # Split/define parameter set:
+  if (is.character(parameters) && trimws(parameters) == "") {
+    parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
+    message("No parameter set passed, using hardcoded set: ", parameters)
+  }
+  parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
+
 } else {
   message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
   start_date      <- "2023-01-01"
   end_date        <- "2023-12-31"
   out_result_path <- "data/out/ferrybox_default.csv"
+  parameters      <- c("temperature", "salinity", "oxygen_sat",
+                       "chlorophyll", "turbidity", "fdom")
 }
-
-# Hard-coded parameters:
-parameters = c("temperature", "salinity", "oxygen_sat",
-               "chlorophyll", "turbidity", "fdom")
-message(paste("Using hard-coded parameter set:", paste(parameters, collapse=", ")))
 
 # Future: Let users pass bbox:
 lon_min = NULL
@@ -67,6 +73,8 @@ message("URL:   ", url)
 message("START: ", start_date %||% "<full range>")
 message("END:   ", end_date %||% "<full range>")
 message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
+message("PARAM  ", paste(parameters, collapse=", ")))
+
 
 # --- Open THREDDS dataset ----------------------------------------------------
 message(paste("Opening dataset:", url))
