@@ -103,7 +103,9 @@ export PYGEOAPI_OPENAPI=pygeoapi-openapi.yml
 date; pygeoapi openapi generate $PYGEOAPI_CONFIG --output-file $PYGEOAPI_OPENAPI
 ```
 
-And then call it via http, e.g.:
+* Restart the pygeoapi instance
+
+* And then call it via http, e.g.:
 
 ```
 export PYSERVER="your.pygeoapi.instance.com/pygeoapi"
