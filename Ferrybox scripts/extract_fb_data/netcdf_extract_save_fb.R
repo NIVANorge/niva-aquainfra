@@ -36,7 +36,7 @@ if (length(args) >= 4) {
   lat_max         <- args[9]
 
   # Split/define parameter set:
-  if (is.character(parameters) && trimws(parameters) == "") {
+  if (is.na(parameters)) {
     parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
     message("No parameter set passed, using hardcoded set: ", parameters)
   }
@@ -78,8 +78,8 @@ message("URL:   ", url)
 message("START: ", start_date %||% "<full range>")
 message("END:   ", end_date %||% "<full range>")
 message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
-message("PARAM  ", paste(parameters, collapse=", ")))
-message("BBOX   ", paste(c(lon_min, lon_max, lat_min, lat_max), collapse=", "))
+message("PARAM: ", paste(parameters, collapse=", "))
+message("BBOX:  ", paste(c(lon_min, lon_max, lat_min, lat_max), collapse=", "))
 
 
 # --- Open THREDDS dataset ----------------------------------------------------
