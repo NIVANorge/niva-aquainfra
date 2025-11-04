@@ -35,6 +35,11 @@ if (length(args) >= 4) {
   out_result_path <- "data/out/ferrybox_default.csv"
 }
 
+# Hard-coded parameters:
+parameters = c("temperature", "salinity", "oxygen_sat",
+               "chlorophyll", "turbidity", "fdom")
+message(paste("Using hard-coded parameter set:", paste(parameters, collapse=", ")))
+
 # Normalize optional blanks to NULL
 start_date <- as_null_if_blank(start_date)
 end_date   <- as_null_if_blank(end_date)
@@ -176,8 +181,7 @@ df_ferrybox <- function(parameters, time_index,
 
 # --- Example run (works both in RStudio and CLI) -----------------------------
 df_all <- df_ferrybox(
-  parameters = c("temperature", "salinity", "oxygen_sat",
-                 "chlorophyll", "turbidity", "fdom"),
+  parameters = parameters,
   time_index = time_index,
   save_csv   = TRUE,
   out_dir    = out_dir,
