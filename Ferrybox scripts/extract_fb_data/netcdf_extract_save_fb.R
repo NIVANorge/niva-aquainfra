@@ -23,12 +23,14 @@ args <- commandArgs(trailingOnly = TRUE)
 print(paste0("R Command line args: ", paste(args, collapse = " | ")))
 
 if (length(args) >= 4) {
+  message("Reading CLI args...")
+  print(paste0('R Command line args: ', args))
   url             <- args[1]
   start_date      <- args[2]
   end_date        <- args[3]
   out_result_path <- args[4]
 } else {
-  message("No CLI args detected → using interactive defaults.")
+  message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
   start_date      <- "2023-01-01"
   end_date        <- "2023-12-31"
@@ -67,6 +69,7 @@ message("END:   ", end_date %||% "<full range>")
 message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
 
 # --- Open THREDDS dataset ----------------------------------------------------
+message(paste("Opening dataset:", url))
 fb_nc <- tryCatch(nc_open(url), error = function(e)
   stop("Could not open THREDDS dataset: ", conditionMessage(e)))
 on.exit(try(nc_close(fb_nc), silent = TRUE), add = TRUE)
@@ -161,29 +164,39 @@ df_ferrybox <- function(parameters, param_vars, time_index,
 
   # --- Save as CSV if requested ---------------------------------------------
   if (isTRUE(save_csv)) {
+    message("Saving CSV...")
+
+    # If the user passed nothing, create default storage location:
     if (is.null(out_dir) || out_dir == "") {
       out_dir <- "data/out"
+      message(paste("No result directory was passed, using:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
       param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
       stamp     <- format(Sys.time(), "%Y%m%d_%H%M%S")
       file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
+      message(paste("No result directory was passed, using file name:", file_name))
       file_path <- file.path(out_dir, file_name)
 
+    # If the user passed directory and file name, use them:
     } else if (grepl("\\.csv$", out_dir, ignore.case = TRUE)) {
       file_path     <- out_dir
+      message(paste("Result directory and filename was passed:", file_path))
       dir_to_create <- dirname(file_path)
       if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
 
+    # If the user provided dir only, use it plus default file name:
     } else {
+      message(paste("Result directory was passed:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
       param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
       stamp     <- format(Sys.time(), "%Y%m%d_%H%M%S")
       file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
+      message(paste("Using file name:", file_name))
       file_path <- file.path(out_dir, file_name)
     }
-
+    message("Saving CSV to: ", file_path)
     utils::write.csv(df_combined, file_path, row.names = FALSE)
-    message("Saved CSV: ", file_path)
+    message("Saved CSV:     ", file_path)
     attr(df_combined, "saved_csv_path") <- file_path
   } else {
     message("To save as CSV, set save_csv=TRUE.")
