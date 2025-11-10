@@ -22,37 +22,41 @@ as_null_if_blank <- function(x) {
 args <- commandArgs(trailingOnly = TRUE)
 print(paste0("R Command line args: ", paste(args, collapse = " | ")))
 
-if (length(args) >= 4) {
+if (length(args) >= 2) {
   message("Reading CLI args...")
   print(paste0('R Command line args: ', args))
   url             <- args[1]
-  start_date      <- args[2]
-  end_date        <- args[3]
-  out_result_path <- args[4]
-  parameters      <- args[5]
-  lon_min         <- args[6]
-  lon_max         <- args[7]
-  lat_min         <- args[8]
-  lat_max         <- args[9]
-
+  out_result_path <- args[2]
+  
+  # Optional parameters
+  start_date      <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+  end_date        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+  parameters      <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+  lon_min         <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
+  lon_max         <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
+  lat_min         <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+  lat_max         <- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+  
   # Split/define parameter set:
   if (is.na(parameters)) {
     parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
     message("No parameter set passed, using hardcoded set: ", parameters)
   }
   parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
-
+  
   # CLI arguments can only be strings, so converting here:
+  if (start_date == "null") start_date <- NULL
+  if (end_date == "null") end_date <- NULL
   if (lon_min == "null") lon_min <- NULL
   if (lon_max == "null") lon_max <- NULL
   if (lat_min == "null") lat_min <- NULL
   if (lat_max == "null") lat_max <- NULL
-
+  
 } else {
   message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-  start_date      <- "2023-01-01"
-  end_date        <- "2023-12-31"
+  start_date      <- NULL
+  end_date        <- NULL
   out_result_path <- "data/out/ferrybox_default.csv"
   parameters      <- c("temperature", "salinity", "oxygen_sat",
                        "chlorophyll", "turbidity", "fdom")
@@ -80,13 +84,6 @@ if (is_csv_target) {
   out_name <- NULL
 }
 
-message("URL:   ", url)
-message("START: ", start_date %||% "<full range>")
-message("END:   ", end_date %||% "<full range>")
-message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
-message("PARAM: ", paste(parameters, collapse=", "))
-message("BBOX:  ", paste(c(lon_min, lon_max, lat_min, lat_max), collapse=", "))
-
 
 # --- Open THREDDS dataset ----------------------------------------------------
 message(paste("Opening dataset:", url))
@@ -98,16 +95,50 @@ on.exit(try(nc_close(fb_nc), silent = TRUE), add = TRUE)
 time_raw       <- ncvar_get(fb_nc, "time")
 time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
 
+# --- Boundary area ---------------------
+lon_min_default <- min(ncvar_get(fb_nc, "longitude"))
+lon_max_default <- max(ncvar_get(fb_nc, "longitude"))
+lat_min_default <- min(ncvar_get(fb_nc, "latitude"))
+lat_max_default <- max(ncvar_get(fb_nc, "latitude"))
+
+# Print input variables available
+message("URL:   ", url)
+message("START: ", min(time_converted) %||% "<full range>")
+message("END:   ", max(time_converted) %||% "<full range>")
+message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
+message("PARAM: ", paste(parameters, collapse=", "))
+message("BBOX:  ", paste(c(lon_min_default, lon_max_default, lat_min_default, lat_max_default), collapse=", "))
+
 # --- Time index helper -------------------------------------------------------
 get_time_index <- function(start_date = NULL, end_date = NULL) {
   if (!is.null(start_date) && is.na(start_date)) start_date <- NULL
   if (!is.null(end_date)   && is.na(end_date))   end_date   <- NULL
+  
+  #If only one date is specified, return error
   if (xor(is.null(start_date), is.null(end_date)))
-    stop("Please specify both start and end date (or neither).")
-  if (is.null(start_date)) return(seq_along(time_converted))
+    stop("Please specify both start and end date,or neither.")
+  
+  #If no date interval is specified, return error 
+  if (is.null(start_date) && is.null(start_date))
+  message("No date range specified → Returning full available period")
+  return(seq_along(time_converted))
+  
+  #Use specified date interval and check if it is available
   start_date <- as.POSIXct(paste0(start_date, " 00:00:00"), tz = "UTC")
   end_date   <- as.POSIXct(paste0(end_date,   " 23:59:59"), tz = "UTC")
-  which(time_converted >= start_date & time_converted <= end_date)
+  
+  if (end_date < start_date) {
+    stop("end_date is before start_date.")
+  }
+  
+  idx <- which(time_converted >= start_date & time_converted <= end_date)
+  
+  if (length(idx) == 0) {
+    stop("No data found within requested date range.")
+  }
+  
+  idx
+  
 }
 time_index <- get_time_index(start_date, end_date)
 
@@ -242,6 +273,7 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
 
 
