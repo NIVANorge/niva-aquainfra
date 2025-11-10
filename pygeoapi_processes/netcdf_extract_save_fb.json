@@ -2,10 +2,10 @@
     "version": "0.1.0",
     "id": "netcdf-extract-save-fb",
     "title": {
-        "en": "NIVA Ferrybox Script (WIP) (TODO Simon)"
+        "en": "Color Fantasy Ferrybox data from Oslo-Kiel  (WIP)"
     },
     "description": {
-        "en": "TODO Simon write description..."
+        "en": "Extraction of daily Ferrybox data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
@@ -18,7 +18,7 @@
     }],
     "inputs": {
         "url_thredds": {
-            "title": "Input data THREDDS URL (TODO Simon)",
+            "title": "https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html?dataset=no.niva:af11ba01-dfe3-4432-b9d2-4e6fd10714db",
             "description": "Some THREDDS URL (TODO Simon)",
             "schema": {
                 "type": "string"
@@ -28,8 +28,8 @@
             "keywords": []
         },
         "start_date": {
-            "title": "Start Date (TODO Simon)",
-            "description": "Start date for blabla (TODO Simon) format yyyy-mm-dd",
+            "title": "2023-01-01",
+            "description": "Start date for Color Fantasy data sampling; format yyyy-mm-dd",
             "schema": {
                 "type": "string"
             },
