@@ -19,7 +19,7 @@
     "inputs": {
         "url_thredds": {
             "title": "https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html?dataset=no.niva:af11ba01-dfe3-4432-b9d2-4e6fd10714db",
-            "description": "Some THREDDS URL (TODO Simon)",
+            "description": "NIVA thredds data acces",
             "schema": {
                 "type": "string"
             },
@@ -29,7 +29,7 @@
         },
         "start_date": {
             "title": "2023-01-01",
-            "description": "Start date for Color Fantasy data sampling; format yyyy-mm-dd",
+            "description": "Color Fantasy Start date for data sampling. format yyyy-mm-dd",
             "schema": {
                 "type": "string"
             },
@@ -38,8 +38,8 @@
             "keywords": []
         },
         "end_date": {
-            "title": "End Date (TODO Simon)",
-            "description": "End date for blabla (TODO Simon) format yyyy-mm-dd",
+            "title": "Ongoing",
+            "description": "Color Fantasy continously collects data; format yyyy-mm-dd",
             "schema": {
                 "type": "string"
             },
@@ -49,7 +49,7 @@
         },
         "parameters": {
             "title": "Parameters",
-            "description": "Parameters for blabla (TODO Simon). For example: \"temperature\", \"salinity\", \"oxygen_sat\", \"chlorophyll\", \"turbidity\", \"fdom\".",
+            "description": "Available quality controlled parameters are temperature, salinity, oxygen_sat, chlorophyll, turbidity, fdom.",
             "schema": {
                 "type": "string"
             },
@@ -59,7 +59,7 @@
         },
         "study_area_bbox": {
             "title": "Bounding Box",
-            "description": "Bounding box for blabla (TODO Simon). For example: {\"bbox\": [lat_min, lon_min, lat_max, lon_max]}.",
+            "description": "Bounding box for entire Ferrybox sampling transect. {\"bbox\":Longitude min = 9.90271, Longitude max = 11.946572, Latitude min = 54.377027, Latitude max = 59.90903}.",
             "schema": {
                 "type": "string"
             },
@@ -70,8 +70,8 @@
     },
     "outputs": {
         "csv_results" : {
-            "title": "CSV Result file blabla (TODO Simon)",
-            "description": "This is the link to the result file (TODO Simon).",
+            "title": ".CSV (Comma seperated)",
+            "description": "TDownloads",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"
