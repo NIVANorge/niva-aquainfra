@@ -97,9 +97,13 @@ class NivaFerryboxProcessor(BaseProcessor):
             return mimetype, result
 
         except Exception as e:
-            LOGGER.error(e)
+            err_msg = str(e)
+            LOGGER.error(f'Error during execute: {err_msg}')
+            # This seems to look the same:
+            #LOGGER.error(f'Error during execute: {e}')
+            LOGGER.error('TRACEBACK:')
             print(traceback.format_exc())
-            raise ProcessorExecuteError(e)
+            raise ProcessorExecuteError(err_msg) from e
 
 
     def _execute(self, data):

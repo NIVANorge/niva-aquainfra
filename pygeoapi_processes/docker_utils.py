@@ -285,7 +285,8 @@ def run_docker_container3(
         stderr = e.stderr.decode()
         LOGGER.error('Failed running docker container (exit code %s)' % returncode)
         log_all_docker_output(stdout, stderr)
-        user_err_msg = get_error_message_from_docker_stderr(stderr)
+        user_err_msg = get_error_message_from_docker_stderr(stderr, log_all_lines = False)
+        LOGGER.info(f'Extracted this error message: {user_err_msg}')
         return returncode, stdout, stderr, user_err_msg
 
 
