@@ -232,7 +232,8 @@ def run_docker_container3(
         elif isinstance(arg, bool):
             newarg = "true" if arg else "false"
             #LOGGER.debug(f'Arg: {arg}, type {type(arg)}, newarg {newarg}, type {type(newarg)}...)')
-        elif host_out is not None and host_out in arg:
+        elif isinstance(arg, str) and host_out is not None and host_out in arg:
+            # If arg is float, "host_out in arg" causes: TypeError: argument of type 'float' is not iterable
             newarg = arg.replace(host_out, container_out)
             LOGGER.debug("Replaced argument %s by %s..." % (arg, newarg))
         sanitized_args.append(newarg)
