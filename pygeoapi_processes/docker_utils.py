@@ -224,7 +224,6 @@ def run_docker_container3(
     LOGGER.debug('Script args (before sanitizing): %s' % script_args)
     sanitized_args = []
     for arg in script_args:
-        newarg = arg
         if arg is None or arg == 'None':
             # R scripts may be more familiar with receiving "null" than "None"
             # But they still have to parse them to a proper NULL data type.
@@ -236,6 +235,11 @@ def run_docker_container3(
             # If arg is float, "host_out in arg" causes: TypeError: argument of type 'float' is not iterable
             newarg = arg.replace(host_out, container_out)
             LOGGER.debug("Replaced argument %s by %s..." % (arg, newarg))
+        else:
+            # In any case, the newarg has to be a string:
+            newarg = str(arg)
+
+        # All args, even the ones that did not change, have to be appended (as it is a new list):
         sanitized_args.append(newarg)
     
     LOGGER.debug('Script args (after sanitizing): %s' % sanitized_args)
