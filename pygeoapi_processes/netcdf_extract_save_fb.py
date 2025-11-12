@@ -130,7 +130,7 @@ class NivaFerryboxProcessor(BaseProcessor):
         parsed_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
         LOGGER.debug(f'The provided start_date is valid: {parsed_date}')
         parsed_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-        LOGGER.debug(f'The provided end_date is valid: {parsed_date}')
+        LOGGER.debug(f'The provided end_date is valid:   {parsed_date}')
 
 
         ##################
@@ -138,7 +138,7 @@ class NivaFerryboxProcessor(BaseProcessor):
         ##################
 
         # Where to store input data (will be mounted read-write into container):
-        #input_dir = f'{self.download_dir}/in/{self.process_id}_job_{self.job_id}'
+        #input_dir = f'{self.download_dir}/in/{self.process_id}/job_{self.job_id}'
         #os.makedirs(input_dir, exist_ok=True)
         # Not needed, no input data is downloaded!
         input_dir = None

@@ -14,23 +14,24 @@ The environment for the R scripts can also be created using docker
 
 ```bash
 # build
-docker build . -t ferry-rscripts
+today=$(date '+%Y%m%d')
+docker build . -t ferry-rscripts${today}
 
 # run an interactive session to execute several scripts
-docker run -it --entrypoint /bin/bash ferry-rscripts
+docker run -it --entrypoint /bin/bash ferry-rscripts${today}
 
 # run one script
 docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts
+  ferry-rscripts${today}
 
 # run one script, with input params:
 mkdir testresults
 docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts \
+  ferry-rscripts${today} \
   'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
   '/out/ferrybox.csv' \
   '2023-01-01' \

@@ -221,7 +221,7 @@ def run_docker_container3(
     # Sanitize arguments passed to container!
     # i.e.: Replace host file paths by mounted file paths, convert args to formats
     # that can be passed to docker and understood/parsed in the R script inside docker:
-    LOGGER.debug('Script args: %s' % script_args)
+    LOGGER.debug('Script args (before sanitizing): %s' % script_args)
     sanitized_args = []
     for arg in script_args:
         newarg = arg
@@ -236,20 +236,25 @@ def run_docker_container3(
             newarg = arg.replace(host_out, container_out)
             LOGGER.debug("Replaced argument %s by %s..." % (arg, newarg))
         sanitized_args.append(newarg)
+    
+    LOGGER.debug('Script args (after sanitizing): %s' % sanitized_args)
 
     # Prepare container command
     docker_args = [
         docker_executable, "run", "--rm",
         "--name", container_name
     ]
+
     # Add the mounts for three directories (-v) (ro and rw):
     if host_out is not None:
         docker_args = docker_args + ["-v", f"{host_out}:{container_out}:rw"]
+
     # Add the name of the script to be called (-e), and the name of the image
     docker_args = docker_args + [
         "-e", f"SCRIPT={script_name}",
         image_name
     ]
+
     # Add the arguments to be passed to the R script:
     docker_command = docker_args + sanitized_args
     LOGGER.debug('Docker command: %s' % docker_command)
