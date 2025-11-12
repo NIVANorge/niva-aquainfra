@@ -13,9 +13,11 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# Tested 2025-11-04
-curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
+# Without a bounding box:
+# Tested 2025-11-12
+curl -i -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 --header 'Content-Type: application/json' \
+--header 'Prefer: respond-async' \
 --data '{
     "inputs": {
         "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
@@ -25,20 +27,30 @@ curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
     }
 }'; date
 
-# Fails: I don't have valid bbox yet with which to test...
-curl -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
+
+# With a bounding box:
+# Testing 2025-11-12, fails with: Coordinates outside data range
+curl -i -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 --header 'Content-Type: application/json' \
+--header 'Prefer: respond-async' \
 --data '{
     "inputs": {
         "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
         "start_date": "2023-01-01",
         "end_date": "2023-12-31",
-        "study_area_bbox": {"bbox": [42.08333, 8.15250, 50.24500, 29.73583]},
+        "study_area_bbox": {"bbox": [58.5, 9.5, 59.9, 11.9]},
         "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"]
     }
 }'; date
 
-# Note:
+# About passing the bbox:
+
+This is the order that the r script wants (bbox):
+lon_min, lon_max, lat_min, lat_max
+'9.5'    '11.9'   '58.5'   '59.9'
+
+This is the order that the OGC API wants (bbox):
+"study_area_bbox": {"bbox": [58.5,     9.5,     59.9,     11.9    ]}
 "study_area_bbox": {"bbox": [42.08333, 8.15250, 50.24500, 29.73583]}
 "study_area_bbox": {"bbox": [lat_min, lon_min, lat_max, lon_max]}
 
