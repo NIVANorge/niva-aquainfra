@@ -30,3 +30,22 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD []
+
+
+# Example build command:
+#today=$(date '+%Y%m%d')
+#docker build . -t ferry-rscripts:${today}
+
+# Example run command:
+# run one script (netcdf_extract_save_fb.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_extract_save_fb.R' \
+#  ferry-rscripts:${today} \
+#  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+#  '/out/ferrybox.csv' \
+#  '2023-01-01' \
+#  '2023-12-31' \
+#  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
+#  'null' 'null' 'null' 'null'
+

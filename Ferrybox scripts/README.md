@@ -15,23 +15,23 @@ The environment for the R scripts can also be created using docker
 ```bash
 # build
 today=$(date '+%Y%m%d')
-docker build . -t ferry-rscripts${today}
+docker build . -t ferry-rscripts:${today}
 
 # run an interactive session to execute several scripts
 docker run -it --entrypoint /bin/bash ferry-rscripts${today}
 
-# run one script
+# run one script (netcdf_extract_save_fb.R):
 docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts${today}
+  ferry-rscripts:${today}
 
-# run one script, with input params:
+# run one script (netcdf_extract_save_fb.R), with input params:
 mkdir testresults
 docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts${today} \
+  ferry-rscripts:${today} \
   'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
   '/out/ferrybox.csv' \
   '2023-01-01' \
@@ -53,7 +53,7 @@ docomentation):
  (this is to simplify version tracking and reproducibility):
 
 ```
-docker build -t ferry-rscripts:20251104 .
+docker build -t ferry-rscripts:20251112 .
 ```
 
 * Add this snippet to the `pygeoapi-config.yml`:
