@@ -67,7 +67,7 @@ class NivaFerryboxProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20251104"
+            self.image_name = "ferry-rscripts:20251111"
             self.script_name = 'netcdf_extract_save_fb.R'
 
 
@@ -175,7 +175,8 @@ class NivaFerryboxProcessor(BaseProcessor):
 
         # Actually call R script:
         params_string = ','.join(parameters)
-        r_args = [url_thredds, start_date, end_date, out_result_path, params_string, lon_min, lon_max, lat_min, lat_max]
+        r_args = [url_thredds, out_result_path, start_date, end_date, params_string, lon_min, lon_max, lat_min, lat_max]
+        LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,

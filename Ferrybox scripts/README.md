@@ -32,9 +32,9 @@ docker run \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
   ferry-rscripts \
   'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  '/out/ferrybox.csv' \
   '2023-01-01' \
   '2023-12-31' \
-  '/out/ferrybox.csv' \
   'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
   'null' 'null' 'null' 'null'
 ```
