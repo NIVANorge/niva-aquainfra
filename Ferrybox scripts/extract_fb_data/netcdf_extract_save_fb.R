@@ -114,21 +114,19 @@ get_time_index <- function(start_date = NULL, end_date = NULL) {
   if (!is.null(start_date) && is.na(start_date)) start_date <- NULL
   if (!is.null(end_date)   && is.na(end_date))   end_date   <- NULL
   
-  #If only one date is specified, return error
   if (xor(is.null(start_date), is.null(end_date)))
-    stop("Please specify both start and end date,or neither.")
+    stop("Please specify both start and end date, or neither.")
   
-  #If no date interval is specified, return error 
-  if (is.null(start_date) && is.null(start_date))
-  message("No date range specified → Returning full available period")
-  return(seq_along(time_converted))
+  if (is.null(start_date) && is.null(end_date)) {
+    message("No date range specified → Returning full available period")
+    return(seq_along(time_converted))
+  }
   
-  #Use specified date interval and check if it is available
   start_date <- as.POSIXct(paste0(start_date, " 00:00:00"), tz = "UTC")
-  end_date   <- as.POSIXct(paste0(end_date,   " 23:59:59"), tz = "UTC")
+  end_date   <- as.POSIXct(paste0(end_date, " 23:59:59"), tz = "UTC")
   
-  if (end_date < start_date) {
-    stop("end_date is before start_date.")
+  if (start_date > end_date) {
+    stop("start_date is after end_date.")
   }
   
   idx <- which(time_converted >= start_date & time_converted <= end_date)
@@ -137,9 +135,9 @@ get_time_index <- function(start_date = NULL, end_date = NULL) {
     stop("No data found within requested date range.")
   }
   
-  idx
-  
+  return(idx)
 }
+
 time_index <- get_time_index(start_date, end_date)
 
 # --- Variables ---------------------------------------------------------------
@@ -273,6 +271,7 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
 
 
