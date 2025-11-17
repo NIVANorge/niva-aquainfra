@@ -206,7 +206,11 @@ df_ferrybox <- function(parameters, param_vars, time_index,
       month  = lubridate::month(datetime),
       day    = lubridate::day(datetime),
       hour   = lubridate::hour(datetime),
-      minute = lubridate::minute(datetime)
+      minute = lubridate::minute(datetime),
+      lon_min = as.numeric(lon_min),
+      lon_max = as.numeric(lon_max),
+      lat_min = as.numeric(lat_min),
+      lat_max = as.numeric(lat_max)
     ) |>
     dplyr::filter(dplyr::between(longitude, lon_min, lon_max),
                   dplyr::between(latitude,  lat_min,  lat_max))
@@ -271,6 +275,7 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
 
 
