@@ -176,7 +176,7 @@ df_ferrybox <- function(parameters, param_vars, time_index,
 
   if (lon_min != min(lon)  | lon_max != max(lon) |
       lat_min != min(lat) | lat_max != max(lat)) {
-    message("Coordinates are not within boundary area.\nlon: ", min(lon), "–", max(lon),
+    message("Coordinates are not equal to the boundary area.\nlon: ", min(lon), "–", max(lon),
             "\nlat: ", min(lat), "–", max(lat),"\nReturnining available data")
   }
 
@@ -271,6 +271,7 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
 
 
