@@ -174,8 +174,8 @@ df_ferrybox <- function(parameters, param_vars, time_index,
     message("No bounding box specified – returning full area for selected time range.")
   }
 
-  if (lon_min < min(lon)-0.1 | lon_max > max(lon)+0.1 |
-      lat_min < min(lat)-0.1 | lat_max > max(lat)+0.1) {
+  if (lon_min < min(lon) - 1 | lon_max > max(lon) + 1 |
+      lat_min < min(lat) - 1 | lat_max > max(lat) + 1) {
     stop("Coordinates outside data range.\nlon: ", min(lon), "–", max(lon),
          "\nlat: ", min(lat), "–", max(lat))
   }
@@ -271,6 +271,7 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+
 
 
 
