@@ -29,7 +29,7 @@ curl -i -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 
 
 # With a bounding box:
-# Testing 2025-11-12, fails with: Coordinates outside data range
+# Tested 2025-11-18
 curl -i -X POST https://${PYSERVER}/processes/netcdf-extract-save-fb/execution \
 --header 'Content-Type: application/json' \
 --header 'Prefer: respond-async' \
@@ -79,7 +79,7 @@ class NivaFerryboxProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20251112"
+            self.image_name = "ferry-rscripts:20251118"
             self.script_name = 'netcdf_extract_save_fb.R'
 
 

@@ -1,6 +1,7 @@
 {
     "version": "0.1.0",
     "id": "netcdf-extract-save-fb",
+    "use_case": "NIVA Ferrybox Scripts",
     "title": {
         "en": "Color Fantasy Ferrybox data from Oslo-Kiel  (WIP)"
     },
