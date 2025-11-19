@@ -21,7 +21,7 @@ COPY dependencies.R dependencies.R
 
 RUN R --slave --no-restore -e 'source("dependencies.R")'
 
-COPY coordinate_plot/ coordinate_plot/
+COPY position_plot/position_plot/
 COPY extract_fb_data/ extract_fb_data/
 COPY time_series/ time_series/
 
