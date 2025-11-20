@@ -88,7 +88,7 @@ coord_value_point_plot <- function(data = ferrybox_df,
                                    parameter = NULL,
                                    param_available,
                                    world_sf,
-                                   out_dir,
+                                   out_dir = NULL,
                                    out_name = NULL,
                                    save_png = TRUE) {
 
@@ -184,6 +184,7 @@ plot_obj <- coord_value_point_plot(
   out_name  = out_name,
   save_png  = TRUE
 )
+
 
 
 
