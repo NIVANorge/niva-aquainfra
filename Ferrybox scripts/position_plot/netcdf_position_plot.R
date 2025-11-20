@@ -23,19 +23,30 @@ as_null_if_blank <- function(x) {
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
-if (length(args) >= 3) {
+if (length(args) >= 2) {
   message("Reading CLI args...")
   input_path      <- args[1]  # CSV with ferrybox-data
   out_result_path <- args[2]  # folder
-  parameter       <- args[3]  # fx "temperature"
+  
+  # Optional parameter
+  parameters <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+
+  # Split/define parameter set:
+  if (is.na(parameters)) {
+    parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
+    message("No parameter set passed, using hardcoded set: ", parameters)
+  }
+  parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
+  
+  
 } else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
   out_result_path <- "data/out/ferrybox_position.png"
-  parameter       <- "temperature"
+  parameters  <- c("temperature", "salinity", "oxygen_sat",
+                       "chlorophyll", "turbidity", "fdom") # using default parameters
 }
 
-parameter <- as_null_if_blank(parameter)
 
 # --- read ----------------------------------------------------------------
 if (!file.exists(input_path)) {
@@ -46,6 +57,7 @@ ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
 
 param_available <- unique(ferrybox_df$parameter)
 message("Parameters available in data: ", paste(param_available, collapse = ", "))
+param_available <- unique(ferrybox_df$parameter) |> as.character()
 
 if (is.null(parameter) || !(parameter %in% param_available)) {
   stop("Invalid or missing parameter: ", parameter,
@@ -73,79 +85,105 @@ world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
 # --- Function for position plot --------------------------------------------------
 coord_value_point_plot <- function(data = ferrybox_df,
-                                   parameter,
+                                   parameter = NULL,
+                                   param_available,
                                    world_sf,
                                    out_dir,
                                    out_name = NULL,
                                    save_png = TRUE) {
-  parameter <- tolower(parameter)
-  # Filter for specified parameter
-  data_param <- data %>%
-    dplyr::filter(parameter == !!parameter) %>%
-    dplyr::filter(!is.na(latitude), !is.na(longitude))
-  
-  if (nrow(data_param) == 0) {
-    stop("No data for the specified parameter available. Check your input data frame.")
+
+  if(is.null(parameter)){
+    parameter <- param_available
+    message(paste("Plotting position for:"),"\n",paste(param_available, collapse = ", "))
+  } else {
+    parameter <- parameter
   }
   
-  # Konverter til sf
-  data_sf <- data_param %>%
-    dplyr::distinct(latitude, longitude, .keep_all = TRUE) %>%
-    sf::st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+  parameter <- tolower(parameter)
   
-  # BBOX for zoom
-  bbox_data <- sf::st_bbox(data_sf)
+  # Filter and check data
+  data_clean <- data %>%
+    filter(!is.na(latitude), !is.na(longitude))
   
-  # Plot (positioner; du kan evt. farve efter value)
+  if (nrow(data_clean) == 0) {
+    stop("No data available for plotting.")
+  }
+  
+  # Convert to sf
+  data_sf <- st_as_sf(
+    data_clean,
+    coords = c("longitude", "latitude"),
+    crs = 4326,
+    remove = FALSE
+  )
+  
+  # Bounding box
+  bbox_data <- st_bbox(data_sf)
+  
+  # --- Plot ---
   p <- ggplot() +
-    geom_sf(data = world_sf, fill = "grey95", color = "grey70") +
-    geom_sf(data = data_sf, size = 0.4, color = "black") +
+    geom_sf(data = world_sf, fill = "grey98", color = "grey80", size = 0.2) +
+    geom_path(data = data_clean,
+              aes(x = longitude, y = latitude),
+              color = "black", linewidth = 0.4, alpha = 0.8) +
     coord_sf(
-      xlim = c(bbox_data["xmin"] - 1, bbox_data["xmax"] + 1),
-      ylim = c(bbox_data["ymin"] - 1, bbox_data["ymax"] + 1),
+      xlim = c(bbox_data["xmin"] - 0.5, bbox_data["xmax"] + 0.5),
+      ylim = c(bbox_data["ymin"] - 0.5, bbox_data["ymax"] + 0.5),
       expand = FALSE
     ) +
     labs(
-      title = paste("FerryBox positions for", parameter),
+      title = "FerryBox route for:",
+      subtitle = paste(parameter, collapse = ", "),
       x = "Longitude",
       y = "Latitude"
     ) +
-    theme_minimal()
+    theme_minimal(base_size = 12) +
+    theme(
+      plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 8, hjust = 0.5, margin = margin(b = 10)),
+      axis.text = element_text(size = 10),
+      axis.title = element_text(size = 11),
+      plot.margin = margin(15, 15, 15, 15)
+    )
   
+  # --- Save file ---
   if (isTRUE(save_png)) {
-    # Lav filnavn hvis ikke givet
     param_tag <- gsub("[^A-Za-z0-9_-]+", "-", parameter)
-    if (is.null(out_name) || out_name == "") {
-      stamp    <- format(Sys.time(), "%Y%m%d_%H%M%S")
+    
+    if (is.null(out_name)) {
+      stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
       out_name <- sprintf("ferrybox_position_%s_%s.png", param_tag, stamp)
     }
+    
     file_path <- file.path(out_dir, out_name)
     
-    ggplot2::ggsave(
+    ggsave(
       filename = file_path,
-      plot     = p,
-      width    = 16,
-      height   = 12,
-      units    = "cm",
-      dpi      = 300,
-      bg       = "white"
+      plot = p,
+      width = 18,
+      height = 22,
+      units = "cm",
+      dpi = 300,
+      bg = "white"
     )
     
-    message("Plot saved as PNG: ", file_path)
-    attr(p, "saved_png_path") <- file_path
-  } else {
-    message('To save as PNG, set save_png = TRUE')
+    message("Plot saved: ", file_path)
   }
   
   return(p)
 }
 
+
 # --- run function ------------------------------------------------------------
 plot_obj <- coord_value_point_plot(
   data     = ferrybox_df,
-  parameter = parameter,
+  parameter = NULL,
+  param_available = param_available,
   world_sf  = world,
   out_dir   = out_dir,
   out_name  = out_name,
   save_png  = TRUE
 )
+
+
+
