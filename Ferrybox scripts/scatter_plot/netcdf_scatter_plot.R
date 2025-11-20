@@ -54,11 +54,6 @@ ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
 param_available <- unique(ferrybox_df$parameter)
 message("Parameters available in data: ", paste(param_available, collapse = ", "))
 
-if (is.null(parameter) || !(parameter %in% param_available)) {
-  stop("Invalid or missing parameter: ", parameter,
-       "\nAvailable parameters are: ", paste(param_available, collapse = ", "))
-}
-
 # --- output-dir and filename --------------------------------------------
 is_png_target <- !is.null(out_result_path) &&
   grepl("\\.png$", out_result_path, ignore.case = TRUE)
