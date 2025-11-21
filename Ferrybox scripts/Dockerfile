@@ -23,7 +23,9 @@ RUN R --slave --no-restore -e 'source("dependencies.R")'
 
 COPY position_plot/ position_plot/
 COPY extract_fb_data/ extract_fb_data/
-COPY time_series/ time_series/
+COPY tile_plot/ tile_plot/
+COPY scatter_plot/ scatter_plot/
+
 
 # Add an entrypoint that can deal with CLI arguments that contain spaces:
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -48,4 +50,19 @@ CMD []
 #  '2023-12-31' \
 #  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
 #  'null' 'null' 'null' 'null'
+
+# Example run for tile plot:
+# run one script (netcdf_tile_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_tile_plot.R' \
+#  ferry-rscripts:${today} \
+#  'folder_path_to_csv' \
+#  '/out/ferrybox_tile.png' \
+#  '2023-01-01' \ 
+#  '2023-12-31' \ 
+#  'temperature,salinity,chlorophyll' \ 
+#  'null' 'null'
+#  '2023-08-08'
+
 
