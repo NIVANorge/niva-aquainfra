@@ -2,10 +2,11 @@
     "version": "0.1.0",
     "id": "netcdf-extract-save-fb",
     "title": {
-        "en": "Color Fantasy Ferrybox data from Oslo-Kiel  (WIP)"
+        "en": "Color Fantasy Ferrybox data from Oslo-Kiel"
     },
     "description": {
-        "en": "Extraction of daily Ferrybox data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres."
+        "en": "Extraction of daily Ferrybox environmental monitoring data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres.
+        Output is a .csv file with a latitudal transect between Oslo (Norway) and Kiel (Germany) for temperature, salinity, oxygen_sat, chlorophyll, turbidity and fdom."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
@@ -17,9 +18,9 @@
         "hreflang": "en-US"
     }],
     "inputs": {
-        "url_thredds": {
-            "title": "https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html?dataset=no.niva:af11ba01-dfe3-4432-b9d2-4e6fd10714db",
-            "description": "NIVA thredds data acces",
+        "https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html?dataset=no.niva:af11ba01-dfe3-4432-b9d2-4e6fd10714db": {
+            "title": "url_thredds",
+            "description": "Link to NIVA thredds data access",
             "schema": {
                 "type": "string"
             },
@@ -28,8 +29,8 @@
             "keywords": []
         },
         "start_date": {
-            "title": "2023-01-01",
-            "description": "Color Fantasy Start date for data sampling. format yyyy-mm-dd",
+            "title": "start date interval extracted",
+            "description": "Format is yyyy-mm-dd. The Color Fantasy provides data beginning from 2023-01-01.",
             "schema": {
                 "type": "string"
             },
@@ -38,8 +39,8 @@
             "keywords": []
         },
         "end_date": {
-            "title": "Ongoing",
-            "description": "Color Fantasy continously collects data; format yyyy-mm-dd",
+            "title": "End date interval extracted",
+            "description": "Format is yyyy-mm-dd. The Color Fantasy provides continous",
             "schema": {
                 "type": "string"
             },
@@ -48,7 +49,7 @@
             "keywords": []
         },
         "parameters": {
-            "title": "Parameters",
+            "title": "Parameters extracted",
             "description": "Available quality controlled parameters are temperature, salinity, oxygen_sat, chlorophyll, turbidity, fdom.",
             "schema": {
                 "type": "string"
@@ -58,8 +59,8 @@
             "keywords": []
         },
         "study_area_bbox": {
-            "title": "Bounding Box",
-            "description": "Bounding box for entire Ferrybox sampling transect. {\"bbox\":Longitude min = 9.90271, Longitude max = 11.946572, Latitude min = 54.377027, Latitude max = 59.90903}.",
+            "title": "Area to extract data from ",
+            "description": "Bounding box for entire Ferrybox sampling transect: {\"bbox\":Longitude min = 9.90271, Longitude max = 11.946572, Latitude min = 54.377027, Latitude max = 59.90903}.",
             "schema": {
                 "type": "string"
             },
@@ -84,7 +85,7 @@
             "start_date": "2023-01-01",
             "end_date": "2023-12-31",
             "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"],
-            "study_area_bbox": {"bbox": [42.08333, 8.15250, 50.24500, 29.73583]}
+            "study_area_bbox": {"bbox": [9.5, 12, 54, 60]}
         }
     }
 }
