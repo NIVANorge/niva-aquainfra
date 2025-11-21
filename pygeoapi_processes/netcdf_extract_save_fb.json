@@ -5,8 +5,7 @@
         "en": "Color Fantasy Ferrybox data from Oslo-Kiel"
     },
     "description": {
-        "en": "Extraction of daily Ferrybox environmental monitoring data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres.
-        Output is a .csv file with a latitudal transect between Oslo (Norway) and Kiel (Germany) for temperature, salinity, oxygen_sat, chlorophyll, turbidity and fdom."
+        "en": "Extraction of daily Ferrybox environmental monitoring data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres. Output is a .csv file with a latitudal transect between Oslo (Norway) and Kiel (Germany) for temperature, salinity, oxygen_sat, chlorophyll, turbidity and fdom."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
