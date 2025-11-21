@@ -26,13 +26,12 @@ if (length(args) >= 2) {
   
   # Optional parameter
   # Optional parameters
-  start_date      <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-  end_date        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-  parameters      <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-  lon_min         <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
-  lon_max         <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
-  lat_min         <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
-  lat_max         <- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+  start_date      <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL # filter for period to plot
+  end_date        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL # filter for period to plot
+  parameters      <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL # Which parameters to plot 
+  lat_min         <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL # Latitude range to plot
+  lat_max         <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL # Latitude range to plot
+  storm_date      <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL # Optional storm date
   
   # Split/define parameter set:
   if (is.na(parameters)) {
@@ -43,10 +42,9 @@ if (length(args) >= 2) {
   # CLI arguments can only be strings, so converting here:
   if (start_date == "null") start_date <- NULL
   if (end_date == "null") end_date <- NULL
-  if (lon_min == "null") lon_min <- NULL
-  if (lon_max == "null") lon_max <- NULL
   if (lat_min == "null") lat_min <- NULL
   if (lat_max == "null") lat_max <- NULL
+  if (storm_date == "null") storm_date <- NULL
   
 } else {
   message("No CLI args detected → using defaults...")
@@ -56,19 +54,18 @@ if (length(args) >= 2) {
   end_date        <- NULL
   parameters      <- c("temperature", "salinity", "oxygen_sat",
                        "chlorophyll", "turbidity", "fdom")
-  lon_min <- NULL
-  lon_max <- NULL
   lat_min <- NULL
   lat_max <- NULL
+  storm_date <- NULL
 }
 
 # Normalize optional blanks to NULL
 start_date <- as_null_if_blank(start_date)
 end_date   <- as_null_if_blank(end_date)
-lon_min    <- as_null_if_blank(lon_min)
-lon_max    <- as_null_if_blank(lon_max)
 lat_min    <- as_null_if_blank(lat_min)
 lat_max    <- as_null_if_blank(lat_max)
+storm_date    <- as_null_if_blank(storm_date)
+
 
 
 # --- read ----------------------------------------------------------------
@@ -101,8 +98,8 @@ if (!dir.exists(out_dir)) {
 tile_plot <- function(
     data,
     parameters,
-    date_start = NULL,
-    date_end   = NULL,
+    start_date = NULL,
+    end_date   = NULL,
     lat_min = NULL,
     lat_max = NULL,
     storm_date = NULL,
@@ -126,14 +123,14 @@ tile_plot <- function(
   data <- data %>%
     mutate(Date = as.Date(datetime))
   
-  if (!is.null(date_start)) {
-    date_start <- as.Date(date_start)
-    data <- data %>% filter(Date >= date_start)
+  if (!is.null(start_date)) {
+    start_date <- as.Date(start_date)
+    data <- data %>% filter(Date >= start_date)
   }
   
-  if (!is.null(date_end)) {
-    date_end <- as.Date(date_end)
-    data <- data %>% filter(Date <= date_end)
+  if (!is.null(end_date)) {
+    end_date <- as.Date(end_date)
+    data <- data %>% filter(Date <= end_date)
   }
   
   # --- Filter and transform data ---
@@ -227,16 +224,14 @@ tile_plot <- function(
   final_plot
 }
 
-
-
-# Example usage
+## example usage in R
 tile_plot(ferrybox_df, parameters = "salinity", lat_min = 58.9, lat_max = 60, save_png = TRUE)
 
 tile_plot(ferrybox_df,
           parameters = "salinity",
           lat_min = 58.9, lat_max = 60,
-          date_start = "2023-07-01",
-          date_end = "2023-11-01",
+          start_date = "2023-07-01",
+          end_date = "2023-11-01",
           storm_date = "2023-08-08")
 
 
@@ -247,3 +242,5 @@ tile_plot(ferrybox_df,
           lat_max = 60,
           storm_date = "2023-08-08",
           save_png = FALSE)
+
+        
