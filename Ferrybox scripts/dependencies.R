@@ -13,5 +13,11 @@ pak::pkg_install(c(
   "tidyverse",
   "tidyr",
   "ncdf4",
-  "ggplot2"
+  "ggplot2",
+  "sf,
+  "rnaturalearth",
+  "scales",
+  "scico",
+  "paletteer",
+  "gridExtra"
 ))
