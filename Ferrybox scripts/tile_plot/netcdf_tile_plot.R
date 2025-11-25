@@ -118,10 +118,10 @@ tile_plot <- function(
     stop("Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
          "\nAvailable parameters: ", paste(unique(data$parameter), collapse = ", "))
   }
-  
-  # --- Validate output directory ---
-  if (is.null(out_dir)) out_dir <- "tile_plots"
-  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+  # 
+  # # --- Validate output directory ---
+  # if (is.null(out_dir)) out_dir <- "data/out"
+  # if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   
   # --- Convert datetime & apply date filtering ---
   data <- data %>%
@@ -226,7 +226,7 @@ tile_plot <- function(
       message(paste("Result directory was passed:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
       param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
-      file_name <- out_name %||% sprintf("ferrybox_%s.png", param_tag)
+      file_name <- out_name %||% sprintf("ferrybox_tile_%s.png", param_tag)
       message(paste("Using file name:", file_name))
       file_path <- file.path(out_dir, file_name)
     }
@@ -248,6 +248,9 @@ tile_plot <- function(
   
   final_plot
 }
+
+
+
 
 
 ## example usage in R
