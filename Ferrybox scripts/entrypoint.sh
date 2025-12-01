@@ -1,4 +1,4 @@
 #!/bin/sh
-Rscript "/code/extract_fb_data/${SCRIPT}" "$@"
+Rscript "/code/all_functions/${SCRIPT}" "$@"
 
 
