@@ -1,3 +1,11 @@
+
+# --- Load required packages (installeres typisk via dependencies.R i Docker) --
+required_packages <- c("tidyverse", "ggplot2")
+new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
+if (length(new_packages)) install.packages(new_packages)
+invisible(lapply(required_packages, function(p)
+  suppressPackageStartupMessages(library(p, character.only = TRUE))))
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
@@ -44,6 +52,7 @@ ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
 
 param_available <- unique(ferrybox_df$parameter)
 message("Parameters available in data: ", paste(param_available, collapse = ", "))
+
 
 # --- output-dir and filename --------------------------------------------
 is_png_target <- !is.null(out_result_path) &&
@@ -102,8 +111,9 @@ scatter_plot <- function(data        = ferrybox_df,
   data_wide <- data %>%
     dplyr::mutate(parameter = tolower(parameter),
                   datetime = as.Date(datetime)) %>%
+    mutate(month_charachter = factor(month.name[month], levels = month.name)) %>%
     dplyr::filter(parameter %in% c(parameter_x, parameter_y)) %>%
-    dplyr::select(datetime, latitude, longitude, parameter, value) %>%
+    dplyr::select(datetime,month_charachter, latitude, longitude, parameter, value) %>%
     tidyr::pivot_wider(
       names_from  = parameter,
       values_from = value
@@ -137,7 +147,8 @@ scatter_plot <- function(data        = ferrybox_df,
       axis.text     = element_text(size = 10),
       axis.title    = element_text(size = 11),
       plot.margin   = margin(12, 12, 12, 12)
-    )
+    )+
+    facet_wrap(~month_charachter, scales = "free_y")
   
   # --- save as PNG ------------------------------------------------------------
   if (isTRUE(save_png)) {
