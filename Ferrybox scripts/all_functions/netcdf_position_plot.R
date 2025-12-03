@@ -14,42 +14,31 @@ if (length(args) >= 2) {
   message("Reading CLI args...")
   input_path      <- args[1]  # CSV with ferrybox-data
   out_result_path <- args[2]  # folder
-  
   # Optional parameter
-  parameter <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+  parameter_user_input <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 
-  # Split/define parameter set:
-  if (is.na(parameter)) {
-    parameter <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
-    message("No parameter set passed, using hardcoded set: ", parameter)
-  }
-  parameter <- strsplit(parameter, "\\s*,\\s*")[[1]]
-  
-  
-} else {
+  } else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
   out_result_path <- "data/out/ferrybox_position.png"
-  parameter  <- c("temperature", "salinity", "oxygen_sat",
-                       "chlorophyll", "turbidity", "fdom") # using default parameter
-}
-
-
-# --- read ----------------------------------------------------------------
+  parameter_user_input <- NULL
+}  
+  
+# --- read csv ----------------------------------------------------------------
 if (!file.exists(input_path)) {
-  stop("Input CSV not found: ", input_path)
-}
+    stop("Input CSV not found: ", input_path)
+  } else {
+  ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
+  parameter_available <- as.character(paste(unique(ferrybox_df$parameter)))}
 
-ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
+#--- If parameter is NULL use hardcoded/available parameters
+if (is.null(parameter_user_input)){
+  message("No parameter set passed, using hardcoded set: ", paste(parameter_available, collapse = ", "))
+  parameter <- parameter_available
+} else {
+    parameter <- parameter_user_input
+  }
 
-param_available <- unique(ferrybox_df$parameter)
-message("parameter available in data: ", paste(param_available, collapse = ", "))
-param_available <- unique(ferrybox_df$parameter) |> as.character()
-
-if (is.null(parameter) || !(parameter %in% param_available)) {
-  stop("Invalid or missing parameter: ", parameter,
-       "\nAvailable parameter are: ", paste(param_available, collapse = ", "))
-}
 
 # --- output-dir and filename --------------------------------------------
 is_png_target <- !is.null(out_result_path) &&
@@ -73,15 +62,15 @@ world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 # --- Function for position plot --------------------------------------------------
 coord_value_point_plot <- function(data = ferrybox_df,
                                    parameter = NULL,
-                                   param_available,
+                                   parameter_available,
                                    world_sf,
                                    out_dir = NULL,
                                    out_name = NULL,
                                    save_png = TRUE) {
-
+  
   if(is.null(parameter)){
-    parameter <- param_available
-    message(paste("Plotting position for:"),"\n",paste(param_available, collapse = ", "))
+    parameter <- parameter_available
+    message(paste("Plotting position for:"),"\n",paste(parameter_available, collapse = ", "))
   } else {
     parameter <- parameter
   }
@@ -161,11 +150,10 @@ coord_value_point_plot <- function(data = ferrybox_df,
 }
 
 
-# --- run function ------------------------------------------------------------
 plot_obj <- coord_value_point_plot(
   data     = ferrybox_df,
   parameter = NULL,
-  param_available = param_available,
+  parameter_available,
   world_sf  = world,
   out_dir   = out_dir,
   out_name  = out_name,
