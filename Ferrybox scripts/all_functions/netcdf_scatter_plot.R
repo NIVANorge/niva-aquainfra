@@ -1,11 +1,3 @@
-
-# --- Load required packages (installeres typisk via dependencies.R i Docker) --
-required_packages <- c("tidyverse", "ggplot2")
-new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
-if (length(new_packages)) install.packages(new_packages)
-invisible(lapply(required_packages, function(p)
-  suppressPackageStartupMessages(library(p, character.only = TRUE))))
-
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
@@ -18,30 +10,21 @@ as_null_if_blank <- function(x) {
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
-if (length(args) >= 2) {
+if (length(args) >= 4) {
   message("Reading CLI args...")
   input_path      <- args[1]  # CSV with ferrybox-data
   out_result_path <- args[2]  # folder
-  
-  # Optional parameter
-  parameters <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-  
-  # Split/define parameter set:
-  if (is.na(parameters)) {
-    parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
-    message("No parameter set passed, using hardcoded set: ", parameters)
-  }
-  parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
+  parameter_x <- args[3]
+  parameter_y <- args[4]
   
   
 } else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
   out_result_path <- "data/out/ferrybox_scatter.png"
-  parameters  <- c("temperature", "salinity", "oxygen_sat",
-                   "chlorophyll", "turbidity", "fdom") # using default parameters
+  parameter_x <- "salinity" # example parameter  
+  parameter_y <- "chlorophyll" # example parameter
 }
-
 
 # --- read ----------------------------------------------------------------
 if (!file.exists(input_path)) {
