@@ -14,7 +14,7 @@ pak::pkg_install(c(
   "tidyr",
   "ncdf4",
   "ggplot2",
-  "sf,
+  "sf",
   "rnaturalearth",
   "scales",
   "scico",

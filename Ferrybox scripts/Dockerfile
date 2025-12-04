@@ -25,6 +25,7 @@ COPY position_plot/ position_plot/
 COPY extract_fb_data/ extract_fb_data/
 COPY tile_plot/ tile_plot/
 COPY scatter_plot/ scatter_plot/
+COPY all_functions/ all_functions/
 
 
 # Add an entrypoint that can deal with CLI arguments that contain spaces:
