@@ -1,3 +1,12 @@
+
+# Importing the required libraries
+# (which were installed previously)
+library(dplyr)
+library(sf)
+library(readr)
+library(rnaturalearth)
+library(ggplot2)
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
