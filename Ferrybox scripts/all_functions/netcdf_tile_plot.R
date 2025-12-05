@@ -1,3 +1,9 @@
+library(tidyverse)  
+library(paletteer)
+library(scico)
+library(gridExtra)
+
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
