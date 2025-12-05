@@ -1,3 +1,10 @@
+### Scatter parameter plot 
+library("rnaturalearth")
+library("sf")
+library("ggplot2")
+library("dplyr")
+library("readr")
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
