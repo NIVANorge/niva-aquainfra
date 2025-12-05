@@ -6,8 +6,6 @@ library(sf)
 library(readr)
 library(rnaturalearth)
 library(ggplot2)
-
-# --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 as_null_if_blank <- function(x) {
@@ -25,18 +23,18 @@ if (length(args) >= 2) {
   out_result_path <- args[2]  # folder
   # Optional parameter
   parameter_user_input <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-
-  } else {
+  
+} else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
   out_result_path <- "data/out/ferrybox_position.png"
   parameter_user_input <- NULL
 }  
-  
+
 # --- read csv ----------------------------------------------------------------
 if (!file.exists(input_path)) {
-    stop("Input CSV not found: ", input_path)
-  } else {
+  stop("Input CSV not found: ", input_path)
+} else {
   ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
   parameter_available <- as.character(paste(unique(ferrybox_df$parameter)))}
 
@@ -45,8 +43,8 @@ if (is.null(parameter_user_input)){
   message("No parameter set passed, using hardcoded set: ", paste(parameter_available, collapse = ", "))
   parameter <- parameter_available
 } else {
-    parameter <- parameter_user_input
-  }
+  parameter <- parameter_user_input
+}
 
 
 # --- output-dir and filename --------------------------------------------
@@ -104,8 +102,7 @@ coord_value_point_plot <- function(data = ferrybox_df,
   
   # Bounding box
   bbox_data <- st_bbox(data_sf)
-  
-  # --- Plot ---
+    # --- Plot ---
   p <- ggplot() +
     geom_sf(data = world_sf, fill = "grey98", color = "grey80", size = 0.2) +
     geom_path(data = data_clean,
@@ -129,15 +126,22 @@ coord_value_point_plot <- function(data = ferrybox_df,
       axis.text = element_text(size = 10),
       axis.title = element_text(size = 11),
       plot.margin = margin(15, 15, 15, 15)
-    )
+    )+
+    annotation_north_arrow(location = "bl",
+                           which_north = "true",
+                           style = north_arrow_fancy_orienteering) +
+    annotation_scale(location = "bl",
+                     bar_cols = c("grey60", "white"),
+                     pad_x = unit(2, "cm"), 
+                     pad_y = unit(0.5, "cm"))
+
   
   # --- Save file ---
   if (isTRUE(save_png)) {
     param_tag <- gsub("[^A-Za-z0-9_-]+", "-", parameter)
     
     if (is.null(out_name)) {
-      stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-      out_name <- sprintf("ferrybox_position_%s_%s.png", param_tag, stamp)
+      out_name <- "ferrybox_position.png"
     }
     
     file_path <- file.path(out_dir, out_name)
@@ -159,12 +163,15 @@ coord_value_point_plot <- function(data = ferrybox_df,
 }
 
 
+
+
 plot_obj <- coord_value_point_plot(
   data     = ferrybox_df,
-  parameter = NULL,
+  parameter = "salinity",
   parameter_available,
   world_sf  = world,
   out_dir   = out_dir,
   out_name  = out_name,
   save_png  = TRUE
 )
+
