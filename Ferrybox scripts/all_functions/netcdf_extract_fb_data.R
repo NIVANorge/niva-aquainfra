@@ -1,3 +1,7 @@
+library("tidyverse")
+library("ncdf4")
+library("lubridate")
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
