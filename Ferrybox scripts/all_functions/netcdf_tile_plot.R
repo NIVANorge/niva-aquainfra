@@ -1,8 +1,8 @@
+
 library(tidyverse)  
 library(paletteer)
 library(scico)
 library(gridExtra)
-
 
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
@@ -19,7 +19,7 @@ message("R Command line args: ", paste(args, collapse = " | "))
 if (length(args) >= 2) {
   message("Reading CLI args...")
   input_path      <- args[1]  # CSV with ferrybox-data
-  out_result_path <- args[2]  # folder
+  out_result_path <- args[2]  # Path to save png
   
   # Optional parameter
   # Optional parameters
@@ -46,7 +46,7 @@ if (length(args) >= 2) {
 } else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
-  out_result_path <- "data/out/ferrybox_tile.png"
+  out_result_path <- "data/out" 
   start_date      <- NULL
   end_date        <- NULL
   parameters      <- c("temperature", "salinity", "oxygen_sat",
@@ -64,7 +64,6 @@ lat_max    <- as_null_if_blank(lat_max)
 storm_date    <- as_null_if_blank(storm_date)
 
 
-
 # --- read ----------------------------------------------------------------
 if (!file.exists(input_path)) {
   stop("Input CSV not found: ", input_path)
@@ -77,24 +76,6 @@ message("Parameters available in data: ", paste(param_available, collapse = ", "
 
 
 
-# --- output-dir and filename --------------------------------------------
-is_png_target <- !is.null(out_result_path) &&
-  grepl("\\.png$", out_result_path, ignore.case = TRUE)
-
-if (is_png_target) {
-  out_dir  <- dirname(out_result_path)
-  out_name <- basename(out_result_path)
-} else {
-  out_dir  <- out_result_path %||% "data/out"
-  out_name <- NULL
-}
-
-if (!dir.exists(out_dir)) {
-  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-}
-
-
-
 # Tile plot function
 tile_plot <- function(
     data,
@@ -104,11 +85,10 @@ tile_plot <- function(
     lat_min = NULL,
     lat_max = NULL,
     storm_date = NULL,
-    out_dir = NULL,
-    out_name = NULL,
+    out_dir = out_result_path,
     save_png = TRUE
 ) {
- 
+  
   # --- Validate parameters ---
   invalid_params <- setdiff(parameters, unique(data$parameter))
   if (length(invalid_params) > 0) {
@@ -199,35 +179,11 @@ tile_plot <- function(
   
   # --- Save as CSV if requested ---------------------------------------------
   if (isTRUE(save_png)) {
-    message("Saving png...")
+    #Saves the png as ferrybox_tile_"PARAMETER(s)".png:
+    param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
+    file_name <- sprintf("ferrybox_tile_%s.png", param_tag)
+    file_path <- paste(out_dir, file_name, sep = "/" )
     
-    # If the user passed nothing, create default storage location:
-    if (is.null(out_dir) || out_dir == "") {
-      out_dir <- "data/out"
-      message(paste("No result directory was passed, using:", out_dir))
-      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
-      file_name <- out_name %||% sprintf("ferrybox_tile_%s.png", param_tag)
-      message(paste("No result directory was passed, using file name:", file_name))
-      file_path <- file.path(out_dir, file_name)
-      
-      # If the user passed directory and file name, use them:
-    } else if (grepl("\\.png$", out_dir, ignore.case = TRUE)) {
-      file_path     <- out_dir
-      message(paste("Result directory and filename was passed:", file_path))
-      dir_to_create <- dirname(file_path)
-      if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
-      
-      # If the user provided dir only, use it plus default file name:
-    } else {
-      message(paste("Result directory was passed:", out_dir))
-      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
-      file_name <- out_name %||% sprintf("ferrybox_tile_%s.png", param_tag)
-      message(paste("Using file name:", file_name))
-      file_path <- file.path(out_dir, file_name)
-    }
-    message("Saving png to: ", file_path)
     ggsave(
       filename = file_path,
       plot     = final_plot,
@@ -237,7 +193,7 @@ tile_plot <- function(
       dpi      = 300,
       bg       = "white"
     )
-    message("Saved PNG:     ", file_path)
+    message("Saved PNG:", file_path)
     attr(final_plot, "saved_png_path") <- file_path
   } else {
     message("To save as PNG, set save_png=TRUE.")
@@ -247,14 +203,10 @@ tile_plot <- function(
 }
 
 
-
-
-
 ## example usage in R
-tile_plot(ferrybox_df, parameters = "salinity", lat_min = 58.9, lat_max = 60, save_png = TRUE)
 
 tile_plot(ferrybox_df,
-          parameters = "salinity",
+          parameters = "chlorophyll",
           lat_min = 58.9, lat_max = 60,
           start_date = "2023-07-01",
           end_date = "2023-11-01",
@@ -268,5 +220,7 @@ tile_plot(ferrybox_df,
           lat_max = 60,
           storm_date = "2023-08-08",
           save_png = FALSE)
+
+
 
         
