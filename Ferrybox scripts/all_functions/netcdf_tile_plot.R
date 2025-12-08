@@ -182,7 +182,8 @@ tile_plot <- function(
     #Saves the png as ferrybox_tile_"PARAMETER(s)".png:
     param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
     file_name <- sprintf("ferrybox_tile_%s.png", param_tag)
-    file_path <- paste(out_dir, file_name, sep = "/" )
+    file_path <- file.path(out_dir, file_name)
+
     
     ggsave(
       filename = file_path,
