@@ -5,6 +5,14 @@ library("ggplot2")
 library("dplyr")
 library("readr")
 
+
+# --- Load required packages (installeres typisk via dependencies.R i Docker) --
+required_packages <- c("tidyverse", "ggplot2")
+new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
+if (length(new_packages)) install.packages(new_packages)
+invisible(lapply(required_packages, function(p)
+  suppressPackageStartupMessages(library(p, character.only = TRUE))))
+
 # --- Helpers -----------------------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
@@ -28,7 +36,7 @@ if (length(args) >= 4) {
 } else {
   message("No CLI args detected → using defaults...")
   input_path      <- "testresults/ferrybox_testforplot.csv"
-  out_result_path <- "data/out/ferrybox_scatter.png"
+  out_result_path <- "data/out"
   parameter_x <- "salinity" # example parameter  
   parameter_y <- "chlorophyll" # example parameter
 }
@@ -45,27 +53,26 @@ message("Parameters available in data: ", paste(param_available, collapse = ", "
 
 
 # --- output-dir and filename --------------------------------------------
-is_png_target <- !is.null(out_result_path) &&
-  grepl("\\.png$", out_result_path, ignore.case = TRUE)
-
-if (is_png_target) {
-  out_dir  <- dirname(out_result_path)
-  out_name <- basename(out_result_path)
-} else {
-  out_dir  <- out_result_path %||% "data/out"
-  out_name <- NULL
-}
-
-if (!dir.exists(out_dir)) {
-  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+# is_png_target <- !is.null(out_result_path) &&
+#   grepl("\\.png$", out_result_path, ignore.case = TRUE)
+# 
+# if (is_png_target) {
+#   out_dir  <- dirname(out_result_path)
+#   out_name <- basename(out_result_path)
+# } else {
+#   out_dir  <- out_result_path %||% "data/out"
+#   out_name <- NULL
+# }
+# 
+# if (!dir.exists(out_dir)) {
+#   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 }
 
 # --- Function for scatter plot --------------------------------------------------
 scatter_plot <- function(data        = ferrybox_df,
                          parameter_x = NULL,
                          parameter_y = NULL,
-                         out_dir = NULL,
-                         out_name    = NULL,
+                         out_dir = out_result_path,
                          save_png    = TRUE) {
   
   # Check input parameters
@@ -142,20 +149,12 @@ scatter_plot <- function(data        = ferrybox_df,
   
   # --- save as PNG ------------------------------------------------------------
   if (isTRUE(save_png)) {
-    # filename if nothing is specified
-    if (is.null(out_name) || out_name == "") {
-      tag_x  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_x)
-      tag_y  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_y)
-      stamp  <- format(Sys.time(), "%Y%m%d_%H%M%S")
-      out_name <- sprintf("ferrybox_scatter_%s_vs_%s_%s.png", tag_y, tag_x, stamp)
-    }
-    
-    if (!dir.exists(out_dir)) {
-      dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-    }
-    
+    # save png with parameter names
+    tag_x  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_x)
+    tag_y  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_y)
+    out_name <- sprintf("ferrybox_scatter_%s_vs_%s.png", tag_y, tag_x)
     file_path <- file.path(out_dir, out_name)
-    
+  
     ggplot2::ggsave(
       filename = file_path,
       plot     = p,
@@ -168,7 +167,9 @@ scatter_plot <- function(data        = ferrybox_df,
     
     message("Scatterplot saved as PNG: ", file_path)
     attr(p, "saved_png_path") <- file_path
-  }
+} else {
+  message("To save as PNG, set save_png=TRUE.")
+}
   
   return(p)
 }
@@ -179,7 +180,6 @@ plot_obj <- scatter_plot(
   data        = ferrybox_df,
   parameter_x = "salinity",
   parameter_y = "chlorophyll",
-  out_dir     = out_dir,
-  out_name    = out_name,
   save_png    = TRUE
 )
+
