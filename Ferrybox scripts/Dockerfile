@@ -52,7 +52,18 @@ CMD []
 #  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
 #  'null' 'null' 'null' 'null'
 
-# Example run for tile plot:
+# Example run command:
+# run one script (netcdf_position_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_position_plot.R' \
+#  ferry-rscripts:${today} \
+#  '/testresults/ferrybox_testforplot.csv' \
+#  'data/out/ferrybox_position.png' \
+#  'null' 
+
+
+# Example run command:
 # run one script (netcdf_tile_plot.R), with input params:
 #docker run \
 #  -v './testresults:/out:rw' \
