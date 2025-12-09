@@ -26,34 +26,53 @@ docker run \
   -e 'SCRIPT=netcdf_extract_save_fb.R' \
   ferry-rscripts:${today}
 
-# run one script (netcdf_extract_save_fb.R), with input params, without a bounding box:
-# Bbox is passed as null null null null
-mkdir testresults
-docker run \
-  -v './testresults:/out:rw' \
-  -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts:${today} \
-  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
-  '/out/ferrybox.csv' \
-  '2023-01-01' \
-  '2023-12-31' \
-  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
-  'null' 'null' 'null' 'null'
+# Example run command:
+# run one script (netcdf_extract_save_fb.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_extract_save_fb.R' \
+#  ferry-rscripts:${today} \
+#  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+#  '/out/ferrybox.csv' \
+#  '2023-01-01' \
+#  '2023-12-31' \
+#  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
+#  'null' 'null' 'null' 'null'
 
-# run one script (netcdf_extract_save_fb.R), with input params, with a bounding box:
-# The order that the r script wants (bbox): lon_min, lon_max, lat_min, lat_max
-mkdir testresults
-docker run \
-  -v './testresults:/out:rw' \
-  -e 'SCRIPT=netcdf_extract_save_fb.R' \
-  ferry-rscripts:${today} \
-  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
-  '/out/ferrybox.csv' \
-  '2023-01-01' \
-  '2023-12-31' \
-  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
-  '9.5' '11.9' '58.5' '59.9'
-```
+# Example run command:
+# run one script (netcdf_position_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_position_plot.R' \
+#  ferry-rscripts:${today} \
+#  '/testresults/ferrybox_testforplot.csv' \
+#  'data/out/ferrybox_position.png' \
+#  'null' 
+
+# Example run command:
+# run one script (netcdf_scatter_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_position_plot.R' \
+#  ferry-rscripts:${today} \
+#  '/testresults/ferrybox_testforplot.csv' \
+#  'data/out' \
+#  'chlorophyll' \ 
+# 'salinity' 
+
+# Example run command:
+# run one script (netcdf_tile_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_tile_plot.R' \
+#  ferry-rscripts:${today} \
+#  'folder_path_to_csv' \
+#  'data/out' \
+#  '2023-01-01' \ 
+#  '2023-12-31' \ 
+#  'temperature,salinity,chlorophyll' \ 
+#  'null' 'null'
+#  '2023-08-08'
 
 ## Pygeoapi / OGC HTTP API
 
