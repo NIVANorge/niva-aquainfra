@@ -64,13 +64,26 @@ CMD []
 
 
 # Example run command:
+# run one script (netcdf_scatter_plot.R), with input params:
+#docker run \
+#  -v './testresults:/out:rw' \
+#  -e 'SCRIPT=netcdf_position_plot.R' \
+#  ferry-rscripts:${today} \
+#  '/testresults/ferrybox_testforplot.csv' \
+#  'data/out' \
+#  'chlorophyll' \ 
+# 'salinity' 
+
+
+
+# Example run command:
 # run one script (netcdf_tile_plot.R), with input params:
 #docker run \
 #  -v './testresults:/out:rw' \
 #  -e 'SCRIPT=netcdf_tile_plot.R' \
 #  ferry-rscripts:${today} \
 #  'folder_path_to_csv' \
-#  '/out/ferrybox_tile.png' \
+#  'data/out' \
 #  '2023-01-01' \ 
 #  '2023-12-31' \ 
 #  'temperature,salinity,chlorophyll' \ 
