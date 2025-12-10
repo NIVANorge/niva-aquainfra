@@ -37,6 +37,7 @@ if (length(args) >= 2) {
   parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
   
   # CLI arguments can only be strings, so converting here:
+  if(out_result_path == "null") out_result_path <- NULL
   if (start_date == "null") start_date <- NULL
   if (end_date == "null") end_date <- NULL
   if (lon_min == "null") lon_min <- NULL
@@ -59,14 +60,13 @@ if (length(args) >= 2) {
 }
 
 # Normalize optional blanks to NULL
+out_result_path <- as_null_if_blank(out_result_path)
 start_date <- as_null_if_blank(start_date)
 end_date   <- as_null_if_blank(end_date)
 lon_min    <- as_null_if_blank(lon_min)
 lon_max    <- as_null_if_blank(lon_max)
 lat_min    <- as_null_if_blank(lat_min)
 lat_max    <- as_null_if_blank(lat_max)
-
-
 
 
 # --- Open THREDDS dataset ----------------------------------------------------
@@ -230,8 +230,6 @@ df_ferrybox <- function(parameters, param_vars, time_index,
 }
 
 
-
-# --- creating hardcoded format path if none is passed (NULL) --------------------------------------------
 
 # --- Example run (works both in RStudio and CLI) -----------------------------
 df_all <- df_ferrybox(
