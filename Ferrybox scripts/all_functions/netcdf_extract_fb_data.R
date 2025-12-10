@@ -47,9 +47,9 @@ if (length(args) >= 2) {
 } else {
   message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+  out_result_path <- "data/out"
   start_date      <- NULL
   end_date        <- NULL
-  out_result_path <- "data/out/ferrybox_default.csv"
   parameters      <- c("temperature", "salinity", "oxygen_sat",
                        "chlorophyll", "turbidity", "fdom")
   lon_min <- NULL
@@ -66,15 +66,7 @@ lon_max    <- as_null_if_blank(lon_max)
 lat_min    <- as_null_if_blank(lat_min)
 lat_max    <- as_null_if_blank(lat_max)
 
-# Derive out_dir/out_name from out_result_path (file or folder)
-is_csv_target <- !is.null(out_result_path) && grepl("\\.csv$", out_result_path, ignore.case = TRUE)
-if (is_csv_target) {
-  out_dir  <- dirname(out_result_path)
-  out_name <- basename(out_result_path)
-} else {
-  out_dir  <- out_result_path %||% "data/out"
-  out_name <- NULL
-}
+
 
 
 # --- Open THREDDS dataset ----------------------------------------------------
@@ -97,7 +89,6 @@ lat_max_default <- max(ncvar_get(fb_nc, "latitude"))
 message("URL:   ", url)
 message("START: ", min(time_converted) %||% "<full range>")
 message("END:   ", max(time_converted) %||% "<full range>")
-message("OUT:   ", if (is_csv_target) file.path(out_dir, out_name) else paste0(out_dir, " (dir)"))
 message("PARAM: ", paste(parameters, collapse=", "))
 message("BBOX:  ", paste(c(lon_min_default, lon_max_default, lat_min_default, lat_max_default), collapse=", "))
 
@@ -136,7 +127,6 @@ time_index <- get_time_index(start_date, end_date)
 # Check which variables are contained in the NetCDF and are valid/available
 # (i.e. don't match the exclusion pattern):
 all_vars   <- names(fb_nc$var)
-message(paste("Variables present in NetCDF:", paste(all_vars, collapse=", ")))
 not_contain <- "_qc|latitude|longitude|trajectory_name|time" # exclusion pattern
 param_vars <- all_vars[!grepl(not_contain, all_vars)]
 message(paste("Variables present in NetCDF, valid for usage:", paste(param_vars, collapse=", ")))
@@ -145,33 +135,33 @@ message(paste("Variables present in NetCDF, valid for usage:", paste(param_vars,
 df_ferrybox <- function(parameters, param_vars, time_index,
                         lon_min = NULL, lon_max = NULL,
                         lat_min = NULL, lat_max = NULL,
-                        save_csv = FALSE, out_dir = NULL, out_name = NULL) {
-
+                        save_csv = FALSE, out_dir = out_result_path) {
+  
   # Check if variables passed by users are present in the netcdf and valid/available:
   invalid_params <- setdiff(parameters, param_vars)
   if (length(invalid_params)) {
     stop("Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
          "\nAvailable: ", paste(param_vars, collapse = ", "))
   }
-
+  
   lat_all <- ncvar_get(fb_nc, "latitude")
   lon_all <- ncvar_get(fb_nc, "longitude")
   lat  <- lat_all[time_index]
   lon  <- lon_all[time_index]
   time <- time_converted[time_index]
-
+  
   if (all(is.null(c(lon_min, lon_max, lat_min, lat_max)))) {
     lon_min <- min(lon); lon_max <- max(lon)
     lat_min <- min(lat); lat_max <- max(lat)
     message("No bounding box specified – returning full area for selected time range.")
   }
-
+  
   if (lon_min != min(lon)  | lon_max != max(lon) |
       lat_min != min(lat) | lat_max != max(lat)) {
     message("Coordinates are not equal to the boundary area.\nlon: ", min(lon), "–", max(lon),
             "\nlat: ", min(lat), "–", max(lat),"\nReturnining available data")
   }
-
+  
   read_param <- function(param) {
     x  <- ncvar_get(fb_nc, param)[time_index]
     fv <- ncatt_get(fb_nc, param, "_FillValue")$value
@@ -179,7 +169,7 @@ df_ferrybox <- function(parameters, param_vars, time_index,
     if (!is.null(fv) && !is.na(fv)) x[x == fv] <- NA
     if (!is.null(mv) && !is.na(mv)) x[x == mv] <- NA
     unit <- ncatt_get(fb_nc, param, "units")$value
-
+    
     tibble::tibble(
       datetime  = time,
       latitude  = lat,
@@ -190,7 +180,7 @@ df_ferrybox <- function(parameters, param_vars, time_index,
     ) |>
       dplyr::filter(!is.na(value))
   }
-
+  
   df_combined <- purrr::map(parameters, read_param) |>
     dplyr::bind_rows() |>
     dplyr::mutate(
@@ -206,49 +196,42 @@ df_ferrybox <- function(parameters, param_vars, time_index,
     ) |>
     dplyr::filter(dplyr::between(longitude, lon_min, lon_max),
                   dplyr::between(latitude,  lat_min,  lat_max))
-
+  
   # --- Save as CSV if requested ---------------------------------------------
   if (isTRUE(save_csv)) {
     message("Saving CSV...")
-
+    
     # If the user passed nothing, create default storage location:
     if (is.null(out_dir) || out_dir == "") {
       out_dir <- "data/out"
       message(paste("No result directory was passed, using:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
-      stamp     <- format(Sys.time(), "%Y%m%d_%H%M%S")
-      file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
+      file_name <- "ferrybox.csv"
       message(paste("No result directory was passed, using file name:", file_name))
       file_path <- file.path(out_dir, file_name)
-
-    # If the user passed directory and file name, use them:
-    } else if (grepl("\\.csv$", out_dir, ignore.case = TRUE)) {
-      file_path     <- out_dir
-      message(paste("Result directory and filename was passed:", file_path))
-      dir_to_create <- dirname(file_path)
-      if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
-
-    # If the user provided dir only, use it plus default file name:
+      
+      # If the user passed directory using the directory 
     } else {
-      message(paste("Result directory was passed:", out_dir))
-      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-      param_tag <- gsub("[^A-Za-z0-9_-]+", "-", paste(parameters, collapse = "_"))
-      stamp     <- format(Sys.time(), "%Y%m%d_%H%M%S")
-      file_name <- out_name %||% sprintf("ferrybox_%s_%s.csv", param_tag, stamp)
-      message(paste("Using file name:", file_name))
-      file_path <- file.path(out_dir, file_name)
-    }
+      file_name <- "ferrybox.csv"
+      file_path     <- file.path(out_dir, file_name)
+      message(paste("Result directory and filename was passed:", file_path))
+      dir_to_create <- dirname(out_dir)
+      if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
+    } 
+    
     message("Saving CSV to: ", file_path)
     utils::write.csv(df_combined, file_path, row.names = FALSE)
-    message("Saved CSV:     ", file_path)
     attr(df_combined, "saved_csv_path") <- file_path
   } else {
     message("To save as CSV, set save_csv=TRUE.")
   }
-
+  
   df_combined
 }
+
+
+
+# --- creating hardcoded format path if none is passed (NULL) --------------------------------------------
 
 # --- Example run (works both in RStudio and CLI) -----------------------------
 df_all <- df_ferrybox(
@@ -260,8 +243,6 @@ df_all <- df_ferrybox(
   lat_min    = lat_min,
   lat_max    = lat_max,
   save_csv   = TRUE,
-  out_dir    = out_dir,
-  out_name   = out_name
 )
 
 
