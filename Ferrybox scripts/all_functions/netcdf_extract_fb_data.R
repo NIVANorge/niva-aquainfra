@@ -1,247 +1,218 @@
-library("tidyverse")
-library("ncdf4")
-library("lubridate")
+#!/usr/bin/env Rscript
+library(tidyverse)
+library(ncdf4)
+library(lubridate)
+library(data.table)
 
-# --- Helpers -----------------------------------------------------------------
-`%||%` <- function(a, b) if (is.null(a)) b else a
 
-as_null_if_blank <- function(x) {
-  if (is.null(x) || length(x) == 0 || is.na(x) || (is.character(x) && trimws(x) == "")) return(NULL)
-  x
+`%||%` <- function(x, y) {
+  if (is.null(x) || all(is.na(x))) y else x
 }
 
-# --- CLI args + interactive fallbacks ----------------------------------------
-args <- commandArgs(trailingOnly = TRUE)
-print(paste0("R Command line args: ", paste(args, collapse = " | ")))
-
-if (length(args) >= 2) {
-  message("Reading CLI args...")
-  print(paste0('R Command line args: ', args))
-  url             <- args[1]
-  out_result_path <- args[2]
+# -------------------------------------------------------------------
+# Main function which reads the ferrybox data from URL or CSV
+# -------------------------------------------------------------------
+df_ferrybox <- function(
+    source,                   
+    parameters      = NULL,    
+    start_date      = NULL,    
+    end_date        = NULL,
+    lon_min         = NULL,
+    lon_max         = NULL,
+    lat_min         = NULL,
+    lat_max         = NULL,
+    save_csv        = FALSE,
+    out_csv_path    = NULL
+) {
   
-  # Optional parameters
-  start_date      <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-  end_date        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-  parameters      <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-  lon_min         <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
-  lon_max         <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
-  lat_min         <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
-  lat_max         <- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+  # ------------------------------------------------------------
+  # source is NetCDF via URL (THREDDS)
+  # ------------------------------------------------------------
+  url <- source
+  message("Opening NetCDF/THREDDS dataset: ", url)
+  fb_nc <- tryCatch(
+    nc_open(url),
+    error = function(e) stop("Could not open URL: ", conditionMessage(e))
+  )
+  on.exit(try(nc_close(fb_nc), silent = TRUE), add = TRUE)
   
-  # Split/define parameter set:
-  if (is.na(parameters)) {
-    parameters <- "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom"
-    message("No parameter set passed, using hardcoded set: ", parameters)
-  }
-  parameters <- strsplit(parameters, "\\s*,\\s*")[[1]]
+  # --- Tid ------------------------------------------------------
+  time_raw       <- ncvar_get(fb_nc, "time")
+  time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
   
-  # CLI arguments can only be strings, so converting here:
-  if(out_result_path == "null") out_result_path <- NULL
-  if (start_date == "null") start_date <- NULL
-  if (end_date == "null") end_date <- NULL
-  if (lon_min == "null") lon_min <- NULL
-  if (lon_max == "null") lon_max <- NULL
-  if (lat_min == "null") lat_min <- NULL
-  if (lat_max == "null") lat_max <- NULL
+  # --- Standard bounding box ----------
+  lon_all_all <- ncvar_get(fb_nc, "longitude")
+  lat_all_all <- ncvar_get(fb_nc, "latitude")
+  lon_min_default <- min(lon_all_all, na.rm = TRUE)
+  lon_max_default <- max(lon_all_all, na.rm = TRUE)
+  lat_min_default <- min(lat_all_all, na.rm = TRUE)
+  lat_max_default <- max(lat_all_all, na.rm = TRUE)
   
-} else {
-  message("No CLI args detected → using defaults...")
-  url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-  out_result_path <- file.path("data","out")
-  start_date      <- NULL
-  end_date        <- NULL
-  parameters      <- c("temperature", "salinity", "oxygen_sat",
-                       "chlorophyll", "turbidity", "fdom")
-  lon_min <- NULL
-  lon_max <- NULL
-  lat_min <- NULL
-  lat_max <- NULL
-}
-
-# Normalize optional blanks to NULL
-out_result_path <- as_null_if_blank(out_result_path)
-start_date <- as_null_if_blank(start_date)
-end_date   <- as_null_if_blank(end_date)
-lon_min    <- as_null_if_blank(lon_min)
-lon_max    <- as_null_if_blank(lon_max)
-lat_min    <- as_null_if_blank(lat_min)
-lat_max    <- as_null_if_blank(lat_max)
-
-
-
-# --- Open THREDDS dataset ----------------------------------------------------
-message(paste("Opening dataset:", url))
-fb_nc <- tryCatch(nc_open(url), error = function(e)
-  stop("Could not open THREDDS dataset: ", conditionMessage(e)))
-on.exit(try(nc_close(fb_nc), silent = TRUE), add = TRUE)
-
-# --- Time dimension ----------------------------------------------------------
-time_raw       <- ncvar_get(fb_nc, "time")
-time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
-
-# --- Boundary area ---------------------
-lon_min_default <- min(ncvar_get(fb_nc, "longitude"))
-lon_max_default <- max(ncvar_get(fb_nc, "longitude"))
-lat_min_default <- min(ncvar_get(fb_nc, "latitude"))
-lat_max_default <- max(ncvar_get(fb_nc, "latitude"))
-
-# Print input variables available
-message("URL:   ", url)
-message("START: ", min(time_converted) %||% "<full range>")
-message("END:   ", max(time_converted) %||% "<full range>")
-message("PARAM: ", paste(parameters, collapse=", "))
-message("BBOX:  ", paste(c(lon_min_default, lon_max_default, lat_min_default, lat_max_default), collapse=", "))
-
-# --- Time index helper -------------------------------------------------------
-get_time_index <- function(start_date = NULL, end_date = NULL) {
-  if (!is.null(start_date) && is.na(start_date)) start_date <- NULL
-  if (!is.null(end_date)   && is.na(end_date))   end_date   <- NULL
+  # --- Variables -----------------------------------------------
+  all_vars   <- names(fb_nc$var)
+  not_contain <- "_qc|latitude|longitude|trajectory_name|time"
+  param_vars <- all_vars[!grepl(not_contain, all_vars)]
   
-  if (xor(is.null(start_date), is.null(end_date)))
-    stop("Please specify both start and end date, or neither.")
-  
-  if (is.null(start_date) && is.null(end_date)) {
-    message("No date range specified → Returning full available period")
-    return(seq_along(time_converted))
+  # If no parameters is specified, use all
+  if (is.null(parameters)) {
+    parameters <- param_vars
   }
   
-  start_date <- as.POSIXct(paste0(start_date, " 00:00:00"), tz = "UTC")
-  end_date   <- as.POSIXct(paste0(end_date, " 23:59:59"), tz = "UTC")
+  message("URL:   ", url)
+  message("TID:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
+          format(max(time_converted), "%Y-%m-%d"))
+  message("PARAM: ", paste(parameters, collapse = ", "))
+  message("BBOX (fuld):  ",
+          paste(c(lon_min_default, lon_max_default,
+                  lat_min_default, lat_max_default), collapse = ", "))
   
-  if (start_date > end_date) {
-    stop("start_date is after end_date.")
+  # --- Time index helper function ---------------------------
+  get_time_index <- function(start_date = NULL, end_date = NULL) {
+    
+    if (!is.null(start_date) && is.na(start_date)) start_date <- NULL
+    if (!is.null(end_date)   && is.na(end_date))   end_date   <- NULL
+    
+    if (xor(is.null(start_date), is.null(end_date)))
+      stop("start_date is after end_date.")
+    
+    if (is.null(start_date) && is.null(end_date)) {
+      message("No date interval specified → using entire period.")
+      return(seq_along(time_converted))
+    }
+    
+    start_dt <- as.POSIXct(paste0(start_date, " 00:00:00"), tz = "UTC")
+    end_dt   <- as.POSIXct(paste0(end_date,   " 23:59:59"), tz = "UTC")
+    
+    if (start_dt > end_dt) stop("start_date is after end_date.")
+    
+    idx <- which(time_converted >= start_dt & time_converted <= end_dt)
+    
+    if (length(idx) == 0) {
+      stop("No data found in the date interval.")
+    }
+    
+    idx
   }
   
-  idx <- which(time_converted >= start_date & time_converted <= end_date)
+  time_index <- get_time_index(start_date, end_date)
   
-  if (length(idx) == 0) {
-    stop("No data found within requested date range.")
-  }
-  
-  return(idx)
-}
-
-time_index <- get_time_index(start_date, end_date)
-
-# --- Variables ---------------------------------------------------------------
-# Check which variables are contained in the NetCDF and are valid/available
-# (i.e. don't match the exclusion pattern):
-all_vars   <- names(fb_nc$var)
-not_contain <- "_qc|latitude|longitude|trajectory_name|time" # exclusion pattern
-param_vars <- all_vars[!grepl(not_contain, all_vars)]
-message(paste("Variables present in NetCDF, valid for usage:", paste(param_vars, collapse=", ")))
-
-# --- Main extraction ---------------------------------------------------------
-df_ferrybox <- function(parameters, param_vars, time_index,
-                        lon_min = NULL, lon_max = NULL,
-                        lat_min = NULL, lat_max = NULL,
-                        save_csv = FALSE, out_dir = out_result_path) {
-  
-  # Check if variables passed by users are present in the netcdf and valid/available:
+  # --- Tjek parametre ------------------------------------------
   invalid_params <- setdiff(parameters, param_vars)
   if (length(invalid_params)) {
-    stop("Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
-         "\nAvailable: ", paste(param_vars, collapse = ", "))
+    stop(
+      "Invalid parameter(s): ", paste(invalid_params, collapse = ", "),
+      "\nAvailable: ", paste(param_vars, collapse = ", ")
+    )
   }
   
+  # --- Udtræk basis lat/lon + tid (subset på time_index) -------
   lat_all <- ncvar_get(fb_nc, "latitude")
   lon_all <- ncvar_get(fb_nc, "longitude")
   lat  <- lat_all[time_index]
   lon  <- lon_all[time_index]
   time <- time_converted[time_index]
   
+  # --- Bounding box håndtering ---------------------------------
   if (all(is.null(c(lon_min, lon_max, lat_min, lat_max)))) {
-    lon_min <- min(lon); lon_max <- max(lon)
-    lat_min <- min(lat); lat_max <- max(lat)
-    message("No bounding box specified – returning full area for selected time range.")
+    lon_min <- min(lon, na.rm = TRUE); lon_max <- max(lon, na.rm = TRUE)
+    lat_min <- min(lat, na.rm = TRUE); lat_max <- max(lat, na.rm = TRUE)
   }
   
-  if (lon_min != min(lon)  | lon_max != max(lon) |
-      lat_min != min(lat) | lat_max != max(lat)) {
-    message("Coordinates are not equal to the boundary area.\nlon: ", min(lon), "–", max(lon),
-            "\nlat: ", min(lat), "–", max(lat),"\nReturnining available data")
+  if (lon_min != min(lon, na.rm = TRUE)  | lon_max != max(lon, na.rm = TRUE) |
+      lat_min != min(lat, na.rm = TRUE) | lat_max != max(lat, na.rm = TRUE)) {
+    message(
+      "Applied coordinates are not within assessment area.\n",
+      "lon: ", min(lon, na.rm = TRUE), " – ", max(lon, na.rm = TRUE),
+      "\nlat: ", min(lat, na.rm = TRUE), " – ", max(lat, na.rm = TRUE))
   }
   
+  # --- Read parameter ------------------------------------
   read_param <- function(param) {
     x  <- ncvar_get(fb_nc, param)[time_index]
     fv <- ncatt_get(fb_nc, param, "_FillValue")$value
     mv <- ncatt_get(fb_nc, param, "missing_value")$value
     if (!is.null(fv) && !is.na(fv)) x[x == fv] <- NA
     if (!is.null(mv) && !is.na(mv)) x[x == mv] <- NA
-    unit <- ncatt_get(fb_nc, param, "units")$value
+    unit <- ncatt_get(fb_nc, param, "units")$value %||% NA_character_
     
-    tibble::tibble(
+    tibble(
       datetime  = time,
       latitude  = lat,
       longitude = lon,
       value     = x,
-      unit      = unit %||% NA_character_,
+      unit      = unit,
       parameter = param
     ) |>
-      dplyr::filter(!is.na(value))
+      filter(!is.na(value))
   }
   
+  # --- combine parameter --------------------------------------
   df_combined <- purrr::map(parameters, read_param) |>
-    dplyr::bind_rows() |>
-    dplyr::mutate(
-      year   = lubridate::year(datetime),
-      month  = lubridate::month(datetime),
-      day    = lubridate::day(datetime),
-      hour   = lubridate::hour(datetime),
-      minute = lubridate::minute(datetime),
+    bind_rows() |>
+    mutate(
+      year    = year(datetime),
+      month   = month(datetime),
+      day     = day(datetime),
+      hour    = hour(datetime),
+      minute  = minute(datetime)
+    ) |>
+    filter(
+      between(longitude, lon_min, lon_max),
+      between(latitude,  lat_min, lat_max)
+    ) |>
+    mutate(
       lon_min = as.numeric(lon_min),
       lon_max = as.numeric(lon_max),
       lat_min = as.numeric(lat_min),
       lat_max = as.numeric(lat_max)
-    ) |>
-    dplyr::filter(dplyr::between(longitude, lon_min, lon_max),
-                  dplyr::between(latitude,  lat_min,  lat_max))
+    )
   
-  
-  
-  
-  # --- Save as CSV if requested ---------------------------------------------
-  if (isTRUE(save_csv)) {
-    message("Saving CSV...")
-    
-    # Use either users out_dir or global out_result_path or fallback
-    dir <- out_dir %||% out_result_path %||% file.path("data", "out")
-    file_name <- "ferrybox.csv"
-    file_path <- file.path(dir, file_name)
-    
-    # Ensure folder exist
-    dir_to_create <- dirname(file_path)
-    if (!dir.exists(dir_to_create)) {
-      dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
-    }
-    
-    message("Saving CSV to: ", file_path)
-    utils::write.csv(df_combined, file_path, row.names = FALSE)
-    attr(df_combined, "saved_csv_path") <- file_path
-  } else {
-    message("To save as CSV, set save_csv=TRUE.")
-  }
-  
-  
-  df_combined
+  return(df_combined)
 }
 
+# -------------------------------------------------------------------
+# CLI-del – så scriptet fungerer som dit barplot-script
+# -------------------------------------------------------------------
+# Forventet argumentrækkefølge (eksempel):
+#  1: in_source           (URL til NetCDF eller sti til CSV)
+#  2: parameters_json     (JSON-liste over parametre, fx '["temp","sal"]' eller '[]' for alle)
+#  3: start_date          (fx "2023-01-01" eller "" for ingen begrænsning)
+#  4: end_date            (fx "2023-12-31" eller "" for ingen begrænsning)
+#  5: lon_min             (fx "-5" eller "" for default)
+#  6: lon_max
+#  7: lat_min
+#  8: lat_max
+#  9: out_csv_path        (fx "DATA/OUT/ferrybox_subset.csv")
+# 10: save_csv            ("TRUE" eller "FALSE")
+
+args <- commandArgs(trailingOnly = TRUE)
+
+print(paste0('R Command line args: ', args))
+source <- args[1] # e.g URL to netcdf or a csv with similar structure "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+parameters <- args[2] 
+start_date <- args[3]
+end_date  <- args[4]          
+lon_min <- args[5]  
+lon_max <- args[6]
+lat_min <- args[7]
+lat_max <- args[8]
 
 
-# --- Example run (works both in RStudio and CLI) -----------------------------
+
+
 df_all <- df_ferrybox(
-  parameters = parameters,
-  param_vars = param_vars,
-  time_index = time_index,
-  lon_min    = lon_min,
-  lon_max    = lon_max,
-  lat_min    = lat_min,
-  lat_max    = lat_max,
-  save_csv   = TRUE,
-)
+  source      = "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
+  parameters  = NULL,
+  start_date  = NULL,
+  end_date    = NULL,
+  lon_min     = NULL,
+  lon_max     = NULL,
+  lat_min     = NULL,
+  lat_max     = NULL,
+  )
 
-
-# --- Close dataset ---
-nc_close(fb_nc)
+# save dataframe as csv
+out_csv_path <- "DATA/OUT/ferrybox_subset.csv" # e.g (fx "DATA/OUT/ferrybox_subset.csv")
+print(paste0('Write result to csv file: ', out_csv_path))
+utils::write.csv(df_all, file = out_csv_path, row.names = FALSE, append = FALSE)
 
