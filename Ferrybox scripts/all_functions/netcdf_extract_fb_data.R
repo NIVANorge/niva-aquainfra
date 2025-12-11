@@ -200,35 +200,43 @@ df_ferrybox <- function(parameters, param_vars, time_index,
   # --- Save as CSV if requested ---------------------------------------------
   if (isTRUE(save_csv)) {
     message("Saving CSV...")
-    
+
     # If the user passed nothing, create default storage location:
     if (is.null(out_dir) || out_dir == "") {
       out_dir <- file.path("data","out")
       message(paste("No result directory was passed, using:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-      file_name <- "ferrybox.csv"
-      message(paste("No result directory was passed, using file name:", file_name))
-      file_path <- file.path(out_dir, file_name)
-      
-      # If the user passed directory using the directory 
+      file_path <- file.path(out_dir, "ferrybox.csv")
     } else {
-      file_name <- "ferrybox.csv"
-      file_path     <- file.path(out_dir, file_name)
-      message(paste("Result directory and filename was passed:", file_path))
-      dir_to_create <- dirname(out_dir)
-      if (!dir.exists(dir_to_create)) dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
-    } 
-    
+      # Check if out_dir is a file path (ends with .csv) or a directory
+      if (grepl("\\.csv$", out_dir, ignore.case = TRUE)) {
+        # User provided full file path
+        file_path <- out_dir
+        dir_to_create <- dirname(file_path)
+      } else {
+        # User provided directory path
+        file_path <- file.path(out_dir, "ferrybox.csv")
+        dir_to_create <- out_dir
+      }
+      
+      message(paste("Output file path:", file_path))
+      if (!dir.exists(dir_to_create)) {
+        message(paste("Creating directory:", dir_to_create))
+        dir.create(dir_to_create, recursive = TRUE, showWarnings = FALSE)
+      }
+    }
+
     message("Saving CSV to: ", file_path)
     utils::write.csv(df_combined, file_path, row.names = FALSE)
     attr(df_combined, "saved_csv_path") <- file_path
   } else {
     message("To save as CSV, set save_csv=TRUE.")
   }
-  
+
   df_combined
 }
 
+<<<<<<< HEAD
 
 # --- Example run (works both in RStudio and CLI) -----------------------------
 df_all <- df_ferrybox(
@@ -245,6 +253,13 @@ df_all <- df_ferrybox(
 
 # --- Close dataset ---
 nc_close(fb_nc)
+=======
+# --- Execute the extraction --------------------------------------------------
+result <- df_ferrybox(parameters, param_vars, time_index, 
+                      lon_min, lon_max, lat_min, lat_max, 
+                      save_csv = TRUE, out_dir = out_result_path)
+message("Extraction complete!")
+>>>>>>> 00808de (Fix CSV save logic, add function call, and fix line endings)
 
 
 
