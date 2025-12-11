@@ -48,7 +48,7 @@ if (length(args) >= 2) {
 } else {
   message("No CLI args detected → using defaults...")
   url             <- "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-  out_result_path <- "data/out"
+  out_result_path <- file.path("data","out")
   start_date      <- NULL
   end_date        <- NULL
   parameters      <- c("temperature", "salinity", "oxygen_sat",
@@ -203,7 +203,7 @@ df_ferrybox <- function(parameters, param_vars, time_index,
     
     # If the user passed nothing, create default storage location:
     if (is.null(out_dir) || out_dir == "") {
-      out_dir <- "data/out"
+      out_dir <- file.path("data","out")
       message(paste("No result directory was passed, using:", out_dir))
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
       file_name <- "ferrybox.csv"
@@ -228,24 +228,6 @@ df_ferrybox <- function(parameters, param_vars, time_index,
   
   df_combined
 }
-
-
-
-# --- Example run (works both in RStudio and CLI) -----------------------------
-df_all <- df_ferrybox(
-  parameters = parameters,
-  param_vars = param_vars,
-  time_index = time_index,
-  lon_min    = lon_min,
-  lon_max    = lon_max,
-  lat_min    = lat_min,
-  lat_max    = lat_max,
-  save_csv   = TRUE,
-)
-
-
-# --- Close dataset ---
-nc_close(fb_nc)
 
 
 
