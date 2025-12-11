@@ -230,6 +230,21 @@ df_ferrybox <- function(parameters, param_vars, time_index,
 }
 
 
+# --- Example run (works both in RStudio and CLI) -----------------------------
+df_all <- df_ferrybox(
+  parameters = parameters,
+  param_vars = param_vars,
+  time_index = time_index,
+  lon_min    = lon_min,
+  lon_max    = lon_max,
+  lat_min    = lat_min,
+  lat_max    = lat_max,
+  save_csv   = TRUE,
+)
+
+
+# --- Close dataset ---
+nc_close(fb_nc)
 
 
 
