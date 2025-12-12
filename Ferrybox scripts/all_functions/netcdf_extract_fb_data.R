@@ -189,6 +189,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 print(paste0('R Command line args: ', args))
 source <- args[1] # e.g URL to netcdf or a csv with similar structure "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+save_path <- args[1] 
 parameters <- args[2] 
 start_date <- args[3]
 end_date  <- args[4]          
@@ -201,18 +202,23 @@ lat_max <- args[8]
 
 
 df_all <- df_ferrybox(
-  source      = "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
-  parameters  = NULL,
-  start_date  = NULL,
-  end_date    = NULL,
-  lon_min     = NULL,
-  lon_max     = NULL,
-  lat_min     = NULL,
-  lat_max     = NULL,
+  source      = source,
+  parameters  = parameters,
+  start_date  = start_date,
+  end_date    = end_date,
+  lon_min     = lon_min,
+  lon_max     = lon_max,
+  lat_min     = lat_min,
+  lat_max     = lat_max,
   )
 
 # save dataframe as csv
-out_csv_path <- "DATA/OUT/ferrybox_subset.csv" # e.g (fx "DATA/OUT/ferrybox_subset.csv")
-print(paste0('Write result to csv file: ', out_csv_path))
-utils::write.csv(df_all, file = out_csv_path, row.names = FALSE, append = FALSE)
+#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
+file_name <- "ferrybox.csv"
+if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
+
+print(paste0('Write result to csv file: ', save_path))
+file_path <- file.path(save_path, file_name)
+utils::write.csv(df_all, file = file_path, row.names = FALSE)
+
 
