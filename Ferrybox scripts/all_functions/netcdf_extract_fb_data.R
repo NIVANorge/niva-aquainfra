@@ -171,23 +171,45 @@ df_ferrybox <- function(
 }
 
 # -------------------------------------------------------------------
+as_null_if_blank <- function(x) {
+  if (is.null(x)) return(NULL)
+  x <- trimws(x)
+  if (!nzchar(x) || tolower(x) == "null") NULL else x
+}
+
+parse_parameters <- function(x) {
+  x <- as_null_if_blank(x)
+  if (is.null(x)) return(NULL)
+  trimws(strsplit(x, ",", fixed = TRUE)[[1]])
+}
+
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
-if (length(args) >= 2) {
-  source <- args[1]
-  save_path <- args[2]
-  
-  #Optional parameters, if nothing is passed the script will use all available data
-  parameters<- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-  start_date<- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-  end_date<- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-  lon_min<- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
-  lon_max<- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
-  lat_min<- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
-  lat_max<- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
-} else {
-  stop("Provide URL source and path to save")
-}
+
+if (length(args) < 2) stop("Provide source (URL/CSV) and path to save")
+
+source    <- args[1]
+save_path <- args[2]
+
+parameters <- if (length(args) >= 3) parse_parameters(args[3]) else NULL
+
+start_date <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+end_date   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+
+lon_min <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
+lon_max <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
+lat_min <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+lat_max <- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+
+# Convert numeric bbox args if present
+lon_min <- if (!is.null(lon_min)) as.numeric(lon_min) else NULL
+lon_max <- if (!is.null(lon_max)) as.numeric(lon_max) else NULL
+lat_min <- if (!is.null(lat_min)) as.numeric(lat_min) else NULL
+lat_max <- if (!is.null(lat_max)) as.numeric(lat_max) else NULL
+
+
+# e.g URL to netcdf or a csv with similar structure "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
+
 
 
 df_all <- df_ferrybox(
@@ -202,10 +224,11 @@ df_all <- df_ferrybox(
   )
 
 # save dataframe as csv
-#save_path <- "data/out" # e.g "data/out/ferrybox.csv"
+#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
 file_name <- "ferrybox.csv"
 if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 
 print(paste0('Write result to csv file: ', save_path))
 file_path <- file.path(save_path, file_name)
 utils::write.csv(df_all, file = file_path, row.names = FALSE)
+
