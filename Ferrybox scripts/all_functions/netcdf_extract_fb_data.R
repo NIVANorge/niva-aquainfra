@@ -59,10 +59,10 @@ df_ferrybox <- function(
   }
   
   message("URL:   ", url)
-  message("TID:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
+  message("Time:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
           format(max(time_converted), "%Y-%m-%d"))
   message("PARAM: ", paste(parameters, collapse = ", "))
-  message("BBOX (fuld):  ",
+  message("BBOX:  ",
           paste(c(lon_min_default, lon_max_default,
                   lat_min_default, lat_max_default), collapse = ", "))
   
@@ -171,34 +171,23 @@ df_ferrybox <- function(
 }
 
 # -------------------------------------------------------------------
-# CLI-del – så scriptet fungerer som dit barplot-script
-# -------------------------------------------------------------------
-# Forventet argumentrækkefølge (eksempel):
-#  1: in_source           (URL til NetCDF eller sti til CSV)
-#  2: parameters_json     (JSON-liste over parametre, fx '["temp","sal"]' eller '[]' for alle)
-#  3: start_date          (fx "2023-01-01" eller "" for ingen begrænsning)
-#  4: end_date            (fx "2023-12-31" eller "" for ingen begrænsning)
-#  5: lon_min             (fx "-5" eller "" for default)
-#  6: lon_max
-#  7: lat_min
-#  8: lat_max
-#  9: out_csv_path        (fx "DATA/OUT/ferrybox_subset.csv")
-# 10: save_csv            ("TRUE" eller "FALSE")
-
 args <- commandArgs(trailingOnly = TRUE)
-
-print(paste0('R Command line args: ', args))
-source <- args[1] # e.g URL to netcdf or a csv with similar structure "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-save_path <- args[1] 
-parameters <- args[2] 
-start_date <- args[3]
-end_date  <- args[4]          
-lon_min <- args[5]  
-lon_max <- args[6]
-lat_min <- args[7]
-lat_max <- args[8]
-
-
+message("R Command line args: ", paste(args, collapse = " | "))
+if (length(args) >= 2) {
+  source <- args[1]
+  save_path <- args[2]
+  
+  #Optional parameters, if nothing is passed the script will use all available data
+  parameters<- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+  start_date<- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+  end_date<- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+  lon_min<- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
+  lon_max<- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
+  lat_min<- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+  lat_max<- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+} else {
+  stop("Provide URL source and path to save")
+}
 
 
 df_all <- df_ferrybox(
@@ -213,12 +202,10 @@ df_all <- df_ferrybox(
   )
 
 # save dataframe as csv
-#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
+#save_path <- "data/out" # e.g "data/out/ferrybox.csv"
 file_name <- "ferrybox.csv"
 if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 
 print(paste0('Write result to csv file: ', save_path))
 file_path <- file.path(save_path, file_name)
 utils::write.csv(df_all, file = file_path, row.names = FALSE)
-
-
