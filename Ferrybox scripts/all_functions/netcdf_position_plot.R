@@ -1,98 +1,37 @@
+#!/usr/bin/env Rscript
 
-# Importing the required libraries
-# (which were installed previously)
-library(dplyr)
+library(tidyverse)
 library(sf)
 library(readr)
 library(rnaturalearth)
 library(ggplot2)
-`%||%` <- function(a, b) if (is.null(a)) b else a
+library(ggspatial)
 
-as_null_if_blank <- function(x) {
-  if (is.null(x) || length(x) == 0 || is.na(x) || (is.character(x) && trimws(x) == "")) return(NULL)
-  x
-}
+`%||%` <- function(x, y) if (is.null(x) || all(is.na(x))) y else x
 
-# --- CLI args + interactive fallback -----------------------------------------
-args <- commandArgs(trailingOnly = TRUE)
-message("R Command line args: ", paste(args, collapse = " | "))
 
-if (length(args) >= 2) {
-  message("Reading CLI args...")
-  input_path      <- args[1]  # CSV with ferrybox-data
-  out_result_path <- args[2]  # folder
-  # Optional parameter
-  parameter_user_input <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+# -------------------------------------------------------------------
+# Main function: create position plot
+# -------------------------------------------------------------------
+coord_value_point_plot <- function(
+    data = NULL,
+    world_sf
+) {
   
-} else {
-  message("No CLI args detected → using defaults...")
-  input_path      <- "testresults/ferrybox_testforplot.csv"
-  out_result_path <- "data/out/ferrybox_position.png"
-  parameter_user_input <- NULL
-}  
-
-# --- read csv ----------------------------------------------------------------
-if (!file.exists(input_path)) {
-  stop("Input CSV not found: ", input_path)
-} else {
-  ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
-  parameter_available <- as.character(paste(unique(ferrybox_df$parameter)))}
-
-#--- If parameter is NULL use hardcoded/available parameters
-if (is.null(parameter_user_input)){
-  message("No parameter set passed, using hardcoded set: ", paste(parameter_available, collapse = ", "))
-  parameter <- parameter_available
-} else {
-  parameter <- parameter_user_input
-}
-
-
-# --- output-dir and filename --------------------------------------------
-is_png_target <- !is.null(out_result_path) &&
-  grepl("\\.png$", out_result_path, ignore.case = TRUE)
-
-if (is_png_target) {
-  out_dir  <- dirname(out_result_path)
-  out_name <- basename(out_result_path)
-} else {
-  out_dir  <- out_result_path %||% "data/out"
-  out_name <- NULL
-}
-
-if (!dir.exists(out_dir)) {
-  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-}
-
-# --- get world map --------------------------------------------------------
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-
-# --- Function for position plot --------------------------------------------------
-coord_value_point_plot <- function(data = ferrybox_df,
-                                   parameter = NULL,
-                                   parameter_available,
-                                   world_sf,
-                                   out_dir = NULL,
-                                   out_name = NULL,
-                                   save_png = TRUE) {
-  
-  if(is.null(parameter)){
-    parameter <- parameter_available
-    message(paste("Plotting position for:"),"\n",paste(parameter_available, collapse = ", "))
-  } else {
-    parameter <- parameter
+  if (is.null(data)) {
+    stop("Please provide valid csv file.")
   }
   
-  parameter <- tolower(parameter)
-  
-  # Filter and check data
+  # Clean lat/lon
   data_clean <- data %>%
-    filter(!is.na(latitude), !is.na(longitude))
+    filter(!is.na(latitude), !is.na(longitude)) %>%
+    distinct(latitude, longitude)
   
   if (nrow(data_clean) == 0) {
-    stop("No data available for plotting.")
+    stop("No data available for plotting after filtering latitude/longitude.")
   }
   
-  # Convert to sf
+  # Convert to sf for bbox
   data_sf <- st_as_sf(
     data_clean,
     coords = c("longitude", "latitude"),
@@ -100,78 +39,97 @@ coord_value_point_plot <- function(data = ferrybox_df,
     remove = FALSE
   )
   
-  # Bounding box
   bbox_data <- st_bbox(data_sf)
-    # --- Plot ---
+  
   p <- ggplot() +
-    geom_sf(data = world_sf, fill = "grey98", color = "grey80", size = 0.2) +
-    geom_path(data = data_clean,
-              aes(x = longitude, y = latitude),
-              color = "black", linewidth = 0.4, alpha = 0.8) +
+    geom_sf(data = world_sf, fill = "grey98", color = "grey80", linewidth = 0.2) +
+    geom_point(
+      data = data_clean,
+      aes(x = longitude, y = latitude),
+      color = "black",
+    ) +
     coord_sf(
-      xlim = c(bbox_data["xmin"] - 0.5, bbox_data["xmax"] + 0.5),
+      xlim = c(bbox_data["xmin"] - 1, bbox_data["xmax"] + 1),
       ylim = c(bbox_data["ymin"] - 0.5, bbox_data["ymax"] + 0.5),
       expand = FALSE
     ) +
     labs(
-      title = "FerryBox route for:",
-      subtitle = paste(parameter, collapse = ", "),
+      title = "Ferry Box route",
       x = "Longitude",
       y = "Latitude"
     ) +
     theme_minimal(base_size = 12) +
     theme(
       plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(size = 8, hjust = 0.5, margin = margin(b = 10)),
-      axis.text = element_text(size = 10),
+      axis.text.y = element_text(size = 10),
+      axis.text.x = element_text(size = 10, angle = 60),
       axis.title = element_text(size = 11),
       plot.margin = margin(15, 15, 15, 15)
-    )+
-    annotation_north_arrow(location = "bl",
-                           which_north = "true",
-                           style = north_arrow_fancy_orienteering) +
-    annotation_scale(location = "bl",
-                     bar_cols = c("grey60", "white"),
-                     pad_x = unit(2, "cm"), 
-                     pad_y = unit(0.5, "cm"))
-
-  
-  # --- Save file ---
-  if (isTRUE(save_png)) {
-    param_tag <- gsub("[^A-Za-z0-9_-]+", "-", parameter)
-    
-    if (is.null(out_name)) {
-      out_name <- "ferrybox_position.png"
-    }
-    
-    file_path <- file.path(out_dir, out_name)
-    
-    ggsave(
-      filename = file_path,
-      plot = p,
-      width = 18,
-      height = 22,
-      units = "cm",
-      dpi = 300,
-      bg = "white"
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "bl",
+      which_north = "true",
+      style = ggspatial::north_arrow_fancy_orienteering
+    ) +
+    ggspatial::annotation_scale(
+      location = "bl",
+      bar_cols = c("grey60", "white"),
+      pad_x = unit(2, "cm"),
+      pad_y = unit(0.5, "cm")
     )
-    
-    message("Plot saved: ", file_path)
-  }
   
   return(p)
 }
 
+# -------------------------------------------------------------------
+# CLI args
+# -------------------------------------------------------------------
+# Args order (example):
+#  1: input_csv_path   (required)
+#  2: save_path     (required) -> full file path, e.g. "data/out/ferrybox_position.png"
 
 
+args <- commandArgs(trailingOnly = TRUE)
+message("R Command line args: ", paste(args, collapse = " | "))
 
+if (length(args) < 2) {
+  stop("Provide input path to csv and output path.")
+}
+input_file  <- args[1] # csv file with data
+save_png_path <- args[2] # output folder path
+
+
+message("Reading input CSV: ", input_file)
+ferrybox_df <- readr::read_csv(input_file, show_col_types = FALSE)
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+
+# -------------------------------------------------------------------
+# Create plot
+# -------------------------------------------------------------------
 plot_obj <- coord_value_point_plot(
-  data     = ferrybox_df,
-  parameter = "salinity",
-  parameter_available,
-  world_sf  = world,
-  out_dir   = out_dir,
-  out_name  = out_name,
-  save_png  = TRUE
+  data = ferrybox_df,
+  world_sf = world
 )
+
+print(plot_obj)
+
+# -------------------------------------------------------------------
+# Save PNG
+# -------------------------------------------------------------------
+if(!dir.exists(save_png_path)) dir.create(save_png_path, recursive = TRUE)
+png_name <- "ferrybox_position.png"
+file_path <- file.path(save_png_path,png_name)
+
+message("Saving PNG to: ", file_path)
+ggsave(
+  filename = file_path,
+  plot = plot_obj,
+  width = 18,
+  height = 22,
+  units = "cm",
+  dpi = 300,
+  bg = "white"
+)
+
 
