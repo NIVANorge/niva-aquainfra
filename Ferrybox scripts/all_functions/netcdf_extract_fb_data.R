@@ -230,7 +230,7 @@ file_path <- file.path(save_path, file_name)
 print(paste0('Write result to csv file: ', file_path))
 
 utils::write.table(
-  df_combined,
+  df_all,
   file = file_path,
   sep = ",",
   row.names = FALSE,
