@@ -16,6 +16,7 @@ pak::pkg_install(c(
   "ggplot2",
   "sf",
   "rnaturalearth",
+  "rnaturalearthdata",
   "scales",
   "scico",
   "paletteer",
