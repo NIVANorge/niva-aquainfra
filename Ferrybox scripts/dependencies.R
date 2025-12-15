@@ -19,5 +19,6 @@ pak::pkg_install(c(
   "scales",
   "scico",
   "paletteer",
-  "gridExtra"
+  "gridExtra",
+  "ggspatial"
 ))
