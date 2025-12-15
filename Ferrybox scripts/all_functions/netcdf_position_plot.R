@@ -4,6 +4,7 @@ library(tidyverse)
 library(sf)
 library(readr)
 library(rnaturalearth)
+library(rnaturalearthdata)
 library(ggplot2)
 library(ggspatial)
 
