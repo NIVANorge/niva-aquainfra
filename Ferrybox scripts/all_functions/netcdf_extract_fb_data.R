@@ -229,6 +229,14 @@ if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 file_path <- file.path(save_path, file_name)
 print(paste0('Write result to csv file: ', file_path))
 
-utils::write.csv(df_all, file = file_path, row.names = FALSE, append = FALSE)
+utils::write.table(
+  df_combined,
+  file = file_path,
+  sep = ",",
+  row.names = FALSE,
+  col.names = TRUE,
+  quote = TRUE,
+  append = FALSE
+)
 
 
