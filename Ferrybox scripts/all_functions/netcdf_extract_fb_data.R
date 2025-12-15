@@ -229,6 +229,6 @@ if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 file_path <- file.path(save_path, file_name)
 print(paste0('Write result to csv file: ', file_path))
 
-utils::write.csv(df_all, file = file_path, row.names = FALSE, append = FALSE))
+utils::write.csv(df_all, file = file_path, row.names = FALSE, append = FALSE)
 
 
