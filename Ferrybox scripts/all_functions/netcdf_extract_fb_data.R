@@ -223,12 +223,12 @@ df_all <- df_ferrybox(
   lat_max     = lat_max,
   )
 
-# save dataframe as csv
-#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
 file_name <- "ferrybox.csv"
 if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 
-print(paste0('Write result to csv file: ', save_path))
 file_path <- file.path(save_path, file_name)
-utils::write.csv(df_all, file = file_path, row.names = FALSE)
+print(paste0('Write result to csv file: ', file_path))
+
+utils::write.csv(df_all, file = file_path, row.names = FALSE, append = FALSE))
+
 
