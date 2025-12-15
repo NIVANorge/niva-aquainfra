@@ -1,95 +1,45 @@
-### Scatter parameter plot 
-library("rnaturalearth")
-library("sf")
-library("ggplot2")
-library("dplyr")
-library("readr")
+#!/usr/bin/env Rscript
 
+library(tidyverse)
+library(readr)
+library(ggplot2)
 
-# --- Load required packages (installeres typisk via dependencies.R i Docker) --
-required_packages <- c("tidyverse", "ggplot2")
-new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
-if (length(new_packages)) install.packages(new_packages)
-invisible(lapply(required_packages, function(p)
-  suppressPackageStartupMessages(library(p, character.only = TRUE))))
-
-# --- Helpers -----------------------------------------------------------------
-`%||%` <- function(a, b) if (is.null(a)) b else a
+`%||%` <- function(x, y) if (is.null(x) || all(is.na(x))) y else x
 
 as_null_if_blank <- function(x) {
-  if (is.null(x) || length(x) == 0 || is.na(x) || (is.character(x) && trimws(x) == "")) return(NULL)
-  x
+  if (is.null(x)) return(NULL)
+  x <- trimws(x)
+  if (!nzchar(x) || tolower(x) == "null") NULL else x
 }
 
-# --- CLI args + interactive fallback -----------------------------------------
-args <- commandArgs(trailingOnly = TRUE)
-message("R Command line args: ", paste(args, collapse = " | "))
-
-if (length(args) >= 4) {
-  message("Reading CLI args...")
-  input_path      <- args[1]  # CSV with ferrybox-data
-  out_result_path <- args[2]  # folder
-  parameter_x <- args[3]
-  parameter_y <- args[4]
-  
-  
-} else {
-  message("No CLI args detected → using defaults...")
-  input_path      <- "testresults/ferrybox_testforplot.csv"
-  out_result_path <- "data/out"
-  parameter_x <- "salinity" # example parameter  
-  parameter_y <- "chlorophyll" # example parameter
-}
-
-# --- read ----------------------------------------------------------------
-if (!file.exists(input_path)) {
-  stop("Input CSV not found: ", input_path)
-}
-
-ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
-
-param_available <- unique(ferrybox_df$parameter)
-message("Parameters available in data: ", paste(param_available, collapse = ", "))
-
-
-# --- output-dir and filename --------------------------------------------
-# is_png_target <- !is.null(out_result_path) &&
-#   grepl("\\.png$", out_result_path, ignore.case = TRUE)
-# 
-# if (is_png_target) {
-#   out_dir  <- dirname(out_result_path)
-#   out_name <- basename(out_result_path)
-# } else {
-#   out_dir  <- out_result_path %||% "data/out"
-#   out_name <- NULL
-# }
-# 
-# if (!dir.exists(out_dir)) {
-#   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-}
-
-# --- Function for scatter plot --------------------------------------------------
-scatter_plot <- function(data        = ferrybox_df,
-                         parameter_x = NULL,
-                         parameter_y = NULL,
-                         out_dir = out_result_path,
-                         save_png    = TRUE) {
-  
-  # Check input parameters
+# -------------------------------------------------------------------
+# Main function: build scatter plot between two parameters
+# -------------------------------------------------------------------
+scatter_parameter_plot <- function(
+    data,
+    parameter_x,
+    parameter_y
+) {
   if (is.null(parameter_x) || is.null(parameter_y)) {
-    stop(
-      "Specify two parameters to plot.\nAvailable parameters: ",
-      paste(unique(data$parameter), collapse = ", ")
-    )
+    stop("Both parameter_x and parameter_y must be specified.")
   }
   
-  # convert to lower case
+  # Normalize parameter names
   parameter_x <- tolower(parameter_x)
   parameter_y <- tolower(parameter_y)
   
-  params_available <- unique(tolower(data$parameter))
-  missing_params <- setdiff(c(parameter_x, parameter_y), params_available)
+ 
+  # Ensure datetime + month exist
+  data <- data %>%
+    mutate(
+      datetime = as.POSIXct(datetime, tz = "UTC"),
+      month = lubridate::month(datetime),
+      month_label = factor(month.name[month], levels = month.name),
+      parameter = tolower(parameter)
+    )
   
+  params_available <- unique(data$parameter)
+  missing_params <- setdiff(c(parameter_x, parameter_y), params_available)
   if (length(missing_params) > 0) {
     stop(
       "The following parameter(s) are not available in data: ",
@@ -99,44 +49,31 @@ scatter_plot <- function(data        = ferrybox_df,
     )
   }
   
-  #Units for specified parameters
-  unit_x <- unique(data[data$parameter == parameter_x,]$unit)
+  # Units (optional columns)
+  unit_x <- if ("unit" %in% names(data)) unique(data$unit[data$parameter == parameter_x]) else NA
+  unit_y <- if ("unit" %in% names(data)) unique(data$unit[data$parameter == parameter_y]) else NA
+  unit_x <- unit_x[!is.na(unit_x)][1] %||% ""
+  unit_y <- unit_y[!is.na(unit_y)][1] %||% ""
   
-  unit_y <- unique(data[data$parameter == parameter_y,]$unit)
-  
-  # convert data to wide format for scatter plot
+  # Wide format for scatter plot
   data_wide <- data %>%
-    dplyr::mutate(parameter = tolower(parameter),
-                  datetime = as.Date(datetime)) %>%
-    mutate(month_charachter = factor(month.name[month], levels = month.name)) %>%
-    dplyr::filter(parameter %in% c(parameter_x, parameter_y)) %>%
-    dplyr::select(datetime,month_charachter, latitude, longitude, parameter, value) %>%
-    tidyr::pivot_wider(
-      names_from  = parameter,
-      values_from = value
-    ) %>%
-    dplyr::filter(
-      !is.na(.data[[parameter_x]]),
-      !is.na(.data[[parameter_y]])
-    )
+    filter(parameter %in% c(parameter_x, parameter_y))  %>%
+    select(datetime, month_label, latitude, longitude, parameter, value)  %>%
+    tidyr::pivot_wider(names_from = parameter, values_from = value)  %>%
+    filter(!is.na(.data[[parameter_x]]), !is.na(.data[[parameter_y]]))
   
-  if (nrow(data_wide) == 0) {
-    stop("No overlapping data for the chosen parameters (after NA filtering).")
-  }
+  # Labels
+  x_lab <- if (nzchar(unit_x)) paste0(parameter_x, " [", unit_x, "]") else parameter_x
+  y_lab <- if (nzchar(unit_y)) paste0(parameter_y, " [", unit_y, "]") else parameter_y
   
-  # 
-  label_x <- parameter_x
-  label_y <- parameter_y
-  
-  # --- create scatterplot --------------------------------------------------------
   p <- ggplot(data_wide, aes(x = .data[[parameter_x]], y = .data[[parameter_y]])) +
     geom_point(alpha = 0.4, size = 0.7) +
     theme_minimal(base_size = 12) +
     labs(
-      title = paste("Scatterplot of", label_y, "vs", label_x),
-      subtitle = paste("From", min(data_wide$datetime),"to", max(data_wide$datetime), sep = " "),
-      x = paste(label_x , "[",unit_x,"]", sep = ""),
-      y = paste(label_y , "[",unit_y,"]", sep = "")
+      title = paste("Scatterplot of", parameter_y, "vs", parameter_x),
+      subtitle = paste("From", min(as.Date(data_wide$datetime)), "to", max(as.Date(data_wide$datetime))),
+      x = x_lab,
+      y = y_lab
     ) +
     theme(
       plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -144,42 +81,65 @@ scatter_plot <- function(data        = ferrybox_df,
       axis.text     = element_text(size = 10),
       axis.title    = element_text(size = 11),
       plot.margin   = margin(12, 12, 12, 12)
-    )+
-    facet_wrap(~month_charachter, scales = "free_y")
-  
-  # --- save as PNG ------------------------------------------------------------
-  if (isTRUE(save_png)) {
-    # save png with parameter names
-    tag_x  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_x)
-    tag_y  <- gsub("[^A-Za-z0-9_-]+", "-", parameter_y)
-    out_name <- sprintf("ferrybox_scatter_%s_vs_%s.png", tag_y, tag_x)
-    file_path <- file.path(out_dir, out_name)
-  
-    ggplot2::ggsave(
-      filename = file_path,
-      plot     = p,
-      width    = 16,
-      height   = 12,
-      units    = "cm",
-      dpi      = 300,
-      bg       = "white"
-    )
-    
-    message("Scatterplot saved as PNG: ", file_path)
-    attr(p, "saved_png_path") <- file_path
-} else {
-  message("To save as PNG, set save_png=TRUE.")
-}
+    ) +
+    facet_wrap(~month_label, scales = "free_y")
   
   return(p)
 }
 
+# -------------------------------------------------------------------
+# CLI args (matches style of script #2)
+# -------------------------------------------------------------------
+# Args order (example):
+#  1: input_csv_path   (required)
+#  2: out_png_path     (required) -> full file path, e.g. "data/out/ferrybox_scatter.png"
+#  3: parameter_x      (required) -> e.g. "salinity"
+#  4: parameter_y      (required) -> e.g. "chlorophyll"
 
 
-plot_obj <- scatter_plot(
-  data        = ferrybox_df,
-  parameter_x = "salinity",
-  parameter_y = "chlorophyll",
-  save_png    = TRUE
+args <- commandArgs(trailingOnly = TRUE)
+message("R Command line args: ", paste(args, collapse = " | "))
+
+if (length(args) < 4) {
+  stop("Provide input_csv_path, out_png_path, parameter_x, parameter_y.")
+}
+
+input_path  <- args[1]
+out_png_path <- args[2]
+parameter_x <- args[3]
+parameter_y <- args[4]
+
+
+if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+
+message("Reading input CSV: ", input_path)
+ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
+
+# -------------------------------------------------------------------
+# Create plot + save PNG
+# -------------------------------------------------------------------
+plot_obj <- scatter_parameter_plot(
+  data = ferrybox_df,
+  parameter_x = parameter_x,
+  parameter_y = parameter_y
 )
 
+# Show plot in interactive sessions (RStudio, interactive VS Code)
+if (interactive()) {
+  print(plot_obj)
+}
+
+if(!dir.exists(save_png_path)) dir.create(save_png_path, recursive = TRUE)
+png_name <- "scatterplot.png"
+file_path <- file.path(out_png_path, png_name)
+message("Saving PNG to: ", file_path)
+
+ggsave(
+  filename = file_path,
+  plot = plot_obj,
+  width = 18,
+  height = 22,
+  units = "cm",
+  dpi = 300,
+  bg = "white"
+)
