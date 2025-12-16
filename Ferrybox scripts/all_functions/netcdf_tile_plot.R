@@ -9,9 +9,16 @@ library(gridExtra)
 
 as_null_if_blank <- function(x) {
   if (is.null(x)) return(NULL)
-  x <- trimws(x)
-  if (!nzchar(x) || tolower(x) == "null") NULL else x
+  if (!is.atomic(x) && !is.character(x)) return(x)  # don't is.na() environments etc.
+  if (length(x) == 0) return(NULL)
+  if (length(x) == 1 && is.na(x)) return(NULL)
+  if (is.character(x)) {
+    x <- trimws(x)
+    if (!nzchar(x) || tolower(x) == "null") return(NULL)
+  }
+  x
 }
+
 
 parse_parameters <- function(x) {
   x <- as_null_if_blank(x)
