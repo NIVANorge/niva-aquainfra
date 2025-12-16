@@ -98,6 +98,11 @@ tile_plot <- function(
     stop("No data left after filtering (dates/latitude/parameters).")
   }
   
+  #Set date_break for plotting according to time specified
+  date_break_plot <- if(as.numeric(difftime( strptime(end_date, format = "%Y-%m-%d"), 
+                             strptime(start_date, format = "%Y-%m-%d"),
+                             units = "days")) > 40) "1 month" else "1 days"
+  date_labels_plot <- if(date_break_plot == "1 month") "%y-%b" else "%y-%m-%d"
   # Color scales per parameter (fallback to viridis)
   color_scales <- list(
     salinity     = paletteer::scale_fill_paletteer_c("viridis::viridis", direction = -1, name = "PSU"),
@@ -114,7 +119,7 @@ tile_plot <- function(
     ggplot(df_p, aes(x = Date, y = lat_group, fill = value)) +
       geom_tile() +
       (color_scales[[p]] %||% scale_fill_viridis_c()) +
-      scale_x_date(date_breaks = "1 month", date_labels = "%y-%b") +
+      scale_x_date(date_breaks = date_break_plot, date_labels = date_labels_plot) +
       labs(
         title = paste("FerryBox –", stringr::str_to_title(p)),
         x = "Date",
@@ -127,7 +132,7 @@ tile_plot <- function(
       ) +
       {if (!is.null(storm_date)) geom_vline(xintercept = as.Date(storm_date), linetype = "dashed") else NULL}
   })
-  
+    
   # For >1 plot we return a grob (grid.arrange output)
   final_plot <- if (length(plot_list) == 1) {
     plot_list[[1]]
