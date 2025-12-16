@@ -146,7 +146,7 @@ if (length(args) < 2) {
 }
 
 input_path   <- args[1]
-out_png_path <- args[2]
+save_png_path <- args[2]
 
 start_date <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 end_date   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
@@ -178,11 +178,13 @@ final_plot <- tile_plot(
 # Show plot only in interactive sessions
 if (interactive()) print(final_plot)
 
-dir.create(dirname(out_png_path), recursive = TRUE, showWarnings = FALSE)
-message("Saving PNG to: ", out_png_path)
+dir.create(dirname(save_png_path), recursive = TRUE, showWarnings = FALSE)
+png_name <- "ferrybox_tile.png"
+file_path <- file.path(save_png_path,png_name)
+message("Saving PNG to: ", file_path)
 
 ggsave(
-  filename = out_png_path,
+  filename = file_path,
   plot = final_plot,
   width = 18,
   height = 22,
@@ -190,6 +192,4 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
-
-message("Plot saved: ", out_png_path)
 
