@@ -5,7 +5,13 @@ library(paletteer)
 library(scico)
 library(gridExtra)
 
-`%||%` <- function(x, y) if (is.null(x) || all(is.na(x))) y else x
+
+`%||%` <- function(x, y) {
+  if (is.null(x)) return(y)
+  if (length(x) == 0) return(y)
+  x
+}
+
 
 as_null_if_blank <- function(x) {
   if (is.null(x)) return(NULL)
