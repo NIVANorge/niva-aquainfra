@@ -216,7 +216,7 @@ df_all <- df_ferrybox(
   lon_min     = lon_min,
   lon_max     = lon_max,
   lat_min     = lat_min,
-  lat_max     = lat_max,
+  lat_max     = lat_max
   )
 
 # save dataframe as csv
