@@ -20,9 +20,7 @@ df_ferrybox <- function(
     lon_min         = NULL,
     lon_max         = NULL,
     lat_min         = NULL,
-    lat_max         = NULL,
-    save_csv        = FALSE,
-    out_csv_path    = NULL
+    lat_max         = NULL
 ) {
   
   # ------------------------------------------------------------
@@ -36,7 +34,7 @@ df_ferrybox <- function(
   )
   on.exit(try(nc_close(fb_nc), silent = TRUE), add = TRUE)
   
-  # --- Tid ------------------------------------------------------
+  # --- Time------------------------------------------------------
   time_raw       <- ncvar_get(fb_nc, "time")
   time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
   
@@ -59,7 +57,7 @@ df_ferrybox <- function(
   }
   
   message("URL:   ", url)
-  message("Time:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
+  message("TIME:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
           format(max(time_converted), "%Y-%m-%d"))
   message("PARAM: ", paste(parameters, collapse = ", "))
   message("BBOX:  ",
@@ -96,7 +94,7 @@ df_ferrybox <- function(
   
   time_index <- get_time_index(start_date, end_date)
   
-  # --- Tjek parametre ------------------------------------------
+  # --- check parameters ------------------------------------------
   invalid_params <- setdiff(parameters, param_vars)
   if (length(invalid_params)) {
     stop(
@@ -105,14 +103,14 @@ df_ferrybox <- function(
     )
   }
   
-  # --- Udtræk basis lat/lon + tid (subset på time_index) -------
+  
   lat_all <- ncvar_get(fb_nc, "latitude")
   lon_all <- ncvar_get(fb_nc, "longitude")
   lat  <- lat_all[time_index]
   lon  <- lon_all[time_index]
   time <- time_converted[time_index]
   
-  # --- Bounding box håndtering ---------------------------------
+  # --- Bounding box ---------------------------------
   if (all(is.null(c(lon_min, lon_max, lat_min, lat_max)))) {
     lon_min <- min(lon, na.rm = TRUE); lon_max <- max(lon, na.rm = TRUE)
     lat_min <- min(lat, na.rm = TRUE); lat_max <- max(lat, na.rm = TRUE)
@@ -142,24 +140,24 @@ df_ferrybox <- function(
       value     = x,
       unit      = unit,
       parameter = param
-    ) |>
+    ) %>%
       filter(!is.na(value))
   }
   
   # --- combine parameter --------------------------------------
-  df_combined <- purrr::map(parameters, read_param) |>
-    bind_rows() |>
+  df_combined <- purrr::map(parameters, read_param) %>%
+    bind_rows() %>%
     mutate(
       year    = year(datetime),
       month   = month(datetime),
       day     = day(datetime),
       hour    = hour(datetime),
       minute  = minute(datetime)
-    ) |>
+    ) %>%
     filter(
       between(longitude, lon_min, lon_max),
       between(latitude,  lat_min, lat_max)
-    ) |>
+    ) %>%
     mutate(
       lon_min = as.numeric(lon_min),
       lon_max = as.numeric(lon_max),
@@ -208,9 +206,7 @@ lat_min <- if (!is.null(lat_min)) as.numeric(lat_min) else NULL
 lat_max <- if (!is.null(lat_max)) as.numeric(lat_max) else NULL
 
 
-# e.g URL to netcdf or a csv with similar structure "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
-
-
+# e.g URL to netcdf  "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc"
 
 df_all <- df_ferrybox(
   source      = source,
@@ -223,6 +219,8 @@ df_all <- df_ferrybox(
   lat_max     = lat_max,
   )
 
+# save dataframe as csv
+#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
 file_name <- "ferrybox.csv"
 if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 
@@ -230,7 +228,7 @@ file_path <- file.path(save_path, file_name)
 print(paste0('Write result to csv file: ', file_path))
 
 utils::write.table(
-  df_all,
+  df_combined,
   file = file_path,
   sep = ",",
   row.names = FALSE,
@@ -238,5 +236,3 @@ utils::write.table(
   quote = TRUE,
   append = FALSE
 )
-
-
