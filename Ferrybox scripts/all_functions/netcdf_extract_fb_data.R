@@ -219,16 +219,19 @@ df_all <- df_ferrybox(
   lat_max     = lat_max
   )
 
-# save dataframe as csv
-#save_path <- "data/out" # e.g "DATA/OUT/ferrybox.csv"
-file_name <- "ferrybox.csv"
-if(!dir.exists(save_path)) dir.create(save_path, recursive = TRUE)
 
-file_path <- file.path(save_path, file_name)
+if (grepl("\\.csv$", save_path, ignore.case = TRUE)) {
+  file_path <- save_path
+  dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+} else {
+  dir.create(save_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_path, "ferrybox.csv")
+}
+
 print(paste0('Write result to csv file: ', file_path))
 
 utils::write.table(
-  df_combined,
+  df_all,
   file = file_path,
   sep = ",",
   row.names = FALSE,
