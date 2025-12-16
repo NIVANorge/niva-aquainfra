@@ -105,7 +105,7 @@ if (length(args) < 4) {
 }
 
 input_path  <- args[1]
-out_png_path <- args[2]
+save_png_path  <- args[2]
 parameter_x <- args[3]
 parameter_y <- args[4]
 
@@ -131,7 +131,7 @@ if (interactive()) {
 
 if(!dir.exists(save_png_path)) dir.create(save_png_path, recursive = TRUE)
 png_name <- "scatterplot.png"
-file_path <- file.path(out_png_path, png_name)
+file_path <- file.path(save_png_path , png_name)
 message("Saving PNG to: ", file_path)
 
 ggsave(
