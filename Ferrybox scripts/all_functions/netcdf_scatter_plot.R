@@ -101,7 +101,7 @@ args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
 if (length(args) < 4) {
-  stop("Provide input_csv_path, out_png_path, parameter_x, parameter_y.")
+  stop("Provide input_csv_path, save_png_path, parameter_x, parameter_y.")
 }
 
 input_path  <- args[1]
