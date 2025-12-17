@@ -129,10 +129,15 @@ if (interactive()) {
   print(plot_obj)
 }
 
-if(!dir.exists(save_png_path)) dir.create(save_png_path, recursive = TRUE)
-png_name <- "scatterplot.png"
-file_path <- file.path(save_png_path , png_name)
-message("Saving PNG to: ", file_path)
+
+# If .png name is pased in save_path using that as saving name else default "scatterplot.png" is used. 
+if (grepl("\\.csv$", save_png_path, ignore.case = TRUE)) {
+  file_path <- save_png_path
+  dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+} else {
+  dir.create(save_png_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_png_path, "scatterplot.png")
+}
 
 ggsave(
   filename = file_path,
