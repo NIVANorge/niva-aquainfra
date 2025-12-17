@@ -131,7 +131,7 @@ if (interactive()) {
 
 
 # If .png name is pased in save_path using that as saving name else default "scatterplot.png" is used. 
-if (grepl("\\.csv$", save_png_path, ignore.case = TRUE)) {
+if (grepl("\\.png$", save_png_path, ignore.case = TRUE)) {
   file_path <- save_png_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
 } else {
