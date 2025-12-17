@@ -97,7 +97,7 @@ if (length(args) < 2) {
   stop("Provide input path to csv and output path.")
 }
 input_file  <- args[1] # csv file with data
-save_png_path <- args[2] # output folder path
+save_path <- args[2] # output folder path
 
 
 message("Reading input CSV: ", input_file)
@@ -120,12 +120,12 @@ print(plot_obj)
 # -------------------------------------------------------------------
 
 # If .png name is pased in save_path using that as saving name else default "ferrybox_position.png" is used. 
-if (grepl("\\.png$", save_png_path, ignore.case = TRUE)) {
-  file_path <- save_png_path
+if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
+  file_path <- save_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
 } else {
-  dir.create(save_png_path, recursive = TRUE, showWarnings = FALSE)
-  file_path <- file.path(save_png_path, "ferrybox_position.png")
+  dir.create(save_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_path, "ferrybox_position.png")
 }
 
 
