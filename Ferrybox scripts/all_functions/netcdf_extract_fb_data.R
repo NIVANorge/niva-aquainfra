@@ -209,7 +209,7 @@ df_all <- df_ferrybox(
   lat_max     = lat_max
   )
 
-
+# If .csv name is pased in save_path using that as saving name else default "ferrybox.csv" is used. 
 if (grepl("\\.csv$", save_path, ignore.case = TRUE)) {
   file_path <- save_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
