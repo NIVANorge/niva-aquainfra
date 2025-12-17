@@ -10,7 +10,7 @@ library(data.table)
 }
 
 # -------------------------------------------------------------------
-# Main function which reads the ferrybox data from URL or CSV
+# Main function which reads the ferrybox data from URL
 # -------------------------------------------------------------------
 df_ferrybox <- function(
     source,                   
@@ -39,12 +39,9 @@ df_ferrybox <- function(
   time_converted <- as.POSIXct(time_raw, origin = "1970-01-01", tz = "UTC")
   
   # --- Standard bounding box ----------
-  lon_all_all <- ncvar_get(fb_nc, "longitude")
-  lat_all_all <- ncvar_get(fb_nc, "latitude")
-  lon_min_default <- min(lon_all_all, na.rm = TRUE)
-  lon_max_default <- max(lon_all_all, na.rm = TRUE)
-  lat_min_default <- min(lat_all_all, na.rm = TRUE)
-  lat_max_default <- max(lat_all_all, na.rm = TRUE)
+  lon_all <- ncvar_get(fb_nc, "longitude")
+  lat_all <- ncvar_get(fb_nc, "latitude")
+
   
   # --- Variables -----------------------------------------------
   all_vars   <- names(fb_nc$var)
@@ -57,12 +54,10 @@ df_ferrybox <- function(
   }
   
   message("URL:   ", url)
-  message("TIME:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
+  message("Full period:   ", format(min(time_converted), "%Y-%m-%d"), " → ",
           format(max(time_converted), "%Y-%m-%d"))
-  message("PARAM: ", paste(parameters, collapse = ", "))
-  message("BBOX:  ",
-          paste(c(lon_min_default, lon_max_default,
-                  lat_min_default, lat_max_default), collapse = ", "))
+  message("Parameters: ", paste(parameters, collapse = ", "))
+ 
   
   # --- Time index helper function ---------------------------
   get_time_index <- function(start_date = NULL, end_date = NULL) {
@@ -103,26 +98,28 @@ df_ferrybox <- function(
     )
   }
   
-  
-  lat_all <- ncvar_get(fb_nc, "latitude")
-  lon_all <- ncvar_get(fb_nc, "longitude")
-  lat  <- lat_all[time_index]
-  lon  <- lon_all[time_index]
+  lon_all_all <- ncvar_get(fb_nc, "longitude")
+  lat_all_all <- ncvar_get(fb_nc, "latitude")
+  lat  <- lat_all_all[time_index]
+  lon  <- lon_all_all[time_index]
   time <- time_converted[time_index]
   
-  # --- Bounding box ---------------------------------
-  if (all(is.null(c(lon_min, lon_max, lat_min, lat_max)))) {
-    lon_min <- min(lon, na.rm = TRUE); lon_max <- max(lon, na.rm = TRUE)
-    lat_min <- min(lat, na.rm = TRUE); lat_max <- max(lat, na.rm = TRUE)
-  }
+  # --- Bounding box ----
+  # If NULL is parsed use default value
+  if (is.null(lon_min)) lon_min <- min(lon, na.rm = TRUE)
+  if (is.null(lon_max)) lon_max <- max(lon, na.rm = TRUE)
+  if (is.null(lat_min)) lat_min <- min(lat, na.rm = TRUE)
+  if (is.null(lat_max)) lat_max <- max(lat, na.rm = TRUE)
   
-  if (lon_min != min(lon, na.rm = TRUE)  | lon_max != max(lon, na.rm = TRUE) |
-      lat_min != min(lat, na.rm = TRUE) | lat_max != max(lat, na.rm = TRUE)) {
-    message(
-      "Applied coordinates are not within assessment area.\n",
-      "lon: ", min(lon, na.rm = TRUE), " – ", max(lon, na.rm = TRUE),
-      "\nlat: ", min(lat, na.rm = TRUE), " – ", max(lat, na.rm = TRUE))
-  }
+  # Return message with lat/lon extracted (what was available)
+  lon_min_available <- min(lon, na.rm = TRUE)
+  lon_max_available <- max(lon, na.rm = TRUE)
+  lat_min_available <- min(lat, na.rm = TRUE)
+  lat_max_available <- max(lat, na.rm = TRUE)
+  
+  message("Data available in BBOX:  ",
+          paste(c(lon_min_available, lon_max_available,
+                  lat_min_available, lat_max_available), collapse = ", "))
   
   # --- Read parameter ------------------------------------
   read_param <- function(param) {
@@ -157,17 +154,10 @@ df_ferrybox <- function(
     filter(
       between(longitude, lon_min, lon_max),
       between(latitude,  lat_min, lat_max)
-    ) %>%
-    mutate(
-      lon_min = as.numeric(lon_min),
-      lon_max = as.numeric(lon_max),
-      lat_min = as.numeric(lat_min),
-      lat_max = as.numeric(lat_max)
-    )
+    ) 
   
   return(df_combined)
 }
-
 # -------------------------------------------------------------------
 as_null_if_blank <- function(x) {
   if (is.null(x)) return(NULL)
