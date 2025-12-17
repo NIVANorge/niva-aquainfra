@@ -59,7 +59,7 @@ CMD []
 #  -e 'SCRIPT=netcdf_position_plot.R' \
 #  ferry-rscripts:${today} \
 #  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
-#  'data/out' \ # # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
+#  'data/out' \ # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
 
 
 # Example run command:
@@ -69,9 +69,9 @@ CMD []
 #  -e 'SCRIPT=netcdf_position_plot.R' \
 #  ferry-rscripts:${today} \
 #  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
-#  'data/out' \ # # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-#  'chlorophyll' \ 
-# 'salinity' 
+#  'data/out' \ # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
+#  'chlorophyll' \ # example parameter
+# 'salinity'  # example parameter
 
 
 
@@ -81,12 +81,12 @@ CMD []
 #  -v './testresults:/out:rw' \
 #  -e 'SCRIPT=netcdf_tile_plot.R' \
 #  ferry-rscripts:${today} \
-#  'folder_path_to_csv' \
-#  'data/out' \
-#  '2023-01-01' \ 
-#  '2023-12-31' \ 
-#  'temperature,salinity,chlorophyll' \ 
-#  'null' 'null'
-#  '2023-08-08'
+#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
+#  'data/out' \  # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
+#  '2023-01-01' \ # Dates to plot
+#  '2023-12-31' \ #Dates to plot
+#  'salinity,chlorophyll' \  #example parameters
+#  'null' 'null' # Latitude to plot if desired
+#  '2023-08-08' # Storm date, can be null
 
 
