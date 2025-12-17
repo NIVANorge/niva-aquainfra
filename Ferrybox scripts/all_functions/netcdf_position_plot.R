@@ -118,9 +118,16 @@ print(plot_obj)
 # -------------------------------------------------------------------
 # Save PNG
 # -------------------------------------------------------------------
-if(!dir.exists(save_png_path)) dir.create(save_png_path, recursive = TRUE)
-png_name <- "ferrybox_position.png"
-file_path <- file.path(save_png_path,png_name)
+
+# If .png name is pased in save_path using that as saving name else default "ferrybox_position.png" is used. 
+if (grepl("\\.csv$", save_png_path, ignore.case = TRUE)) {
+  file_path <- save_png_path
+  dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+} else {
+  dir.create(save_png_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_png_path, "ferrybox_position.png")
+}
+
 
 message("Saving PNG to: ", file_path)
 ggsave(
