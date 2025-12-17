@@ -196,9 +196,15 @@ final_plot <- tile_plot(
 # Show plot only in interactive sessions
 if (interactive()) print(final_plot)
 
-dir.create(dirname(save_png_path), recursive = TRUE, showWarnings = FALSE)
-png_name <- "ferrybox_tile.png"
-file_path <- file.path(save_png_path,png_name)
+# If .csv name is pased in save_path using that as saving name else default "ferrybox_tile.png" is used. 
+if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
+  file_path <- save_path
+  dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+} else {
+  dir.create(save_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_path, "ferrybox_tile.png")
+}
+  
 message("Saving PNG to: ", file_path)
 
 ggsave(
