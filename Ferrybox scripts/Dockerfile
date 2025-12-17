@@ -46,10 +46,10 @@ CMD []
 #  -e 'SCRIPT=netcdf_extract_save_fb.R' \
 #  ferry-rscripts:${today} \
 #  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
-#  '/out/ferrybox.csv' \
+#  '/out/data' \ # If only path is parsed saving as "ferrybox.csv". Alternative specify filename e.g "/out/data/ferrybox.csv"
 #  '2023-01-01' \
 #  '2023-12-31' \
-#  'temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom' \
+#  'temperature,salinity,chlorophyll,turbidity' \
 #  'null' 'null' 'null' 'null'
 
 # Example run command:
@@ -58,9 +58,8 @@ CMD []
 #  -v './testresults:/out:rw' \
 #  -e 'SCRIPT=netcdf_position_plot.R' \
 #  ferry-rscripts:${today} \
-#  '/testresults/ferrybox_testforplot.csv' \
-#  'data/out/ferrybox_position.png' \
-#  'null' 
+#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
+#  'data/out' \ # # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
 
 
 # Example run command:
@@ -69,8 +68,8 @@ CMD []
 #  -v './testresults:/out:rw' \
 #  -e 'SCRIPT=netcdf_position_plot.R' \
 #  ferry-rscripts:${today} \
-#  '/testresults/ferrybox_testforplot.csv' \
-#  'data/out' \
+#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
+#  'data/out' \ # # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
 #  'chlorophyll' \ 
 # 'salinity' 
 
