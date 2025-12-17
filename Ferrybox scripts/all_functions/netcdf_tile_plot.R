@@ -148,7 +148,7 @@ tile_plot <- function(
 # -------------------------------------------------------------------
 # Args order:
 #  1: input_csv_path   (required)
-#  2: out_png_path     (required) full file path, e.g. "/out/ferrybox_tile.png"
+#  2: save_path     (required) path to folder or full file path e.g  "/out" or "/out/ferrybox_tile.png"
 #  3: start_date       (optional) "YYYY-MM-DD" or "null"
 #  4: end_date         (optional) "YYYY-MM-DD" or "null"
 #  5: parameters       (optional) "salinity,chlorophyll" or "null"
@@ -164,7 +164,7 @@ if (length(args) < 2) {
 }
 
 input_path   <- args[1]
-save_png_path <- args[2]
+save_path <- args[2]
 
 start_date <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 end_date   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
