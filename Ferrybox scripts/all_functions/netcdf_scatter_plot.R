@@ -101,11 +101,11 @@ args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
 if (length(args) < 4) {
-  stop("Provide input_csv_path, save_png_path, parameter_x, parameter_y.")
+  stop("Provide input_csv_path, save_path, parameter_x, parameter_y.")
 }
 
 input_path  <- args[1]
-save_png_path  <- args[2]
+save_path  <- args[2]
 parameter_x <- args[3]
 parameter_y <- args[4]
 
@@ -131,12 +131,12 @@ if (interactive()) {
 
 
 # If .png name is pased in save_path using that as saving name else default "scatterplot.png" is used. 
-if (grepl("\\.png$", save_png_path, ignore.case = TRUE)) {
-  file_path <- save_png_path
+if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
+  file_path <- save_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
 } else {
-  dir.create(save_png_path, recursive = TRUE, showWarnings = FALSE)
-  file_path <- file.path(save_png_path, "scatterplot.png")
+  dir.create(save_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_path, "scatterplot.png")
 }
 
 ggsave(
