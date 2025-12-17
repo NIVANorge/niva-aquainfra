@@ -21,5 +21,6 @@ pak::pkg_install(c(
   "scico",
   "paletteer",
   "gridExtra",
-  "ggspatial"
+  "ggspatial",
+  "lubridate"
 ))
