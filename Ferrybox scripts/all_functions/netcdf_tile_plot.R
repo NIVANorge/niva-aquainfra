@@ -45,18 +45,17 @@ tile_plot <- function(
     lat_max    = NULL,
     storm_date = NULL
 ) {
-  if (!"datetime" %in% names(data)) stop("Input data must contain 'datetime'.")
-  if (!"latitude" %in% names(data)) stop("Input data must contain 'latitude'.")
-  if (!"parameter" %in% names(data)) stop("Input data must contain 'parameter'.")
-  if (!"value" %in% names(data)) stop("Input data must contain 'value'.")
   
   # Normalize
   data <- data %>%
+    group_by(longitude, latitude, unit, parameter,datetime, year,month,day) %>%
+    summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
     mutate(
       datetime = as.POSIXct(datetime, tz = "UTC"),
       Date = as.Date(datetime),
       parameter = tolower(parameter)
-    )
+    ) 
+   
   
   available <- unique(data$parameter)
   
@@ -101,9 +100,9 @@ tile_plot <- function(
   
   #Set date_break for plotting according to time specified
   date_break_plot <- if(as.numeric(difftime( strptime(end_date, format = "%Y-%m-%d"), 
-                             strptime(start_date, format = "%Y-%m-%d"),
-                             units = "days")) > 40) "1 month" else "1 days"
-  date_labels_plot <- if(date_break_plot == "1 month") "%y-%b" else "%y-%m-%d"
+                                             strptime(start_date, format = "%Y-%m-%d"),
+                                             units = "days")) > 40) "1 week" else "1 days"
+  date_labels_plot <-"%y-%m-%d"
   # Color scales per parameter (fallback to viridis)
   color_scales <- list(
     salinity     = paletteer::scale_fill_paletteer_c("viridis::viridis", direction = -1, name = "PSU"),
@@ -128,12 +127,12 @@ tile_plot <- function(
       ) +
       theme_minimal(base_size = 12) +
       theme(
-        axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.x = element_text(angle = 60, hjust = 1),
         plot.title  = element_text(size = 15, face = "bold", hjust = 0.5)
       ) +
       {if (!is.null(storm_date)) geom_vline(xintercept = as.Date(storm_date), linetype = "dashed") else NULL}
   })
-    
+  
   # For >1 plot we return a grob (grid.arrange output)
   final_plot <- if (length(plot_list) == 1) {
     plot_list[[1]]
