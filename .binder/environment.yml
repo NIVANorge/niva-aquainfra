@@ -1,6 +1,7 @@
 name: niva-aquainfra
 channels:
   - conda-forge
+  - nodefaults
 channel_priority: strict
 dependencies:
   - libnetcdf
