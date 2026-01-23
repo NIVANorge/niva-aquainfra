@@ -13,62 +13,69 @@ The two other scripts can be run as desired. The **netcdf_coords_value_point_plo
 The environment for the R scripts can also be created using docker
 
 ```bash
-# build
 today=$(date '+%Y%m%d')
 docker build . -t ferry-rscripts:${today}
+```
 
-# run an interactive session to execute several scripts
+To run an interactive session to execute several scripts:
+
+```bash
 docker run -it --entrypoint /bin/bash ferry-rscripts${today}
+```
 
-# Example run command:
-# run one script (netcdf_extract_save_fb.R), with input params:
-#docker run \
-#  -v './testresults:/out:rw' \
-#  -e 'SCRIPT=netcdf_extract_save_fb.R' \
-#  ferry-rscripts:${today} \
-#  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
-#  '/out/data' \ # If only path is parsed saving as "ferrybox.csv". Alternative specify filename e.g "/out/data/ferrybox.csv"
-#  '2023-01-01' \
-#  '2023-12-31' \
-#  'temperature,salinity,chlorophyll,turbidity' \
-#  'null' 'null' 'null' 'null'
+To run a single script, with input parameters:
 
-# Example run command:
-# run one script (netcdf_position_plot.R), with input params:
-#docker run \
-#  -v './testresults:/out:rw' \
-#  -e 'SCRIPT=netcdf_position_plot.R' \
-#  ferry-rscripts:${today} \
-#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
-#  'data/out' \ # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
+(When removing the trailing comments, make sure to remove all trailing whitespace, so that the backslash is the last character on the line. Otherwise subsequent lines will not be passed on to the docker-run command).
 
 
-# Example run command:
-# run one script (netcdf_scatter_plot.R), with input params:
-#docker run \
-#  -v './testresults:/out:rw' \
-#  -e 'SCRIPT=netcdf_position_plot.R' \
-#  ferry-rscripts:${today} \
-#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
-#  'data/out' \ # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-#  'chlorophyll' \ # example parameter
-# 'salinity'  # example parameter
+```bash
+# netcdf_extract_fb_data.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_extract_fb_data.R' \
+  ferry-rscripts:${today} \
+  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  '/out/myferryboxtest.csv' \ # If only path is parsed saving as "ferrybox.csv". Alternative specify filename e.g "/out/data/ferrybox.csv"
+  'temperature,salinity,chlorophyll,turbidity' \
+  '2023-01-01' \
+  '2023-12-31' \
+  'null' 'null' 'null' 'null';
+
+# netcdf_position_plot.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_position_plot.R' \
+  ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
+  '/out/plots/mypositionplottest.png'; # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
 
 
+# netcdf_scatter_plot.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_position_plot.R' \
+  ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
+  '/out/plots/myscatterplottest.png' \ # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
+  'chlorophyll' \ # example parameter
+  'salinity';  # example parameter
 
-# Example run command:
-# run one script (netcdf_tile_plot.R), with input params:
-#docker run \
-#  -v './testresults:/out:rw' \
-#  -e 'SCRIPT=netcdf_tile_plot.R' \
-#  ferry-rscripts:${today} \
-#  '/out/data/ferrybox.csv' \  #Name and path of the ferrybox csv file.
-#  'data/out' \  # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-#  '2023-01-01' \ # Dates to plot
-#  '2023-12-31' \ #Dates to plot
-#  'salinity,chlorophyll' \  #example parameters
-#  'null' 'null' # Latitude to plot if desired
-#  '2023-08-08' # Storm date, can be null
+
+# netcdf_tile_plot.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_tile_plot.R' \
+  ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
+  '/out/plots/mytileplottest.png' \  # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
+  '2023-01-01' \ # Dates to plot
+  '2023-12-31' \ #Dates to plot
+  'salinity,chlorophyll' \  #example parameters
+  'null' 'null' \ # Latitude to plot if desired
+  '2023-08-08'; # Storm date, can be null
+
+```
+
 
 ## Pygeoapi / OGC HTTP API
 

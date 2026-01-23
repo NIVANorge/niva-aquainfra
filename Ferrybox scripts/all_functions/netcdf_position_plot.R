@@ -139,5 +139,5 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
-
+message("Saving PNG... done")
 

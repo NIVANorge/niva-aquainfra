@@ -142,6 +142,7 @@ if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
   file_path <- file.path(save_path, "scatterplot.png")
 }
 
+message("Saving PNG to: ", file_path)
 ggsave(
   filename = file_path,
   plot = plot_obj,
@@ -151,3 +152,5 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
+message("Saving PNG... done")
+

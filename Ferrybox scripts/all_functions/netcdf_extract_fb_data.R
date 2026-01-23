@@ -178,16 +178,23 @@ if (length(args) < 2) stop("Provide source (URL/CSV) and path to save")
 
 source    <- args[1]
 save_path <- args[2]
+message("[arg] input csv:  ", source)
+message("[arg] output csv: ", save_path)
 
 parameters <- if (length(args) >= 3) parse_parameters(args[3]) else NULL
+message("[arg] parameters: ", parameters)
 
 start_date <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 end_date   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+message("[arg] start_date: ", start_date)
+message("[arg] end_date:   ", start_date)
 
 lon_min <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
 lon_max <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
 lat_min <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 lat_max <- if (length(args) >= 9) as_null_if_blank(args[9]) else NULL
+message("[arg] lon_min, lon_max: ", lon_min, " - ", lon_max)
+message("[arg] lat_min, lat_max: ", lat_min, " - ", lat_max)
 
 # Convert numeric bbox args if present
 lon_min <- if (!is.null(lon_min)) as.numeric(lon_min) else NULL
@@ -218,7 +225,7 @@ if (grepl("\\.csv$", save_path, ignore.case = TRUE)) {
   file_path <- file.path(save_path, "ferrybox.csv")
 }
 
-print(paste0('Write result to csv file: ', file_path))
+message(paste0('Writing result to CSV file: ', file_path, ' (may take a little while if the data is big)...'))
 
 utils::write.table(
   df_all,
@@ -229,3 +236,5 @@ utils::write.table(
   quote = TRUE,
   append = FALSE
 )
+
+message(paste0('Writing result to CSV file... done'))
