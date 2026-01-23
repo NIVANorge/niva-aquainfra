@@ -1,0 +1,71 @@
+{
+    "version": "0.1.0",
+    "id": "netcdf-scatter-plot",
+    "use_case": "NIVA Ferrybox Scripts",
+    "title": {
+        "en": "SIMON NIVA Scatter Plot of Ferrybox Data"
+    },
+    "description": {
+        "en": "SIMON Description of scatter plot tool."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GitHub repo of NIVA AquaINFRA tools",
+        "href": "https://github.com/NIVANorge/niva-aquainfra",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "url_input_csv": {
+            "title": "SIMON url_input_csv",
+            "description": "URL to input CSV file. SIMON description of input csv",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "param1": {
+            "title": "SIMON Parameter 1/2",
+            "description": "SIMON Description of param1. Btw, should we rename them, or maybe let user provide a list or something... as you prefer.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "param2": {
+            "title": "SIMON Parameter 2/2",
+            "description": "SIMON Description of param2.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+	}
+    },
+    "outputs": {
+        "scatter_plot" : {
+            "title": "SIMON Scatter plot",
+            "description": "SIMON Description of scatter plot",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "url_input_csv": "https://aquainfra.de/download/some_csv_table.csv",
+	    "param1": "chlorophyll",
+            "param2": "salinity"
+        }
+    }
+}
+
+

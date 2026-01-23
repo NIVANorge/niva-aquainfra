@@ -1,0 +1,49 @@
+{
+    "version": "0.1.0",
+    "id": "netcdf-position-plot",
+    "use_case": "NIVA Ferrybox Scripts",
+    "title": {
+        "en": "SIMON NIVA Position Plot for Ferrybox Data"
+    },
+    "description": {
+        "en": "SIMON Description of Position Plot tool"
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GitHub repo of NIVA AquaINFRA tools",
+        "href": "https://github.com/NIVANorge/niva-aquainfra",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "url_input_csv": {
+            "title": "SIMON url_input_csv",
+            "description": "URL of input CSV file. SIMON Description of input csv table.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        }
+    },
+    "outputs": {
+        "position_plot" : {
+            "title": "SIMON Position plot",
+            "description": "SIMON Description of position plot",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "url_input_csv": "https://aquainfra.de/download/some_csv_table.csv"
+        }
+    }
+}
+
+

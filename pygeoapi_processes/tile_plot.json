@@ -1,0 +1,113 @@
+{
+    "version": "0.1.0",
+    "id": "netcdf-tile-plot",
+    "use_case": "NIVA Ferrybox Scripts",
+    "title": {
+        "en": "SIMON NIVA Tile Plot Tool for Ferrybox Data"
+    },
+    "description": {
+        "en": "SIMON Description of tile plot tool."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GitHub repo of NIVA AquaINFRA tools",
+        "href": "https://github.com/NIVANorge/niva-aquainfra",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "url_input_csv": {
+            "title": "SIMON url_input_csv",
+            "description": "URL of input CSV file. SIMON description url_input_csv",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "start_date": {
+            "title": "start date interval extracted",
+            "description": "Format is yyyy-mm-dd. The Color Fantasy provides data beginning from 2023-01-01.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "end_date": {
+            "title": "End date interval extracted",
+            "description": "Format is yyyy-mm-dd. The Color Fantasy provides continous",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "parameters": {
+            "title": "SIMON Parameters",
+            "description": "SIMON descriotion of parameters",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 100,
+            "keywords": []
+        },
+        "storm_date": {
+            "title": "SIMON Storm date",
+            "description": "SIMON description of storm date. Optional parameter. Format is yyyy-mm-dd. The Color Fantasy provides continous",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "lat1": {
+            "title": "SIMON Latitude to plot if desired (1/2)",
+            "description": "SIMON Description of Latitude to plot if desired. Optional parameter.",
+            "schema": {
+                "type": "number"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "keywords": []
+        },
+        "lat2": {
+            "title": "SIMON Latitude to plot if desired (1/2)",
+            "description": "SIMON Description Latitude to plot if desired. Optional parameter.",
+            "schema": {
+                "type": "number"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "keywords": []
+        }
+    },
+    "outputs": {
+        "tile_plot" : {
+            "title": "SIMON tile_plot",
+            "description": "SIMON Description of tile plot.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "url_input_csv": "https://aquainfra.de/download/some_csv_table.csv",
+            "start_date": "2023-01-01",
+            "end_date": "2023-12-31",
+            "parameters": ["salinity", "chlorophyll"],
+            "storm_date": "2023-08-08"
+	}
+    }
+}
+
+
