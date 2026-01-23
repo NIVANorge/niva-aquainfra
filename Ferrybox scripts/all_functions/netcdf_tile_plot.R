@@ -177,8 +177,11 @@ storm_date <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 lat_min <- if (!is.null(lat_min)) as.numeric(lat_min) else NULL
 lat_max <- if (!is.null(lat_max)) as.numeric(lat_max) else NULL
 
-
-if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+if (startsWith(input_path, 'http')) {
+  message('Input CSV provided as URL')
+} else {
+  if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+}
 
 message("Reading input CSV: ", input_path)
 ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)

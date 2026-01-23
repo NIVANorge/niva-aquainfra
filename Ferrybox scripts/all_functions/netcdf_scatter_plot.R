@@ -109,8 +109,11 @@ save_path  <- args[2]
 parameter_x <- args[3]
 parameter_y <- args[4]
 
-
-if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+if (startsWith(input_path, 'http')) {
+  message('Input CSV provided as URL')
+} else {
+  if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+}
 
 message("Reading input CSV: ", input_path)
 ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
