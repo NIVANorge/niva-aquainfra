@@ -141,13 +141,6 @@ df_logger <- function(
 # -------------------------------------------------------------------
 # CLI args (script #2 style)
 # -------------------------------------------------------------------
-# Args order:
-#  1: url              (required) -> THREDDS OPeNDAP .nc
-#  2: save_path    (required) -> full file path, e.g. "/out/logger.csv"
-#  3: start_date       (optional) -> "YYYY-MM-DD" or "null"
-#  4: end_date         (optional) -> "YYYY-MM-DD" or "null"
-#  5: parameters       (optional) -> "temp_water_avg,phvalue_avg" or "null"
-
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
