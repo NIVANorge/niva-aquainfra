@@ -135,7 +135,6 @@ waterbodies_path <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 waterbody_ids <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 waterbody_id_col <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
 lat_range <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL # vector e.g c(58.1,58.2)
-add_lm <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
 
 
 if (startsWith(input_path, 'http')) {
@@ -165,19 +164,7 @@ agg_fun = mean,
 add_lm = TRUE
 )
 
-
-out <- scatter_from_joined(df_joined, lat_range = c(59.0, 59.3))
-out$plot
-
-
-out <- scatter_from_joined(
-  df_joined,
-  lat_range = c(59.1,59.2),
-  #waterbodies = vanntype,
- # waterbody_ids = c("Torbjørnskjær"),
-  #waterbody_id_col = "Vannfore_1"
-)
-out$plot
+scatter_fb_stat$plot
 
 
 # Save PNG
