@@ -201,7 +201,6 @@ waterbody_shp <- if (!is.null(waterbody_shp)) {
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
-river_label_col <- river_label_col
 # -------------------------------------------------------------------
 # Create plot
 # -------------------------------------------------------------------
