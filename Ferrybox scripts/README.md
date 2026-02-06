@@ -59,8 +59,8 @@ date; docker run \
   -e 'SCRIPT=netcdf_assessment_area.R' \
   ferry-rscripts:${today} \
   '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
-  '/out/plots/mypositionplottest.png' # If only path is parsed saving as "assessment_area.png". Alternative specify filename e.g "/out/data/assessment_area.png"
-  '/out/data/myloggertest.csv' # input river 
+  '/out/plots/mypositionplottest.png'\ # If only path is parsed saving as "assessment_area.png". Alternative specify filename e.g "/out/data/assessment_area.png"
+  '/out/data/myloggertest.csv' \ # input river 
   'NULL' ; # If you have no waterbodies shp leave as NULL. Waterbody shapefile can be downloaded from https://karteksport.miljodirektoratet.no/ "vannforekomster"
 
 # netcdf_scatter_station_plot.R:
