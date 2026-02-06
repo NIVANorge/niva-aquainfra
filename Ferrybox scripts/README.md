@@ -34,32 +34,71 @@ date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_fb_data.R' \
   ferry-rscripts:${today} \
-  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \ #thredds link to FB data
   '/out/myferryboxtest.csv' \ # If only path is parsed saving as "ferrybox.csv". Alternative specify filename e.g "/out/data/ferrybox.csv"
-  'temperature,salinity,chlorophyll,turbidity' \
-  '2023-01-01' \
-  '2023-12-31' \
-  'null' 'null' 'null' 'null';
+  'temperature,salinity,chlorophyll,turbidity' \ # Parameters, NULL = ALL
+  '2023-01-01' \ # Start date
+  '2023-12-31' \ # End date
+  'null' 'null' 'null' 'null'; # bounding box
 
-# netcdf_position_plot.R:
+
+# netcdf_logger_extract.R:
 date; docker run \
   -v './testresults:/out:rw' \
-  -e 'SCRIPT=netcdf_position_plot.R' \
+  -e 'SCRIPT=netcdf_logger_extract.R' \
+  ferry-rscripts:${today} \
+  'https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc' \
+  '/out/data/myloggertest.csv' \ # If only path is parsed saving as "logger.csv". Alternative specify filename e.g "/out/data/logger.csv"
+  'NULL' \ # Parameters, NULL = ALL
+  '2023-01-01' \  # Start date
+  '2023-12-31' ; # End date
+
+# netcdf_assessment_area.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_assessment_area.R' \
   ferry-rscripts:${today} \
   '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
-  '/out/plots/mypositionplottest.png'; # If only path is parsed saving as "ferrybox_position.png". Alternative specify filename e.g "/out/data/ferrybox_position.png"
+  '/out/plots/mypositionplottest.png' # If only path is parsed saving as "assessment_area.png". Alternative specify filename e.g "/out/data/assessment_area.png"
+  '/out/data/myloggertest.csv' # input river 
+  'NULL' ; # If you have no waterbodies shp leave as NULL. Waterbody shapefile can be downloaded from https://karteksport.miljodirektoratet.no/ "vannforekomster"
 
-
-# netcdf_scatter_plot.R:
+# netcdf_scatter_station_plot.R:
 date; docker run \
   -v './testresults:/out:rw' \
-  -e 'SCRIPT=netcdf_position_plot.R' \
+  -e 'SCRIPT=netcdf_scatter_station_plot.R' \
   ferry-rscripts:${today} \
   '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
   '/out/plots/myscatterplottest.png' \ # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-  'chlorophyll' \ # example parameter
-  'salinity';  # example parameter
+  'chlorophyll' \ # example parameter x
+  'salinity';  # example parameter y
 
+# netcdf_join_dataframes.R
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_join_dataframes.R' \
+  ferry-rscripts:${today} \
+  'out/data/myferryboxtest.csv' \ #ferrybox dataframe
+'out/data/myloggertest.csv'  \ # river dataframe
+'turbidity' \ # parameter from first dataframe to be plotted
+'turbidity_avg' \ #parameter from second dataframe to be plotted
+'station_name'\ #Column name to find unique station
+'Baterod'\ #station name to be used from second dataframe
+'datetime'\ # Datime for first dataframe
+'datetime'\ # Datetime for second
+'/out/data/myjoinedtest.csv'; #path to save, can inlude name of file, if not default name is used "joined.csv"
+
+# netcdf_scatter_datax_vs_datay.R:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
+  ferry-rscripts:${today} \
+  '/out/data/myjoinedtest.csv' \  # Name and path of the joined csv file
+  '/out/plots/scatter.png' \ # If only path is parsed saving as "scatter.png". Alternative specify filename e.g "/out/data/scatter.png"
+  'NULL'/ # waterbody shapefile, If you have no waterbodies shp leave as NULL. Waterbody shapefile can be downloaded from https://karteksport.miljodirektoratet.no/ "vannforekomster"
+  'NULL' / # Waterbody name to summarise data across 
+  'NULL' / # waterbody column name
+  'c(59.1,59.2)' ; #lat range to summarise data across 
 
 # netcdf_tile_plot.R:
 date; docker run \
