@@ -29,89 +29,135 @@ To run a single script, with input parameters:
 
 
 ```bash
-# netcdf_extract_fb_data.R:
+# netcdf_extract_fb_data.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_fb_data.R' \
   ferry-rscripts:${today} \
-  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \ #thredds link to FB data
-  '/out/myferryboxtest.csv' \ # If only path is parsed saving as "ferrybox.csv". Alternative specify filename e.g "/out/data/ferrybox.csv"
-  'temperature,salinity,chlorophyll,turbidity' \ # Parameters, NULL = ALL
-  '2023-01-01' \ # Start date
-  '2023-12-31' \ # End date
-  'null' 'null' 'null' 'null'; # bounding box
+  # Thredds link to FerryBox data
+  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  # Output CSV (if only a directory is given, defaults to ferrybox.csv)
+  '/out/myferryboxtest.csv' \
+  # Parameters (NULL = ALL)
+  'temperature,salinity,chlorophyll,turbidity' \
+  # Start date
+  '2023-01-01' \
+  # End date
+  '2023-12-31' \
+  # Bounding box (minLon maxLon minLat maxLat) or 'null' 'null' 'null' 'null'
+  'null' 'null' 'null' 'null'
 
 
-# netcdf_logger_extract.R:
+# netcdf_logger_extract.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_logger_extract.R' \
   ferry-rscripts:${today} \
   'https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc' \
-  '/out/data/myloggertest.csv' \ # If only path is parsed saving as "logger.csv". Alternative specify filename e.g "/out/data/logger.csv"
-  'NULL' \ # Parameters, NULL = ALL
-  '2023-01-01' \  # Start date
-  '2023-12-31' ; # End date
+  # Output CSV (if only a directory is given, defaults to logger.csv)
+  '/out/data/myloggertest.csv' \
+  # Parameters (NULL = ALL)
+  'NULL' \
+  # Start date
+  '2023-01-01' \
+  # End date
+  '2023-12-31'
 
-# netcdf_assessment_area.R:
+
+# netcdf_assessment_area.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_assessment_area.R' \
   ferry-rscripts:${today} \
-  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
-  '/out/plots/mypositionplottest.png'\ # If only path is parsed saving as "assessment_area.png". Alternative specify filename e.g "/out/data/assessment_area.png"
-  '/out/data/myloggertest.csv' \ # input river 
-  'NULL' ; # If you have no waterbodies shp leave as NULL. Waterbody shapefile can be downloaded from https://karteksport.miljodirektoratet.no/ "vannforekomster"
+  # Input FerryBox CSV
+  '/out/data/myferryboxtest.csv' \
+  # Output plot (if only a directory is given, defaults to assessment_area.png)
+  '/out/plots/mypositionplottest.png' \
+  # Input river/logger CSV
+  '/out/data/myloggertest.csv' \
+  # Waterbodies shapefile (NULL if none)
+  'NULL'
 
-# netcdf_scatter_station_plot.R:
+
+# netcdf_scatter_station_plot.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_station_plot.R' \
   ferry-rscripts:${today} \
-  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
-  '/out/plots/myscatterplottest.png' \ # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-  'chlorophyll' \ # example parameter x
-  'salinity';  # example parameter y
+  # Input FerryBox CSV
+  '/out/data/myferryboxtest.csv' \
+  # Output plot (if only a directory is given, defaults to ferrybox_scatter.png)
+  '/out/plots/myscatterplottest.png' \
+  # Parameter X
+  'chlorophyll' \
+  # Parameter Y
+  'salinity'
+
 
 # netcdf_join_dataframes.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_join_dataframes.R' \
   ferry-rscripts:${today} \
-  'out/data/myferryboxtest.csv' \ #ferrybox dataframe
-'out/data/myloggertest.csv'  \ # river dataframe
-'turbidity' \ # parameter from first dataframe to be plotted
-'turbidity_avg' \ #parameter from second dataframe to be plotted
-'station_name'\ #Column name to find unique station
-'Baterod'\ #station name to be used from second dataframe
-'datetime'\ # Datime for first dataframe
-'datetime'\ # Datetime for second
-'/out/data/myjoinedtest.csv'; #path to save, can inlude name of file, if not default name is used "joined.csv"
+  # FerryBox dataframe CSV
+  '/out/data/myferryboxtest.csv' \
+  # River/logger dataframe CSV
+  '/out/data/myloggertest.csv' \
+  # Parameter from first dataframe
+  'turbidity' \
+  # Parameter from second dataframe
+  'turbidity_avg' \
+  # Station column name in second dataframe
+  'station_name' \
+  # Station ID/name to filter in second dataframe
+  'Baterod' \
+  # Time column in first dataframe
+  'datetime' \
+  # Time column in second dataframe
+  'datetime' \
+  # Output joined CSV (if only a directory is given, defaults to joined.csv)
+  '/out/data/myjoinedtest.csv'
 
-# netcdf_scatter_datax_vs_datay.R:
+
+# netcdf_scatter_datax_vs_datay.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
   ferry-rscripts:${today} \
-  '/out/data/myjoinedtest.csv' \  # Name and path of the joined csv file
-  '/out/plots/scatter.png' \ # If only path is parsed saving as "scatter.png". Alternative specify filename e.g "/out/data/scatter.png"
-  'NULL'/ # waterbody shapefile, If you have no waterbodies shp leave as NULL. Waterbody shapefile can be downloaded from https://karteksport.miljodirektoratet.no/ "vannforekomster"
-  'NULL' / # Waterbody name to summarise data across 
-  'NULL' / # waterbody column name
-  'c(59.1,59.2)' ; #lat range to summarise data across 
+  # Input joined CSV
+  '/out/data/myjoinedtest.csv' \
+  # Output plot (if only a directory is given, defaults to scatter.png)
+  '/out/plots/scatter.png' \
+  # Waterbody shapefile (NULL if none)
+  'NULL' \
+  # Waterbody IDs/names to summarise across (NULL if none)
+  'NULL' \
+  # Waterbody ID column name in shapefile (NULL if none)
+  'NULL' \
+  # Latitude range to summarise across (e.g. c(59.1,59.2) as text, or NULL)
+  'c(59.1,59.2)'
 
-# netcdf_tile_plot.R:
+
+# netcdf_tile_plot.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_tile_plot.R' \
   ferry-rscripts:${today} \
-  '/out/data/myferryboxtest.csv' \  # Name and path of the ferrybox csv file.
-  '/out/plots/mytileplottest.png' \  # If only path is parsed saving as "ferrybox_scatter.png". Alternative specify filename e.g "/out/data/ferrybox_scatter.png"
-  '2023-01-01' \ # Dates to plot
-  '2023-12-31' \ #Dates to plot
-  'salinity,chlorophyll' \  #example parameters
-  'null' 'null' \ # Latitude to plot if desired
-  '2023-08-08'; # Storm date, can be null
+  # Input FerryBox CSV
+  '/out/data/myferryboxtest.csv' \
+  # Output plot (if only a directory is given, defaults to ferrybox_tile.png)
+  '/out/plots/mytileplottest.png' \
+  # Start date
+  '2023-01-01' \
+  # End date
+  '2023-12-31' \
+  # Parameters (comma-separated)
+  'salinity,chlorophyll' \
+  # Latitude filter (minLat maxLat) or 'null' 'null'
+  'null' 'null' \
+  # Storm date (or 'null')
+  '2023-08-08'
+
 
 ```
 
