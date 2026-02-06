@@ -1,92 +1,131 @@
 {
-    "version": "0.1.0",
-    "id": "netcdf-extract-save-fb",
-    "use_case": "NIVA Ferrybox Scripts",
-    "title": {
-        "en": "Color Fantasy Ferrybox data from Oslo-Kiel"
-    },
-    "description": {
-        "en": "Extraction of daily Ferrybox environmental monitoring data from the Color Fantasy. Once every minute, the FerryBox system measures at a depth of four to seven metres along the fixed route of a vessel. This amounts to about one measurement every 500 metres. Output is a .csv file with a latitudal transect between Oslo (Norway) and Kiel (Germany) for temperature, salinity, oxygen_sat, chlorophyll, turbidity and fdom."
-    },
-    "jobControlOptions": ["sync-execute", "async-execute"],
-    "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox"],
-    "links": [{
-        "type": "text/html",
-        "rel": "about",
-        "title": "GitHub repo of NIVA AquaINFRA tools",
-        "href": "https://github.com/NIVANorge/niva-aquainfra",
-        "hreflang": "en-US"
-    }],
-    "inputs": {
-        "https://thredds.niva.no/thredds/catalog/subcatalogs/ferryboxes.html?dataset=no.niva:af11ba01-dfe3-4432-b9d2-4e6fd10714db": {
-            "title": "url_thredds",
-            "description": "Link to NIVA thredds data access",
-            "schema": {
-                "type": "string"
-            },
-            "minOccurs": 1,
-            "maxOccurs": 1,
-            "keywords": []
-        },
-        "start_date": {
-            "title": "start date interval extracted",
-            "description": "Format is yyyy-mm-dd. The Color Fantasy provides data beginning from 2023-01-01.",
-            "schema": {
-                "type": "string"
-            },
-            "minOccurs": 1,
-            "maxOccurs": 1,
-            "keywords": []
-        },
-        "end_date": {
-            "title": "End date interval extracted",
-            "description": "Format is yyyy-mm-dd. The Color Fantasy provides continous",
-            "schema": {
-                "type": "string"
-            },
-            "minOccurs": 1,
-            "maxOccurs": 1,
-            "keywords": []
-        },
-        "parameters": {
-            "title": "Parameters extracted",
-            "description": "Available quality controlled parameters are temperature, salinity, oxygen_sat, chlorophyll, turbidity, fdom.",
-            "schema": {
-                "type": "string"
-            },
-            "minOccurs": 1,
-            "maxOccurs": 100,
-            "keywords": []
-        },
-        "study_area_bbox": {
-            "title": "Area to extract data from ",
-            "description": "Bounding box for entire Ferrybox sampling transect: {\"bbox\":Longitude min = 9.90271, Longitude max = 11.946572, Latitude min = 54.377027, Latitude max = 59.90903}.",
-            "schema": {
-                "type": "string"
-            },
-            "minOccurs": 0,
-            "maxOccurs": 1,
-            "keywords": []
-        }
-    },
-    "outputs": {
-        "csv_results" : {
-            "title": ".CSV (Comma seperated)",
-            "description": "TDownloads",
-            "schema": {
-                "type": "object",
-                "contentMediaType": "application/json"
-            }
-        }
-    },
-    "example": {
-        "inputs": {
-            "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
-            "start_date": "2023-01-01",
-            "end_date": "2023-12-31",
-            "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"],
-            "study_area_bbox": {"bbox": [9.5, 12, 54, 60]}
-        }
+  "version": "0.1.0",
+  "id": "netcdf_extract_fb_data",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "Extract FerryBox data from NetCDF (THREDDS) to CSV"
+  },
+  "description": {
+    "en": "Extract FerryBox environmental monitoring data from a THREDDS-hosted NetCDF file. Supports optional filtering by date interval and bounding box. Outputs a CSV containing datetime, latitude, longitude, value, unit, parameter, and derived time fields."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "NetCDF", "THREDDS"],
+  "links": [
+    {
+      "type": "text/html",
+      "rel": "about",
+      "title": "GitHub repo of NIVA AquaINFRA tools",
+      "href": "https://github.com/NIVANorge/niva-aquainfra",
+      "hreflang": "en-US"
     }
+  ],
+  "inputs": {
+    "source": {
+      "title": "source",
+      "description": "THREDDS/OPeNDAP URL to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc).",
+      "schema": {
+        "type": "string"
+      },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "save_path": {
+      "title": "save_path",
+      "description": "Output path. If it ends with .csv it is used as the output file. Otherwise it is treated as an output directory and the file name defaults to ferrybox.csv.",
+      "schema": {
+        "type": "string"
+      },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "parameters": {
+      "title": "parameters",
+      "description": "Comma-separated list of parameters to extract (e.g. temperature,salinity,chlorophyll,turbidity). Use NULL (or omit) to extract all available parameters.",
+      "schema": {
+        "type": "string"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "start_date": {
+      "title": "start_date",
+      "description": "Start date (YYYY-MM-DD). If provided, end_date must also be provided. Use NULL to omit.",
+      "schema": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "end_date": {
+      "title": "end_date",
+      "description": "End date (YYYY-MM-DD). If provided, start_date must also be provided. Use NULL to omit.",
+      "schema": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lon_min": {
+      "title": "lon_min",
+      "description": "Minimum longitude for bounding box filter. Use NULL to use the dataset minimum.",
+      "schema": {
+        "type": "number"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lon_max": {
+      "title": "lon_max",
+      "description": "Maximum longitude for bounding box filter. Use NULL to use the dataset maximum.",
+      "schema": {
+        "type": "number"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lat_min": {
+      "title": "lat_min",
+      "description": "Minimum latitude for bounding box filter. Use NULL to use the dataset minimum.",
+      "schema": {
+        "type": "number"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lat_max": {
+      "title": "lat_max",
+      "description": "Maximum latitude for bounding box filter. Use NULL to use the dataset maximum.",
+      "schema": {
+        "type": "number"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "csv_results": {
+      "title": "CSV output",
+      "description": "Path to the CSV file written by the process.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "source": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
+      "save_path": "/out/data/myferryboxtest.csv",
+      "parameters": "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom",
+      "start_date": "2023-01-01",
+      "end_date": "2023-12-31",
+      "lon_min": 9.5,
+      "lon_max": 12.0,
+      "lat_min": 54.0,
+      "lat_max": 60.0
+    }
+  }
 }
 
