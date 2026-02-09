@@ -154,14 +154,14 @@ waterbody_shp <- if (!is.null(waterbodies_path)) {
 
 
 scatter_fb_stat <- scatter_from_joined(
-df_joined,
-waterbody_shp = NULL,          # sf polygons (optional)
-waterbody_ids = waterbody_ids,        # vector (optional)
-waterbody_id_col = waterbody_id_col,     # column name in waterbodies (optional)
-lat_range = lat_range,            # c(min, max) required if no waterbodies
-tz = "UTC",
-agg_fun = mean,
-add_lm = TRUE
+  df_joined = df_joined,
+  waterbodies = waterbody_shp,
+  waterbody_ids = waterbody_ids,
+  waterbody_id_col = waterbody_id_col,
+  lat_range = lat_range,
+  tz = "UTC",
+  agg_fun = mean,
+  add_lm = TRUE
 )
 
 scatter_fb_stat$plot
@@ -179,7 +179,7 @@ if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
 message("Saving PNG to: ", file_path)
 ggsave(
   filename = file_path,
-  plot = p,
+  plot = scatter_fb_stat$plot,
   width = 18,
   height = 22,
   units = "cm",
