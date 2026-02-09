@@ -134,13 +134,13 @@ tile_plot <- function(
   })
   
   # For >1 plot we return a grob (grid.arrange output)
-  final_plot <- if (length(plot_list) == 1) {
+  tile_plot_func <- if (length(plot_list) == 1) {
     plot_list[[1]]
   } else {
     do.call(gridExtra::arrangeGrob, c(plot_list, ncol = 1))
   }
   
-  return(final_plot)
+  return(tile_plot_func)
 }
 
 # -------------------------------------------------------------------
@@ -186,7 +186,7 @@ if (startsWith(input_path, 'http')) {
 message("Reading input CSV: ", input_path)
 ferrybox_df <- readr::read_csv(input_path, show_col_types = FALSE)
 
-final_plot <- tile_plot(
+tile_plot_func <- tile_plot(
   data = ferrybox_df,
   parameters = parameters,
   start_date = start_date,
@@ -197,7 +197,7 @@ final_plot <- tile_plot(
 )
 
 # Show plot only in interactive sessions
-if (interactive()) print(final_plot)
+if (interactive()) print(tile_plot_func)
 
 # If .csv name is pased in save_path using that as saving name else default "ferrybox_tile.png" is used. 
 if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
@@ -212,7 +212,7 @@ message("Saving PNG to: ", file_path)
 
 ggsave(
   filename = file_path,
-  plot = final_plot,
+  plot = tile_plot_func,
   width = 18,
   height = 22,
   units = "cm",
