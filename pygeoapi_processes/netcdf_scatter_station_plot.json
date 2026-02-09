@@ -1,0 +1,53 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-scatter-station-plot",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "Scatterplot between two parameters (faceted by month)"
+  },
+  "description": {
+    "en": "Reads a FerryBox-style CSV and generates a scatterplot between two selected parameters, faceted by month. Outputs a PNG."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "inputs": {
+    "input_csv": {
+      "title": "input_csv",
+      "description": "Path (inside container mount) or URL to input CSV containing at least datetime, parameter, value, and preferably latitude/longitude.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "parameter_x": {
+      "title": "parameter_x",
+      "description": "Parameter name for x-axis (e.g. salinity).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "parameter_y": {
+      "title": "parameter_y",
+      "description": "Parameter name for y-axis (e.g. chlorophyll).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "png_result": {
+      "title": "Scatterplot PNG",
+      "description": "Link to generated scatterplot.png.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "input_csv": "/out/data/myferryboxtest.csv",
+      "parameter_x": "salinity",
+      "parameter_y": "chlorophyll"
+    }
+  }
+}
