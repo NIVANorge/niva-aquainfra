@@ -142,13 +142,13 @@ time_col_y <- args[8] # Charachter
 save_path  <- args[9] #path to save, can inlude name of file, if not default name is used "joined.csv"
 
 
-if (startsWith(input_path, 'http')) {
+if (startsWith(input_path_x, 'http')) {
   message('Input CSV provided as URL')
 } else {
-  if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+  if (!file.exists(input_path_x)) stop("Input CSV not found: ", input_path_x)
 }
 
-message("Reading input CSV: ", input_path)
+message("Reading input CSV: ", input_path_x)
 
 df_x <- readr::read_csv(input_path_x, show_col_types = FALSE)
 df_y <- readr::read_csv(input_path_y, show_col_types = FALSE)
@@ -157,8 +157,8 @@ df_y <- readr::read_csv(input_path_y, show_col_types = FALSE)
 
 
 df_joined <- join_x_y(
-  df_x = FB2023,
-  df_y = test_river,
+  df_x = df_x,
+  df_y = df_y,
   parameter_x = "turbidity",
   parameter_y = "TSM",
   station_col  = "river",
