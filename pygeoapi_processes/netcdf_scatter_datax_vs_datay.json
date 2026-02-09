@@ -1,0 +1,74 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-scatter-from-joined",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "Scatterplot from joined dataframe (transect vs station or waterbody vs station)"
+  },
+  "description": {
+    "en": "Reads a joined CSV (with year/month/day/value_x/value_y and optional lat/lon) and generates a scatterplot PNG. Spatial filtering is either by latitude range OR by waterbody polygons."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Scatter", "Joined", "Waterbody", "Transect"],
+  "inputs": {
+    "joined_csv": {
+      "title": "joined_csv",
+      "description": "Path (inside container mount) or URL to joined CSV (output from join process).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "waterbodies_shp": {
+      "title": "waterbodies_shp",
+      "description": "Optional path to waterbodies shapefile readable by sf::st_read(). Use NULL or omit if not used.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "waterbody_ids": {
+      "title": "waterbody_ids",
+      "description": "Optional list of waterbody IDs/names to keep (must match waterbody_id_col). Required if waterbodies_shp is provided.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "waterbody_id_col": {
+      "title": "waterbody_id_col",
+      "description": "Optional column name in waterbodies shapefile that contains IDs/names. Required if waterbodies_shp is provided.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lat_min": {
+      "title": "lat_min",
+      "description": "Minimum latitude for transect filtering. Required if waterbodies_shp is not provided.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lat_max": {
+      "title": "lat_max",
+      "description": "Maximum latitude for transect filtering. Required if waterbodies_shp is not provided.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "png_result": {
+      "title": "Scatter PNG",
+      "description": "Link to generated scatter.png.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "joined_csv": "/out/data/myjoinedtest.csv",
+      "lat_min": 59.1,
+      "lat_max": 59.2
+    }
+  }
+}
