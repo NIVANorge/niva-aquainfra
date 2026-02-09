@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "id": "netcdf-scatter-from-joined",
+  "id": "netcdf-scatter-datax-vs-datay",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
     "en": "Scatterplot from joined dataframe (transect vs station or waterbody vs station)"
