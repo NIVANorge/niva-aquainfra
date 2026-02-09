@@ -1,0 +1,102 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-join-dataframes",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "Join FerryBox data with station/river data (daily) by parameter"
+  },
+  "description": {
+    "en": "Reads two CSV files, filters to one station ID in the second dataset, aggregates both datasets to daily means, and joins by year/month/day. Outputs a CSV."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Join", "Daily mean"],
+  "links": [
+    {
+      "type": "text/html",
+      "rel": "about",
+      "title": "GitHub repo of NIVA AquaINFRA tools",
+      "href": "https://github.com/NIVANorge/niva-aquainfra",
+      "hreflang": "en-US"
+    }
+  ],
+  "inputs": {
+    "data_x_csv": {
+      "title": "data_x_csv",
+      "description": "Path (inside container mount) or URL to the first CSV (FerryBox-style transect). Must include latitude, longitude, value, parameter, and a time column.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "data_y_csv": {
+      "title": "data_y_csv",
+      "description": "Path (inside container mount) or URL to the second CSV (station/river). Must include value, parameter, a time column, and station column.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "parameter_x": {
+      "title": "parameter_x",
+      "description": "Parameter name to use from the first dataframe (data_x).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "parameter_y": {
+      "title": "parameter_y",
+      "description": "Parameter name to use from the second dataframe (data_y).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "station_col": {
+      "title": "station_col",
+      "description": "Column name in data_y that identifies station/river (e.g. river, station_name).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "station_ID": {
+      "title": "station_ID",
+      "description": "Station/river ID value to filter in data_y (e.g. Drammenselva).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "time_col_x": {
+      "title": "time_col_x",
+      "description": "Time column name in data_x (e.g. datetime).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "time_col_y": {
+      "title": "time_col_y",
+      "description": "Time column name in data_y (e.g. Date or datetime).",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "csv_results": {
+      "title": "Joined CSV",
+      "description": "Link to the generated joined CSV file.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "data_x_csv": "/out/data/myferryboxtest.csv",
+      "data_y_csv": "/out/data/myloggertest.csv",
+      "parameter_x": "turbidity",
+      "parameter_y": "TSM",
+      "station_col": "river",
+      "station_ID": "Drammenselva",
+      "time_col_x": "datetime",
+      "time_col_y": "Date"
+    }
+  }
+}
