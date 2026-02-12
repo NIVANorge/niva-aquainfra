@@ -13,46 +13,14 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# Without a bounding box:
-# Tested 2025-11-12
-# Tested 2026-01-23
-curl -X POST https://${PYSERVER}/processes/netcdf-extract-fb-data/execution \
+# TESTED 2026-01-23
+curl -X POST https://${PYSERVER}/processes/netcdf-position-plot/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
-        "start_date": "2023-01-01",
-        "end_date": "2023-12-31",
-        "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"]
+        "url_input_csv": "https://csv-output-from-extraction-process.csv"
     }
 }'; date
-
-
-# With a bounding box:
-# Tested 2025-11-18
-# Tested 2026-01-23
-curl -X POST https://${PYSERVER}/processes/netcdf-extract-fb-data/execution \
---header 'Content-Type: application/json' \
---data '{
-    "inputs": {
-        "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
-        "start_date": "2023-01-01",
-        "end_date": "2023-12-31",
-        "study_area_bbox": {"bbox": [58.5, 9.5, 59.9, 11.9]},
-        "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"]
-    }
-}'; date
-
-# About passing the bbox:
-
-This is the order that the r script wants (bbox):
-lon_min, lon_max, lat_min, lat_max
-'9.5'    '11.9'   '58.5'   '59.9'
-
-This is the order that the OGC API wants (bbox):
-"study_area_bbox": {"bbox": [58.5,     9.5,     59.9,     11.9    ]}
-"study_area_bbox": {"bbox": [42.08333, 8.15250, 50.24500, 29.73583]}
-"study_area_bbox": {"bbox": [lat_min, lon_min, lat_max, lon_max]}
 
 '''
 
@@ -65,7 +33,7 @@ PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
 
-class NivaFerryboxExtractionProcessor(BaseProcessor):
+class NivaPositionPlotProcessor(BaseProcessor):
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
@@ -80,18 +48,18 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
             self.image_name = "ferry-rscripts:20260123"
-            self.script_name = 'netcdf_extract_fb_data.R'
+            self.script_name = 'netcdf_position_plot.R'
 
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id
 
     def __repr__(self):
-        return f'<NivaFerryboxProcessor> {self.name}'
+        return f'<NivaPositionPlotProcessor> {self.name}'
 
 
     def execute(self, data):
-        LOGGER.info('Starting process NIVA Ferrybox!')
+        LOGGER.info('Starting process NIVA Ferrybox Position Plot!')
         try:
             mimetype, result = self._execute(data)
             return mimetype, result
@@ -113,40 +81,11 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         ##############
 
         # Retrieve user inputs:
-        url_thredds = data.get('url_thredds')
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
-        parameters = data.get('parameters', None)
-        # OGC API has an explicit schema for Bounding Box:
-        # https://docs.ogc.org/is/18-062r2/18-062r2.html#bounding-box-value
-        #"study_area_bbox": {"bbox": [42.08333, 8.15250, 50.24500, 29.73583]}
-        #"study_area_bbox": {"bbox": [lat_min, lon_min, lat_max, lon_max]}
-        study_area_bbox = data.get('study_area_bbox', None)
-        if study_area_bbox is None:
-            lat_min = None
-            lon_min = None
-            lat_max = None
-            lon_max = None
-        else:
-            lat_min = study_area_bbox["bbox"][0]
-            lon_min = study_area_bbox["bbox"][1]
-            lat_max = study_area_bbox["bbox"][2]
-            lon_max = study_area_bbox["bbox"][3]
+        url_input_csv = data.get('url_input_csv')
 
         # Check user inputs:
-        if url_thredds is None:
-            raise ProcessorExecuteError('Missing parameter "url_thredds". Please provide a URL.')
-        if start_date is None:
-            raise ProcessorExecuteError('Missing parameter "start_date". Please provide a date (yyyy-mm-dd).')
-        if end_date is None:
-            raise ProcessorExecuteError('Missing parameter "end_date". Please provide a date (yyyy-mm-dd).')
-
-        # Check validity of argument:
-        # Parse and validate the dates, to see whether it is valid:
-        parsed_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
-        LOGGER.debug(f'The provided start_date is valid: {parsed_date}')
-        parsed_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
-        LOGGER.debug(f'The provided end_date is valid:   {parsed_date}')
+        if url_input_csv is None:
+            raise ProcessorExecuteError('Missing parameter "url_input_csv". Please provide a URL.')
 
 
         ##################
@@ -174,24 +113,15 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         os.makedirs(output_dir, exist_ok=True)
         LOGGER.debug(f'All results will be stored     in: {output_dir}')
         LOGGER.debug(f'All results will be accessible in: {output_url}')
-
-        # Where to store output data
-        # ferrybox_temperature_salinity_oxygen_sat_chlorophyll_turbidity_fdom_20251103_163347.csv
-        params_string = '-'.join(parameters)
-        out_result_path = f'{output_dir}/ferrybox_{self.job_id}_{params_string}.csv'
-
-        # Where to access output data
-        out_result_url = out_result_path.replace(self.download_dir, self.download_url)
-
+        # Output filename
+        out_result_path = f'{output_dir}/position_plot_{self.job_id}.png'
+        out_result_url  = f'{output_url}/position_plot_{self.job_id}.png'
 
         ###########
         ### Run ###
         ###########
 
-
-        # Actually call R script:
-        params_string = ','.join(parameters)
-        r_args = [url_thredds, out_result_path, params_string, start_date, end_date, lon_min, lon_max, lat_min, lat_max]
+        r_args = [url_input_csv, out_result_path]
         LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
@@ -214,16 +144,12 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         # Return link to output csv files and return it wrapped in JSON:
         outputs = {
             "outputs": {
-                "csv_results": {
-                    "title": PROCESS_METADATA['outputs']['csv_results']['title'],
-                    "description": PROCESS_METADATA['outputs']['csv_results']['description'],
+                "position_plot": {
+                    "title": PROCESS_METADATA['outputs']['position_plot']['title'],
+                    "description": PROCESS_METADATA['outputs']['position_plot']['description'],
                     "href": out_result_url
                 }
             }
         }
 
         return 'application/json', outputs
-
-
-
-
