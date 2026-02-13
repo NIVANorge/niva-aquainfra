@@ -159,12 +159,12 @@ df_y <- readr::read_csv(input_path_y, show_col_types = FALSE)
 df_joined <- join_x_y(
   df_x = df_x,
   df_y = df_y,
-  parameter_x = "turbidity",
-  parameter_y = "TSM",
-  station_col  = "river",
-  station_ID = "Drammenselva",
-  time_col_x   = "datetime",
-  time_col_y   = "Date",
+  parameter_x = parameter_x,
+  parameter_y = parameter_y ,
+  station_col  = station_col,
+  station_ID =  station_ID,
+  time_col_x   = time_col_x,
+  time_col_y   = time_col_y,
   tz = "UTC"
 )
 
