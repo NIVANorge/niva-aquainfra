@@ -109,7 +109,7 @@ assessment_plot <- function(
   p <- ggplot() +
     geom_sf(data = world_sf, fill = "grey92", color = "grey60") +
     { if (!is.null(water_sf)) geom_sf(data = water_sf, fill = "lightblue", alpha = 0.6) } +
-    geom_sf(data = fb_sf, aes(color = "FerryBox track"), linewidth = 1.2, alpha = 0.4) +
+    geom_sf(data = fb_sf_pts, aes(color = "FerryBox track"), linewidth = 1.2, alpha = 0.4) +
     { if (!is.null(river_sf)) geom_sf(data = river_sf, aes(color = "River outlet"), size = 4) } +
     { if (!is.null(river_sf) && (river_label_col %in% names(river_sf)))
       geom_sf_text(
