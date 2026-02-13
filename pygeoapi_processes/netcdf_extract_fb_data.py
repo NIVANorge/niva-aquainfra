@@ -6,6 +6,7 @@ import json
 import os
 import traceback
 import datetime
+import requests
 # niva repo has hyphen in it, so we cannot import it in the normal python way:
 #from pygeoapi.process.niva-aquainfra.pygeoapi_processes.docker_utils import run_docker_container3
 import importlib  
@@ -148,6 +149,9 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         parsed_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
         LOGGER.debug(f'The provided end_date is valid:   {parsed_date}')
 
+        # Check existence:
+        # Note: During testing, this gets HTTP 400. Maybe THREDDS does not reply to HEAD requests.
+        #requests.head(url_thredds).raise_for_status()
 
         ##################
         ### Input data ###

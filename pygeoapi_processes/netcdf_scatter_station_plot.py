@@ -6,6 +6,7 @@ import json
 import os
 import traceback
 import datetime
+import requests
 # niva repo has hyphen in it, so we cannot import it in the normal python way:
 #from pygeoapi.process.niva-aquainfra.pygeoapi_processes.docker_utils import run_docker_container3
 import importlib  
@@ -93,6 +94,9 @@ class NivaScatterPlotProcessor(BaseProcessor):
             raise ProcessorExecuteError('Missing parameter "param1". Please provide a string.')
         if param2 is None:
             raise ProcessorExecuteError('Missing parameter "param2". Please provide a string.')
+
+        # Check existence:
+        requests.head(url_input_csv), raise_for_status()
 
 
         ##################

@@ -6,6 +6,7 @@ import json
 import os
 import traceback
 import datetime
+import requests
 # niva repo has hyphen in it, so we cannot import it in the normal python way:
 #from pygeoapi.process.niva-aquainfra.pygeoapi_processes.docker_utils import run_docker_container3
 import importlib  
@@ -105,6 +106,12 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         # Directory where static input data can be found (will be mounted readonly into container):
         # Not needed, no input data is downloaded!
         readonly_dir = None
+
+        # Check existence:
+        requests.head(url_input_csv), raise_for_status()
+        requests.head(url_input_river_logger_csv), raise_for_status()
+        if url_input_waterbody is not None:
+            requests.head(url_input_waterbody), raise_for_status()
 
 
         ###############

@@ -6,6 +6,7 @@ import json
 import os
 import traceback
 import datetime
+import requests
 # niva repo has hyphen in it, so we cannot import it in the normal python way:
 #from pygeoapi.process.niva-aquainfra.pygeoapi_processes.docker_utils import run_docker_container3
 import importlib  
@@ -114,6 +115,8 @@ class NivaTilePlotProcessor(BaseProcessor):
         if lat2 is not None:
             float(lat2)
 
+        # Check existence:
+        requests.head(url_input_csv), raise_for_status()
 
 
         ##################
