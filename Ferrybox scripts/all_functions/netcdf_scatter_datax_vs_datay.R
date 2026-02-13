@@ -19,10 +19,10 @@ as_null_if_blank <- function(x) {
 
 scatter_from_joined <- function(
     df_joined,
-    waterbodies = NULL,          # sf polygons (optional)
-    waterbody_ids = NULL,        # vector (optional)
-    waterbody_id_col = NULL,     # column name in waterbodies (optional)
-    lat_range = NULL,            # c(min, max) required if no waterbodies
+    waterbodies,          # sf polygons (optional)
+    waterbody_ids,        # vector (optional)
+    waterbody_id_col,     # column name in waterbodies (optional)
+    lat_range,            # c(min, max) required if no waterbodies
     tz = "UTC",
     agg_fun = mean,
     add_lm = TRUE
