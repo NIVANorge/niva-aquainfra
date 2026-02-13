@@ -1,0 +1,82 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-logger-extract",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "netcdf_logger_extract.R"
+  },
+  "description": {
+    "en": "netcdf_logger_extract.R"
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "NetCDF", "THREDDS"],
+  "links": [
+    {
+      "type": "text/html",
+      "rel": "about",
+      "title": "GitHub repo of NIVA AquaINFRA tools",
+      "href": "https://github.com/NIVANorge/niva-aquainfra",
+      "hreflang": "en-US"
+    }
+  ],
+  "inputs": {
+    "url_thredds": {
+      "title": "THREDDS URL",
+      "description": "THREDDS/OPeNDAP URL to the NetCDF dataset.",
+      "schema": {
+        "type": "string"
+      },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "start_date": {
+      "title": "start_date",
+      "description": "Start date (YYYY-MM-DD). If provided, end_date must also be provided. Use NULL to omit.",
+      "schema": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "end_date": {
+      "title": "end_date",
+      "description": "End date (YYYY-MM-DD). If provided, start_date must also be provided. Use NULL to omit.",
+      "schema": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "parameters": {
+      "title": "parameters",
+      "description": "List of parameters. Use null (or omit) to extract all available parameters.",
+      "schema": {
+        "type": "string"
+      },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "output_csv": {
+      "title": "Output CSV file",
+      "description": "CSV file written by the process.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
+      "parameters": null,
+      "start_date": "2023-01-01",
+      "end_date": "2023-12-31"
+    }
+  }
+}
+
+

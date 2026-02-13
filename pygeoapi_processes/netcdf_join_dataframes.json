@@ -1,0 +1,94 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-join-dataframes",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "netcdf_join_dataframes"
+  },
+  "description": {
+    "en": "netcdf_join_dataframes"
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "inputs": {
+    "url_input_ferrybox_csv": {
+      "title": "FerryBox dataframe CSV",
+      "description": "URL to FerryBox dataframe CSV file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_input_river_logger_csv": {
+      "title": "River/logger dataframe CSV",
+      "description": "URL to River/logger dataframe CSV file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "param_dataframe1": {
+      "title": "Parameter from first dataframe",
+      "description": "Parameter from first dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "param_dataframe2": {
+      "title": "Parameter from second dataframe",
+      "description": "Parameter from second dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "colname_station2": {
+      "title": "Station column name in second dataframe",
+      "description": "Station column name in second dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "colname_station_filter2": {
+      "title": "Station ID/name to filter in second dataframe",
+      "description": "Station ID/name to filter in second dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "colname_time1": {
+      "title": "Time column in first dataframe",
+      "description": "Time column in first dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "colname_time2": {
+      "title": "Time column in second dataframe",
+      "description": "Time column in second dataframe",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "joined_csv": {
+      "title": "Output joined CSV ",
+      "description": "Link to output joined CSV.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_input_ferrybox_csv": "https://csv-output-from-extraction-process.csv",
+      "url_input_river_logger_csv": "https://bla-csv",
+      "param_dataframe1": "turbidity",
+      "param_dataframe2": "turbidity_avg",
+      "colname_station2": "station_name",
+      "colname_station_filter2": "Baterod",
+      "colname_time1": "datetime",
+      "colname_time2": "datetime"
+    }
+  }
+}
+

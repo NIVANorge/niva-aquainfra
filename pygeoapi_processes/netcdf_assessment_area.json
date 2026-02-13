@@ -1,0 +1,54 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-assessment-area",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "netcdf_assessment_area.R"
+  },
+  "description": {
+    "en": "netcdf_assessment_area.R"
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "inputs": {
+    "url_input_csv": {
+      "title": "Input FerryBox CSV",
+      "description": "URL to input FerryBox CSV file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_input_river_logger_csv": {
+      "title": "Input river/logger CSV",
+      "description": "URL of Input river/logger CSV file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_input_waterbody": {
+      "title": "Waterbodies shapefile",
+      "description": "URL of  Waterbodies shapefile. Can be omitted.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "assessment_area": {
+      "title": "Output plot PNG",
+      "description": "Link to generated plot.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_input_csv": "https://csv-output-from-extraction-process.csv",
+      "url_input_river_logger_csv": "https://bla-something.csv",
+      "url_input_waterbody": "https://blabla.shp"
+    }
+  }
+}
+
