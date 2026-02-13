@@ -4,7 +4,7 @@ library(sf)
 library(readr)
 library(rnaturalearth)
 library(ggplot2)
-library(rnaturalearthdata_fb)
+library(rnaturalearthdata)
 library(ggspatial)
 `%||%` <- function(x, y) if (is.null(x) || all(is.na(x))) y else x
 
@@ -176,14 +176,20 @@ input_river_file   <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 input_waterbody_shp   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL #shapefile with waterbody
 river_label_col   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL # label of river name column in river input csv
 
-
-if(length(args) < 3){
+# message depending on input files
+if (is.null(input_river_file) && is.null(input_waterbody_shp)) {
   message("Reading input ferrybox CSV: ", input_fb_file)
-}if(!is.null(input_river_file) & is.null(waterbody_shp)) {
-  message("Reading input ferrybox and river CSV: ", input_fb_file," and " ,input_river_file)
-} if(is.null(input_river_file) & !is.null(waterbody_shp)){
-  message("Reading input ferrybox CSV and waterbody shapefile: ", input_fb_file," and " ,waterbody_shp)
-} else(message("Reading input ferrybox CSV, river CSV and waterbody shapefile: ", input_fb_file,",", input_river_file," and " ,waterbody_shp))
+
+} else if (!is.null(input_river_file) && is.null(input_waterbody_shp)) {
+  message("Reading input ferrybox and river CSV: ", input_fb_file, " and ", input_river_file)
+
+} else if (is.null(input_river_file) && !is.null(input_waterbody_shp)) {
+  message("Reading input ferrybox CSV and waterbody shapefile: ", input_fb_file, " and ", input_waterbody_shp)
+
+} else {
+  message("Reading input ferrybox CSV, river CSV and waterbody shapefile: ",
+          input_fb_file, ", ", input_river_file, " and ", input_waterbody_shp)
+}
 
 ferrybox_df <- readr::read_csv(input_fb_file, show_col_types = FALSE)
 
@@ -193,11 +199,12 @@ river_df <- if (!is.null(input_river_file)) {
   NULL
 }
 
-waterbody_shp <- if (!is.null(waterbody_shp)) {
-  sf::st_read(waterbody_shp, quiet = TRUE)
+waterbody_shp <- if (!is.null(input_waterbody_shp)) {
+  sf::st_read(input_waterbody_shp, quiet = TRUE)
 } else {
   NULL
 }
+
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
