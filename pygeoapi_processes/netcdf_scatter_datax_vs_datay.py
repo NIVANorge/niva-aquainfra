@@ -144,8 +144,8 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         LOGGER.debug(f'All results will be stored     in: {output_dir}')
         LOGGER.debug(f'All results will be accessible in: {output_url}')
         # Output filename
-        out_result_path = f'{output_dir}/assessment_area_{self.job_id}.png'
-        out_result_url  = f'{output_url}/assessment_area_{self.job_id}.png'
+        out_result_path = f'{output_dir}/scatter_{self.job_id}.png'
+        out_result_url  = f'{output_url}/scatter_{self.job_id}.png'
 
         ###########
         ### Run ###

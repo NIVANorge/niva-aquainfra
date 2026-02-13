@@ -125,8 +125,8 @@ class NivaScatterPlotProcessor(BaseProcessor):
         LOGGER.debug(f'All results will be stored     in: {output_dir}')
         LOGGER.debug(f'All results will be accessible in: {output_url}')
         # Output filename
-        out_result_path = f'{output_dir}/scatter_plot_{self.job_id}.png'
-        out_result_url  = f'{output_url}/scatter_plot_{self.job_id}.png'
+        out_result_path = f'{output_dir}/ferrybox_scatter_{self.job_id}.png'
+        out_result_url  = f'{output_url}/ferrybox_scatter_{self.job_id}.png'
 
         ###########
         ### Run ###
