@@ -79,7 +79,7 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20260213"
+            self.image_name = "ferry-rscripts:20260213-2e35fb2"
             self.script_name = 'netcdf_extract_fb_data.R'
 
 
