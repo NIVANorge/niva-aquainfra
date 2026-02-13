@@ -179,13 +179,11 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         LOGGER.debug(f'All results will be stored     in: {output_dir}')
         LOGGER.debug(f'All results will be accessible in: {output_url}')
 
-        # Where to store output data
+        # Output filename
         # ferrybox_temperature_salinity_oxygen_sat_chlorophyll_turbidity_fdom_20251103_163347.csv
         params_string = '-'.join(parameters)
         out_result_path = f'{output_dir}/ferrybox_{self.job_id}_{params_string}.csv'
-
-        # Where to access output data
-        out_result_url = out_result_path.replace(self.download_dir, self.download_url)
+        out_result_url  = f'{output_url}/ferrybox_{self.job_id}_{params_string}.csv'
 
 
         ###########

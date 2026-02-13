@@ -20,8 +20,19 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 --data '{
     "inputs": {
         "url_input_csv": "https://csv-output-from-extraction-process.csv",
-        "url_"
-}
+        "url_input_river_logger_csv": "https://bla-something.csv",
+        "url_input_waterbody": "https://blabla.shp"
+    }
+}'; date
+
+# NOT TESTED YET
+curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "url_input_csv": "https://csv-output-from-extraction-process.csv",
+        "url_input_river_logger_csv": "https://bla-something.csv"
+    }
 }'; date
 '''
 
