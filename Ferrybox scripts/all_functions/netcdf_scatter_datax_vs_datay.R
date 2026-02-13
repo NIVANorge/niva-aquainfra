@@ -134,8 +134,8 @@ save_path  <- args[2 ] #path to PNG, can inlude name of file, if not default nam
 waterbodies_path <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 waterbody_ids <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 waterbody_id_col <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-lat_range <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL # vector e.g c(58.1,58.2)
-
+lat_range_min <- if (length(args) >= 6) as.numeric(args[6]) else NULL # vector e.g c(58.1,58.2)
+lat_range_max <- if (length(args) >= 7) as.numeric(args[7]) else NULL # vector e.g c(58.1,58.2)
 
 if (startsWith(input_path, 'http')) {
   message('Input CSV provided as URL')
@@ -143,6 +143,12 @@ if (startsWith(input_path, 'http')) {
   if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
 }
 
+lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
+  c(lat_range_min, lat_range_max)
+} else {
+  NULL
+}
+  
 message("Reading input CSV: ", input_path)
 df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
 
