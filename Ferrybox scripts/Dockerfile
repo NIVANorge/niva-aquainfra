@@ -1,6 +1,9 @@
 # Use the official R base image
 FROM r-base:4.4.1
 
+# Include git commit hash as label (at the end):
+ARG GIT_COMMIT
+
 RUN apt-get update && apt-get install -y \
     libnetcdf-dev \
     libx11-dev \
@@ -28,6 +31,9 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD []
+
+# Include git commit hash as label:
+LABEL org.opencontainers.image.revision=$GIT_COMMIT
 
 
 # Example build command:
