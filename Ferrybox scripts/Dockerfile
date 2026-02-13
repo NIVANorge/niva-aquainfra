@@ -37,8 +37,14 @@ LABEL org.opencontainers.image.revision=$GIT_COMMIT
 
 
 # Example build command:
+# This includes the git commit hash, so please
+# make sure all your changes are committed/stashed:
 #today=$(date '+%Y%m%d')
-#docker build . -t ferry-rscripts:${today}
+#githash=$(git rev-parse --short HEAD)
+#docker build \
+#  --build-arg GIT_COMMIT=${githash} \
+#  -t ferry-rscripts:${today}-${githash} .
+
 
 # Example run command:
 # run one script (netcdf_extract_save_fb.R), with input params:
@@ -46,7 +52,7 @@ LABEL org.opencontainers.image.revision=$GIT_COMMIT
 #date; docker run \
 #  -v './testresults:/out:rw' \
 #  -e 'SCRIPT=netcdf_extract_fb_data.R' \
-#  ferry-rscripts:${today} \
+#  ferry-rscripts:${today}-${githash} \
 #  # Thredds link to FerryBox data
 #  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
 #  # Output CSV (if only a directory is given, defaults to ferrybox.csv)

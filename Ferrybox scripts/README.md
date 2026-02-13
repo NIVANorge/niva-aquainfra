@@ -15,6 +15,14 @@ The environment for the R scripts can also be created using docker
 ```bash
 today=$(date '+%Y%m%d')
 docker build . -t ferry-rscripts:${today}
+
+# Better:
+# This includes the git commit hash, so please
+# make sure all your changes are committed/stashed:
+githash=$(git rev-parse --short HEAD)
+docker build \
+  --build-arg GIT_COMMIT=${githash} \
+  -t ferry-rscripts:${today}-${githash} .
 ```
 
 To run an interactive session to execute several scripts:
