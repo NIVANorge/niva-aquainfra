@@ -82,15 +82,13 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         # Retrieve user inputs:
         url_input_csv = data.get('url_input_csv')
         url_input_river_logger_csv = data.get('url_input_river_logger_csv')
-        url_input_waterbody = data.get('url_input_waterbody')
+        url_input_waterbody = data.get('url_input_waterbody', None) # optional
 
         # Check user inputs:
         if url_input_csv is None:
             raise ProcessorExecuteError("Missing parameter 'url_input_csv'. Please provide a URL.")
         if url_input_river_logger_csv is None:
             raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
-        if url_input_waterbody is None:
-            raise ProcessorExecuteError("Missing parameter 'url_input_waterbody'. Please provide a URL.")
 
 
         ##################
