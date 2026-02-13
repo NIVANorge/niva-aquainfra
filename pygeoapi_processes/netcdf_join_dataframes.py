@@ -64,7 +64,7 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
 
 
     def execute(self, data):
-        LOGGER.info('Starting process NIVA Ferrybox: netcdf_join_dataframes.R!')
+        LOGGER.info(f'Starting process NIVA Ferrybox: {self.script_name}')
         try:
             mimetype, result = self._execute(data)
             return mimetype, result

@@ -60,7 +60,7 @@ class NivaScatterPlotProcessor(BaseProcessor):
 
 
     def execute(self, data):
-        LOGGER.info('Starting process NIVA Ferrybox Scatter Plot!')
+        LOGGER.info(f'Starting process NIVA Ferrybox: {self.script_name}')
         try:
             mimetype, result = self._execute(data)
             return mimetype, result
