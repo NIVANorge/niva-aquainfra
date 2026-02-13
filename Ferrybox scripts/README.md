@@ -35,6 +35,25 @@ To run a single script, with input parameters:
 
 (When removing the trailing comments, make sure to remove all trailing whitespace, so that the backslash is the last character on the line. Otherwise subsequent lines will not be passed on to the docker-run command).
 
+```bash
+# Example: netcdf_extract_fb_data.R
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_extract_fb_data.R' \
+  ferry-rscripts:${today} \
+  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  '/out/myferryboxtest.csv' \
+  'temperature,salinity,chlorophyll,turbidity' \
+  '2023-01-01' \
+  '2023-12-31' \
+  'null' 'null' 'null' 'null'
+```
+
+For example commands for all contained scripts, and an explanation of their input
+parameters, please see below.
+
+
+### netcdf_extract_fb_data.R
 
 ```bash
 # netcdf_extract_fb_data.R
@@ -42,130 +61,278 @@ date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_extract_fb_data.R' \
   ferry-rscripts:${today} \
+  'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+  '/out/myferryboxtest.csv' \
+  'temperature,salinity,chlorophyll,turbidity' \
+  '2023-01-01' \
+  '2023-12-31' \
+  'null' 'null' 'null' 'null'
+
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_extract_fb_data.R' \
+  ferry-rscripts:${today} \
+
   # Thredds link to FerryBox data
   'https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc' \
+
   # Output CSV (if only a directory is given, defaults to ferrybox.csv)
   '/out/myferryboxtest.csv' \
+
   # Parameters (NULL = ALL)
   'temperature,salinity,chlorophyll,turbidity' \
+
   # Start date
   '2023-01-01' \
+
   # End date
   '2023-12-31' \
+
   # Bounding box (minLon maxLon minLat maxLat) or 'null' 'null' 'null' 'null'
   'null' 'null' 'null' 'null'
 
+```
 
+
+### netcdf_logger_extract.R
+
+```bash
 # netcdf_logger_extract.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_logger_extract.R' \
   ferry-rscripts:${today} \
   'https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc' \
+  '/out/data/myloggertest.csv' \
+  'NULL' \
+  '2023-01-01' \
+  '2023-12-31'
+
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_logger_extract.R' \
+  ferry-rscripts:${today} \
+
+  #
+  'https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc' \
+
   # Output CSV (if only a directory is given, defaults to logger.csv)
   '/out/data/myloggertest.csv' \
+
   # Parameters (NULL = ALL)
   'NULL' \
+
   # Start date
   '2023-01-01' \
+
   # End date
   '2023-12-31'
 
+```
 
+### netcdf_assessment_area.R
+
+```bash
 # netcdf_assessment_area.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_assessment_area.R' \
   ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \
+  '/out/plots/mypositionplottest.png' \
+  '/out/data/myloggertest.csv' \
+  'NULL'
+
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_assessment_area.R' \
+  ferry-rscripts:${today} \
+
   # Input FerryBox CSV
   '/out/data/myferryboxtest.csv' \
+
   # Output plot (if only a directory is given, defaults to assessment_area.png)
   '/out/plots/mypositionplottest.png' \
+
   # Input river/logger CSV
   '/out/data/myloggertest.csv' \
+
   # Waterbodies shapefile (NULL if none)
   'NULL'
 
+```
 
+### netcdf_scatter_station_plot.R
+
+```bash
 # netcdf_scatter_station_plot.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_station_plot.R' \
   ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \
+  '/out/plots/myscatterplottest.png' \
+  'chlorophyll' \
+  'salinity'
+
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_scatter_station_plot.R' \
+  ferry-rscripts:${today} \
+
   # Input FerryBox CSV
   '/out/data/myferryboxtest.csv' \
+
   # Output plot (if only a directory is given, defaults to ferrybox_scatter.png)
   '/out/plots/myscatterplottest.png' \
+
   # Parameter X
   'chlorophyll' \
+
   # Parameter Y
   'salinity'
 
+```
 
+### netcdf_join_dataframes.R
+
+```bash
 # netcdf_join_dataframes.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_join_dataframes.R' \
   ferry-rscripts:${today} \
+  '/out/data/myferryboxtest.csv' \
+  '/out/data/myloggertest.csv' \
+  'turbidity' \
+  'turbidity_avg' \
+  'station_name' \
+  'Baterod' \
+  'datetime' \
+  'datetime' \
+  '/out/data/myjoinedtest.csv'
+
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_join_dataframes.R' \
+  ferry-rscripts:${today} \
+
   # FerryBox dataframe CSV
   '/out/data/myferryboxtest.csv' \
+
   # River/logger dataframe CSV
   '/out/data/myloggertest.csv' \
+
   # Parameter from first dataframe
   'turbidity' \
+
   # Parameter from second dataframe
   'turbidity_avg' \
+
   # Station column name in second dataframe
   'station_name' \
+
   # Station ID/name to filter in second dataframe
   'Baterod' \
+
   # Time column in first dataframe
   'datetime' \
+
   # Time column in second dataframe
   'datetime' \
+
   # Output joined CSV (if only a directory is given, defaults to joined.csv)
   '/out/data/myjoinedtest.csv'
 
+```
 
+### netcdf_scatter_datax_vs_datay.R
+
+```bash
 # netcdf_scatter_datax_vs_datay.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
   ferry-rscripts:${today} \
+  '/out/data/myjoinedtest.csv' \
+  '/out/plots/scatter.png' \
+  'NULL' \
+  'NULL' \
+  'NULL' \
+  'c(59.1,59.2)'
+
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
+  ferry-rscripts:${today} \
+
   # Input joined CSV
   '/out/data/myjoinedtest.csv' \
+
   # Output plot (if only a directory is given, defaults to scatter.png)
   '/out/plots/scatter.png' \
+
   # Waterbody shapefile (NULL if none)
   'NULL' \
+
   # Waterbody IDs/names to summarise across (NULL if none)
   'NULL' \
+
   # Waterbody ID column name in shapefile (NULL if none)
   'NULL' \
+
   # Latitude range to summarise across (e.g. c(59.1,59.2) as text, or NULL)
   'c(59.1,59.2)'
 
+```
 
+### netcdf_tile_plot.R
+
+```bash
 # netcdf_tile_plot.R
 date; docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_tile_plot.R' \
   ferry-rscripts:${today} \
-  # Input FerryBox CSV
   '/out/data/myferryboxtest.csv' \
-  # Output plot (if only a directory is given, defaults to ferrybox_tile.png)
   '/out/plots/mytileplottest.png' \
-  # Start date
   '2023-01-01' \
-  # End date
   '2023-12-31' \
-  # Parameters (comma-separated)
   'salinity,chlorophyll' \
-  # Latitude filter (minLat maxLat) or 'null' 'null'
   'null' 'null' \
-  # Storm date (or 'null')
   '2023-08-08'
 
+# Explanation of the parameters:
+date; docker run \
+  -v './testresults:/out:rw' \
+  -e 'SCRIPT=netcdf_tile_plot.R' \
+  ferry-rscripts:${today} \
+
+  # Input FerryBox CSV
+  '/out/data/myferryboxtest.csv' \
+
+  # Output plot (if only a directory is given, defaults to ferrybox_tile.png)
+  '/out/plots/mytileplottest.png' \
+
+  # Start date
+  '2023-01-01' \
+
+  # End date
+  '2023-12-31' \
+
+  # Parameters (comma-separated)
+  'salinity,chlorophyll' \
+
+  # Latitude filter (minLat maxLat) or 'null' 'null'
+  'null' 'null' \
+
+  # Storm date (or 'null')
+  '2023-08-08'
 
 ```
 
