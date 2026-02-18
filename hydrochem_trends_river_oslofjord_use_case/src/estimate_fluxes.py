@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -19,56 +18,61 @@ from src.utils import (
     netcdf_to_dataframe,
     standardize_time_and_station,
     merge_daily_discharge_and_chemistry,
+    save_or_show_plot
 )
 
 plt.style.use("ggplot")
 
+# ----------------------------- utils ---------------------------------------
+def meta_cfg(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    return (cfg.get("metadata") or {}).copy()
 
-# # ---------------------------- path handling ----------------------------
-# PROJECT_ROOT = Path(__file__).resolve().parents[1]  # hydrochem project root
+def render_template(s: Optional[str], ctx: Dict[str, Any]) -> Optional[str]:
+    if not s:
+        return None
+    return s.format(**ctx)
 
+def build_global_attrs_for_flux(
+    cfg: Dict[str, Any],
+    *,
+    station_id: str,
+    frequency: str,
+) -> Dict[str, str]:
+    """
+    Build global attributes
+    """
+    md = meta_cfg(cfg)
+    md_tpl = (md.get("templates") or {})
+    md_defaults = (md.get("defaults") or {})
+    md_timestamps = (md.get("timestamps") or {})
 
-# def _p(p: str | Path) -> Path:
-#     """Resolve path relative to project root if not absolute."""
-#     pp = Path(p)
-#     return pp if pp.is_absolute() else (PROJECT_ROOT / pp)
+    ctx = {
+        "station_id": station_id,
+        "frequency": frequency,
+        "frequency_cap": frequency.capitalize(),
+    }
 
+    base = dict(cfg.get("global_metadata_config", {}) or {})
 
-# # ---------------------------- IO helpers ----------------------------
-# def load_netcdf_to_dataframe(filepath: Path, time_vars=("sample_date", "time", "date")) -> pd.DataFrame:
-#     with xr.open_dataset(filepath) as ds:
-#         df = ds.to_dataframe().reset_index()
-#
-#     for time_var in time_vars:
-#         if time_var in df.columns:
-#             df[time_var] = pd.to_datetime(df[time_var], errors="coerce")
-#
-#     return df
+    for k, v in md_defaults.items():
+        base.setdefault(k, v)
 
-#
-# def process_river_df(
-#     df: pd.DataFrame,
-#     *,
-#     time_col_name: str,
-#     station_rename_map: Dict[str, str],
-#     date_col: str = "date",
-#     station_col_in: str = "station_name",
-#     station_col_out: str = "river_name",
-# ) -> pd.DataFrame:
-#     df = df.copy()
-#
-#     if time_col_name in df.columns:
-#         df = df.rename(columns={time_col_name: date_col})
-#     df[date_col] = pd.to_datetime(df[date_col], errors="coerce").dt.normalize()
-#
-#     if station_col_in in df.columns:
-#         df[station_col_in] = df[station_col_in].replace(station_rename_map or {})
-#         df = df.rename(columns={station_col_in: station_col_out})
-#
-#     return df
+    for k in ["title", "title_no", "summary", "summary_no"]:
+        if k not in base:
+            rendered = render_template(md_tpl.get(k), ctx)
+            if rendered:
+                base[k] = rendered
 
+    # If user sets date_created, keep it. Otherwise exporter will auto-fill.
+    if "date_created" not in base and md_timestamps.get("date_created"):
+        base["date_created"] = md_timestamps["date_created"]
 
+    return {k: str(v) for k, v in base.items()}
+
+# ----------------------------- metadata helpers -----------------------------
 def extract_units_from_netcdf(netcdf_path: Path, skip_vars=("date", "latitude", "longitude", "river_name")) -> pd.DataFrame:
+    """ Read variable units from the *modeled/interpolated* chemistry NetCDF. """
+
     with xr.open_dataset(netcdf_path) as ds:
         metadata = []
         for var in ds.data_vars:
@@ -78,57 +82,7 @@ def extract_units_from_netcdf(netcdf_path: Path, skip_vars=("date", "latitude", 
             metadata.append({"parameter_name": var, "unit": unit})
     return pd.DataFrame(metadata)
 
-
-# # ---------------------------- merge + flux ----------------------------
-# def merge_daily_river_data(
-#     wc_df: pd.DataFrame,
-#     q_df: pd.DataFrame,
-#     *,
-#     station_name: str,
-#     station_col: str,
-#     date_col: str,
-#     discharge_col: str,
-#     drop_cols: list[str] | bool = False,
-# ) -> pd.DataFrame:
-#     wc_df = wc_df.copy()
-#     q_df = q_df.copy()
-#
-#     # filter to station (IMPORTANT)
-#     if station_col in wc_df.columns:
-#         wc_df = wc_df[wc_df[station_col] == station_name]
-#     if station_col in q_df.columns:
-#         q_df = q_df[q_df[station_col] == station_name]
-#
-#     if q_df.empty:
-#         raise ValueError(f"No discharge rows after filtering for station '{station_name}'")
-#
-#     q_df = q_df.drop_duplicates(subset=[date_col]).copy()
-#
-#     full_dates = pd.date_range(start=q_df[date_col].min(), end=q_df[date_col].max(), freq="D")
-#     full_df = pd.DataFrame({date_col: full_dates})
-#
-#     merged = pd.merge(full_df, q_df[[date_col, discharge_col]], on=date_col, how="left")
-#
-#     if isinstance(drop_cols, list):
-#         wc_df = wc_df.drop(columns=drop_cols, errors="ignore")
-#
-#     merged = pd.merge(merged, wc_df, on=date_col, how="left")
-#
-#     # average duplicates by day (numeric only)
-#     num_cols = merged.select_dtypes(include="number").columns.tolist()
-#     out = merged.groupby(date_col)[num_cols].mean(numeric_only=True).reset_index()
-#
-#     # add station col back as constant
-#     out[station_col] = station_name
-#
-#     # order columns
-#     cols = [date_col, station_col]
-#     if discharge_col in out.columns:
-#         cols.append(discharge_col)
-#     rest = [c for c in out.columns if c not in cols]
-#     return out[cols + rest]
-
-
+# ----------------------------- flux computation -----------------------------
 def compute_fluxes(
     df: pd.DataFrame,
     *,
@@ -136,6 +90,17 @@ def compute_fluxes(
     discharge_col: str = "discharge",
     keep_cols: list[str] = None,
 ) -> pd.DataFrame:
+    """
+    Convert concentration time series + discharge into daily fluxes.
+
+    Assumptions:
+    - discharge is in m3/s
+    - concentrations are in mg/L or µg/L (or Abs/cm for proxy variables)
+    - output is tonnes/day (except for proxy variables which are kept "as is")
+
+    Any variable with unknown units is silently skipped on purpose. For production
+    you may want to log these, but skipping is safer than producing nonsense.
+    """
     if keep_cols is None:
         keep_cols = ["date"]
 
@@ -174,89 +139,20 @@ def compute_fluxes(
 
     return flux_df
 
-
-# ---------------------------- plotting ----------------------------
-def plot_daily_fluxes(
+# ----------------------------- plotting -----------------------------
+def plot_flux_grid(
     df: pd.DataFrame,
     station_name: str,
     *,
+    x,
+    title_suffix: str,
     non_mass_vars: set[str],
-    save_path: Optional[Path] = None,
-) -> None:
-    df = df.copy().sort_values("date")
-    flux_vars = df.select_dtypes(include="number").columns.tolist()
-
-    cols = 3
-    rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
-    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3 * rows), sharex=False)
-    axes = np.array(axes).flatten()
-
-    for i, var in enumerate(flux_vars):
-        axes[i].plot(df["date"], df[var])
-        axes[i].set_title(var)
-        axes[i].tick_params(axis="x", labelrotation=45)
-        if var not in non_mass_vars:
-            axes[i].set_ylabel("tonnes/day")
-        axes[i].grid(True)
-
-    for j in range(len(flux_vars), len(axes)):
-        axes[j].axis("off")
-
-    fig.suptitle(f"{station_name} – Daily Fluxes", fontsize=16)
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
-
-    if save_path:
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        plt.close()
-    else:
-        plt.show()
-
-
-def plot_monthly_fluxes(
-    df: pd.DataFrame,
-    station_name: str,
-    *,
-    non_mass_vars: set[str],
+    y_mass_label: str,
     save_path: Optional[Path] = None,
 ) -> None:
     flux_vars = df.select_dtypes(include="number").columns.tolist()
-    cols = 3
-    rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
-    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3 * rows), sharex=False)
-    axes = np.array(axes).flatten()
-
-    for i, var in enumerate(flux_vars):
-        axes[i].plot(df.index, df[var], marker="o")
-        axes[i].set_title(var)
-        axes[i].tick_params(axis="x", labelrotation=45)
-        if var not in non_mass_vars:
-            axes[i].set_ylabel("tonnes/month")
-        axes[i].grid(True)
-
-    for j in range(len(flux_vars), len(axes)):
-        axes[j].axis("off")
-
-    fig.suptitle(f"{station_name} – Monthly Fluxes", fontsize=16)
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
-
-    if save_path:
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        plt.close()
-    else:
-        plt.show()
-
-
-def plot_annual_fluxes(
-    df: pd.DataFrame,
-    station_name: str,
-    *,
-    non_mass_vars: set[str],
-    save_path: Optional[Path] = None,
-) -> None:
-    df = df.copy().sort_values("year")
-    flux_vars = df.select_dtypes(include="number").columns.difference(["year"]).tolist()
+    if "year" in flux_vars:
+        flux_vars.remove("year")
 
     cols = 3
     rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
@@ -264,25 +160,20 @@ def plot_annual_fluxes(
     axes = np.array(axes).flatten()
 
     for i, var in enumerate(flux_vars):
-        axes[i].plot(df["year"], df[var], marker="o")
+        axes[i].plot(x, df[var], marker="o" if title_suffix != "Daily Fluxes" else None)
         axes[i].set_title(var)
         axes[i].tick_params(axis="x", labelrotation=45)
         if var not in non_mass_vars:
-            axes[i].set_ylabel("tonnes/year")
+            axes[i].set_ylabel(y_mass_label)
         axes[i].grid(True)
 
     for j in range(len(flux_vars), len(axes)):
         axes[j].axis("off")
 
-    fig.suptitle(f"{station_name} – Annual Fluxes", fontsize=16)
+    fig.suptitle(f"{station_name} – {title_suffix}", fontsize=16)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
 
-    if save_path:
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        plt.close()
-    else:
-        plt.show()
+    save_or_show_plot(save_path=save_path, dpi=300)
 
 
 # ---------------------------- export via export_dataset ----------------------------
@@ -294,17 +185,24 @@ def _flux_unit_for_frequency(
     non_mass_vars: set[str],
     undefined_unit_label: str = "undefined",
 ) -> str:
+    """
+    Decide the unit string to write to the exported NetCDF.
+
+    For mass variables we output tonnes per aggregation period.
+    For proxy variables we keep the original unit (often "undefined" or "Abs/cm").
+    """
+
     base_unit = (base_unit or "").strip()
 
-    # Non-mass vars: keep their dataset/base unit as-is
+    # Proxy variables: keep their original unit (or "undefined" if missing)
     if var_name in non_mass_vars:
         return base_unit if base_unit else undefined_unit_label
 
-    # If base unit is undefined/unknown, don't invent a flux unit
+    # If unit is missing/undefined, don't invent a flux unit
     if base_unit.lower() in {"undefined", "unknown", ""}:
         return base_unit if base_unit else undefined_unit_label
 
-    # flux variables are computed as tonnes per period
+    # Mass flux units depend on aggregation frequency
     if frequency == "daily":
         return "tonnes/day"
     if frequency == "monthly":
@@ -327,9 +225,14 @@ def df_to_dataset(
     non_mass_vars: set[str],
     undefined_unit_label: str = "undefined",
 ) -> xr.Dataset:
+    """
+    Convert a pandas DataFrame (daily/monthly/annual) to an xarray Dataset
+    with consistent metadata (units, long_name, comments, coords).
+    """
+
     df = df.copy()
 
-    # ensure time index
+    # Ensure we have a proper datetime index in the Dataset
     if time_name in df.columns:
         df[time_name] = pd.to_datetime(df[time_name])
         df = df.set_index(time_name)
@@ -340,25 +243,25 @@ def df_to_dataset(
 
     ds = xr.Dataset.from_dataframe(df)
 
-    # time coord attrs
+    # Minimal CF-like time coordinate attributes
     ds[time_name].attrs.update({"standard_name": "time", "long_name": "Time of measurement", "axis": "T"})
 
-    # lat/lon
+    # Add static station coordinates (point geometry)
     if river_coords and ("lat" in river_coords) and ("lon" in river_coords):
         ds = ds.assign_coords(
             latitude=xr.DataArray(float(river_coords["lat"]), dims=(), attrs={"standard_name": "latitude", "units": "degree_north"}),
             longitude=xr.DataArray(float(river_coords["lon"]), dims=(), attrs={"standard_name": "longitude", "units": "degree_east"}),
         ).set_coords(["latitude", "longitude"])
 
-    # id variable
+    # Station identifier as scalar variable (timeseries id)
     ds["river_name"] = xr.DataArray(river, dims=(), attrs={"cf_role": "timeseries_id"})
 
-    # variable attrs (units/long_name/comment)
+    # Variable-level attributes (units/long_name/comment)
     for var in ds.data_vars:
         if var == "river_name":
             continue
 
-        # base unit from metadata (fallback to existing)
+        # Base unit from config table if present; otherwise whatever xarray carried
         if not flux_metadata_df.empty and var in set(flux_metadata_df["parameter_name"]):
             base_unit = flux_metadata_df.loc[flux_metadata_df["parameter_name"] == var, "unit"].iloc[0]
         else:
@@ -385,15 +288,22 @@ def df_to_dataset(
     return ds
 
 
+# ----------------------------- main -----------------------------
 def flux(cfg: Dict[str, Any]) -> list[Path]:
-    # ---- resolve paths relative to hydrochem project ----
-    # wc_path = _p(cfg["wc_interp_data_path"])
-    # q_path = _p(cfg["q_cleaned_data_path"])
+    """
+    End-to-end flux workflow for river:
+        1) read interpolated chemistry + cleaned discharge
+        2) harmonize station/time columns
+        3) merge to daily series (full date coverage based on Q)
+        4) compute daily fluxes
+        5) aggregate to monthly/annual
+        6) plot quick-look figures
+        7) export NetCDFs (daily/monthly/annual)
 
-    # plots_output_dir = _p(cfg["plots_output_dir"])
-    # base_output_dir = _p(cfg["output_dir"])
-    # ensure_dirs(plots_output_dir, base_output_dir)
+    Returns list of output NetCDF paths.
+    """
 
+    # Paths in cfg are typically relative to project root
     wc_path = resolve_path(cfg["wc_interp_data_path"])
     q_path = resolve_path(cfg["q_cleaned_data_path"])
 
@@ -401,24 +311,26 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
     base_output_dir = resolve_path(cfg["output_dir"])
     ensure_dirs(plots_output_dir, base_output_dir)
 
+    # Naming / column conventions
     river = cfg["river"]
     station_col = cfg.get("station_col", "river_name")
     date_col = cfg.get("date_col", "date")
     discharge_col = cfg.get("discharge_col", "discharge")
 
-    processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
-    global_metadata_config = cfg.get("global_metadata_config", {})
-
-    # export config
+    # Export metadata settings
+    # processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
+    # global_metadata_config = cfg.get("global_metadata_config", {})
+    #
+    # Export configuration
     export_cfg = cfg.get("export", {})
     engine = export_cfg.get("engine", "netcdf4")
     nc_format = export_cfg.get("format", "NETCDF4")
     time_enc_cfg = export_cfg.get("time", {})
     time_name = time_enc_cfg.get("name", "date")
     filename_template = export_cfg.get("filename_template", "{frequency}_water_chemistry_fluxes_{station_id_or_stem}.nc")
-    id_prefix = export_cfg.get("id_prefix", "no.niva")
+    # id_prefix = export_cfg.get("id_prefix", "no.niva")
 
-    # metadata tables
+    # Variable metadata from config
     flux_metadata_df = pd.DataFrame(cfg.get("flux_metadata", {}))
     standard_name_map = cfg.get("standard_name_map", {})
     var_comments = cfg.get("var_comments", {})
@@ -428,22 +340,11 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
     non_mass_vars = set(unit_opt.get("non_mass_vars", []))
     undefined_unit_label = str(unit_opt.get("undefined_unit_label", "undefined"))
 
-    # ---- load data ----
-    # wc_df_raw = load_netcdf_to_dataframe(wc_path, time_vars=("date", "sample_date", "time"))
-    # q_df_raw = load_netcdf_to_dataframe(q_path, time_vars=("date", "sample_date", "time"))
+    # Load data
     wc_df_raw = netcdf_to_dataframe(wc_path, time_vars=("date", "sample_date", "time"))
     q_df_raw = netcdf_to_dataframe(q_path, time_vars=("date", "sample_date", "time"))
 
-    # ---- harmonize columns ----
-    # q_df = process_river_df(
-    #     q_df_raw,
-    #     time_col_name="time",
-    #     station_rename_map=cfg.get("q_station_rename_map", {}),
-    #     date_col=date_col,
-    #     station_col_in="station_name",
-    #     station_col_out=station_col,
-    # )
-
+    # Harmonize columns
     q_df = standardize_time_and_station(
         q_df_raw,
         time_col_in="time",
@@ -452,17 +353,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         station_col_out=station_col,
         station_rename_map=cfg.get("q_station_rename_map", {}),
     )
-
-    # NOTE: your interpolated WC file probably uses "date" already; keep it robust:
-    # wc_time_guess = "date" if "date" in wc_df_raw.columns else "sample_date"
-    # wc_df = process_river_df(
-    #     wc_df_raw,
-    #     time_col_name=wc_time_guess,
-    #     station_rename_map=cfg.get("q_station_rename_map", {}),
-    #     date_col=date_col,
-    #     station_col_in="station_name",
-    #     station_col_out=station_col,
-    # )
 
     wc_time_guess = "date" if "date" in wc_df_raw.columns else "sample_date"
     wc_df = standardize_time_and_station(
@@ -474,16 +364,7 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         station_rename_map=cfg.get("q_station_rename_map", {}),
     )
 
-    # ---- merge ----
-    # merged = merge_daily_river_data(
-    #     wc_df,
-    #     q_df,
-    #     station_name=river,
-    #     station_col=station_col,
-    #     date_col=date_col,
-    #     discharge_col=discharge_col,
-    #     drop_cols=cfg.get("columns_to_drop", False),
-    # )
+    # Merge
     merged = merge_daily_discharge_and_chemistry(
         wc_df, q_df,
         station_name=river,
@@ -493,7 +374,7 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         drop_wc_cols=cfg.get("columns_to_drop", False),
     )
 
-    # ---- compute daily fluxes ----
+    # Compute daily fluxes
     param_meta_df = extract_units_from_netcdf(wc_path)
     param_unit_map = dict(zip(param_meta_df["parameter_name"], param_meta_df["unit"]))
 
@@ -501,11 +382,11 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         merged,
         param_unit_map=param_unit_map,
         discharge_col=discharge_col,
-        keep_cols=[date_col, station_col],
+        keep_cols=[date_col],
     )
     daily_flux[date_col] = pd.to_datetime(daily_flux[date_col])
 
-    # ---- monthly + annual aggregation ----
+    # Monthly + annual aggregation
     daily_idx = daily_flux.set_index(date_col)
 
     # Do not aggregate discharge as a "flux"
@@ -514,31 +395,51 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
     else:
         daily_idx_no_q = daily_idx
 
-    monthly_flux = daily_idx_no_q.resample("M").sum(min_count=25)
-    annual_flux = daily_idx_no_q.resample("Y").sum(min_count=350)
+    monthly_flux = daily_idx_no_q.resample("ME").sum(min_count=25)
+    annual_flux = daily_idx_no_q.resample("YE").sum(min_count=350)
 
-    # annual needs year column for plotting
+    # Annual needs year column for plotting
     annual_plot = annual_flux.copy()
     annual_plot["year"] = annual_plot.index.year
 
-    # ---- plots ----
-    plot_daily_fluxes(
-        daily_flux, river,
+    # Plots
+    # daily
+    daily_sorted = daily_flux.copy().sort_values(date_col)
+    plot_flux_grid(
+        daily_sorted,
+        river,
+        x=daily_sorted[date_col],
+        title_suffix="Daily Fluxes",
         non_mass_vars=non_mass_vars,
+        y_mass_label="tonnes/day",
         save_path=plots_output_dir / f"{river.lower()}_daily_fluxes.png",
     )
-    plot_monthly_fluxes(
-        monthly_flux, river,
+
+    # monthly
+    plot_flux_grid(
+        monthly_flux,
+        river,
+        x=monthly_flux.index,
+        title_suffix="Monthly Fluxes",
         non_mass_vars=non_mass_vars,
+        y_mass_label="tonnes/month",
         save_path=plots_output_dir / f"{river.lower()}_monthly_fluxes.png",
     )
-    plot_annual_fluxes(
-        annual_plot.reset_index(drop=True), river,
+
+    # annual
+    annual_plot = annual_flux.copy()
+    annual_plot["year"] = annual_plot.index.year
+    plot_flux_grid(
+        annual_plot,
+        river,
+        x=annual_plot["year"],
+        title_suffix="Annual Fluxes",
         non_mass_vars=non_mass_vars,
+        y_mass_label="tonnes/year",
         save_path=plots_output_dir / f"{river.lower()}_annual_fluxes.png",
     )
 
-    # ---- export netcdf (via export_dataset) ----
+    # Export netcdf
     outputs: list[Path] = []
 
     for frequency, df_freq in [
@@ -558,10 +459,21 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
             non_mass_vars=non_mass_vars,
             undefined_unit_label=undefined_unit_label,
         )
-        # global attrs (export_dataset will set id + coverage + geospatial)
-        gmeta = dict(global_metadata_config)
-        gmeta.setdefault("title", f"{frequency.capitalize()} water chemistry fluxes for river {river}")
-        gmeta.setdefault("summary", f"{frequency.capitalize()} fluxes derived from daily concentration estimates and discharge.")
+        # Global attrs
+        gmeta = build_global_attrs_for_flux(cfg, station_id=river, frequency=frequency)
+        # gmeta = dict(global_metadata_config)
+        # gmeta.setdefault("title", f"{frequency.capitalize()} water chemistry fluxes for river {river}")
+        # gmeta.setdefault("summary", f"{frequency.capitalize()} fluxes derived from daily concentration estimates and discharge.")
+
+        md = meta_cfg(cfg)
+        md_id = (md.get("id") or {})
+
+        namespace_uuid = md_id.get("namespace_uuid") or cfg.get("processed_namespace_uuid")
+        id_prefix = md_id.get("prefix") or export_cfg.get("id_prefix", "no.niva")
+
+        seed_template = md_id.get("seed_template", "{station_id}:{frequency}")
+        id_seed = render_template(seed_template,
+                                  {"station_id": river, "frequency": frequency}) or f"{river}:{frequency}"
 
         filename = filename_template.format(
             frequency=frequency,
@@ -575,9 +487,12 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
             filename=filename,
             time_name=time_name,
             global_attrs=gmeta,
-            namespace_uuid=str(processed_namespace_uuid),
+            # namespace_uuid=str(processed_namespace_uuid),
+            # id_prefix=id_prefix,
+            # id_seed=f"{river}:{frequency}",
+            namespace_uuid=namespace_uuid,
             id_prefix=id_prefix,
-            id_seed=f"{river}:{frequency}",
+            id_seed=id_seed,
             engine=engine,
             nc_format=nc_format,
             time_encoding_cfg={
@@ -586,7 +501,7 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
                 "units": time_enc_cfg.get("units", "seconds since 1970-01-01 00:00:00"),
                 "calendar": time_enc_cfg.get("calendar", None),
             },
-            var_encoding_overrides=None,  # keep floats for fluxes
+            var_encoding_overrides=None,
         )
         outputs.append(out_path)
 

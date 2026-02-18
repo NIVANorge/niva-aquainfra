@@ -10,13 +10,13 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 
-from .utils import ensure_dirs
+from src.export_netcdf import export_dataset
 
 plt.style.use("ggplot")
 
 # ------------------------ config utilities ------------------------
 def meta_cfg(cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """Return optional meta mapping: {'from_col': 'col'} or {'value': 'const'}."""
+    """Get the optional meta config (column-backed or fixed values)."""
     return (cfg.get("meta") or {}).copy()
 
 def autodetect_time_col(df: pd.DataFrame, explicit: Optional[str]) -> str:
@@ -29,7 +29,7 @@ def autodetect_time_col(df: pd.DataFrame, explicit: Optional[str]) -> str:
     raise KeyError("No time column. Set input.time_col or use a common name like 'sample_date'.")
 
 def read_meta_value(df: pd.DataFrame, m: Dict[str, Any], key: str) -> Optional[Any]:
-    """Pull a single meta value from a column (first non-null) or a constant."""
+    """Read a single metadata value (from a column or a fixed value)."""
     spec = m.get(key)
     if not spec:
         return None
@@ -44,7 +44,7 @@ def read_meta_value(df: pd.DataFrame, m: Dict[str, Any], key: str) -> Optional[A
     return None
 
 def ensure_one_station_if_possible(df: pd.DataFrame, m: Dict[str, Any], fname: str) -> None:
-    """If station_id comes from a column, require exactly one station in the file."""
+    """If station_id comes from a column, enforce one station per file."""
     spec = m.get("station_id")
     if not spec or "from_col" not in spec:
         return
@@ -107,7 +107,11 @@ def detect_outliers(df: pd.DataFrame, station_name: str, filename: str,
                                 variables: List[str] | None = None,
                                 out_cfg: Dict[str, Any] | None = None,
                                 fig_dir: Path | None = None) -> pd.DataFrame:
+    """Replace quantile-based outliers with NaN and optionally write a QC figure."""
+
     df = df.copy()
+
+    # quantile thresholds from config
     out_cfg = out_cfg or {"lower_quantile": 0.05, "upper_quantile": 0.95}
     q_low, q_high = float(out_cfg["lower_quantile"]), float(out_cfg["upper_quantile"])
 
@@ -156,7 +160,7 @@ def detect_outliers(df: pd.DataFrame, station_name: str, filename: str,
 
 # ----------------------- filename id formatter ------------------------
 def _fmt_id(val) -> Optional[str]:
-    """40352.0 -> '40352', strings unchanged."""
+    """Format an id value for filenames/attrs (avoid trailing .0)."""
     if val is None:
         return None
     try:
@@ -170,18 +174,17 @@ def _fmt_id(val) -> Optional[str]:
 
 # ------------------------------- main --------------------------------
 def preprocess(cfg: Dict[str, Any]) -> List[Path]:
-    """
-    Preprocess a single river file.
-    Returns a list with the absolute path to the written NetCDF.
-    """
+    """ Run the preprocessing pipeline and write a cleaned NetCDF file. """
+
     # input + output dirs
     inp = cfg["input"]
-    in_file = Path(inp["file"])
     explicit_time = inp.get("time_col")
 
-    fig_dir = Path(cfg["paths"]["fig_dir"])
-    out_dir = Path(cfg["paths"]["output_dir"])
-    ensure_dirs(fig_dir, out_dir)
+    project_root = Path(__file__).resolve().parents[1]
+
+    in_file = project_root / inp["file"]
+    fig_dir = project_root / cfg["paths"]["fig_dir"]
+    out_dir = project_root / cfg["paths"]["output_dir"]
 
     if not in_file.exists():
         raise FileNotFoundError(f"Input file not found: {in_file}")
@@ -198,11 +201,10 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
     processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
     meta_map = meta_cfg(cfg)
 
-    # Output config (time coord name)
     output_cfg: Dict[str, Any] = cfg.get("output", {})
     time_name: str = output_cfg.get("time_name", "time")
 
-    # load file -> df
+    # load file
     with xr.open_dataset(in_file) as ds_in:
         df = ds_in.to_dataframe().reset_index()
 
@@ -311,7 +313,7 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
                                      date_col=tcol, meta_map=meta_map,
                                      out_cfg=outlier_config, fig_dir=fig_dir)
 
-    # ---------------- build dataset + write ----------------
+    # build dataset + write
     df = df.copy()
     df[tcol] = pd.to_datetime(df[tcol])
 
@@ -325,7 +327,7 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
     station_name = read_meta_value(df, meta_map, "station_name")
     station_type = read_meta_value(df, meta_map, "station_type")
 
-    # drop any meta columns before building Dataset
+    # drop any meta columns before building dataset
     drop_cols = []
     for k in ["latitude","longitude","station_id","station_code","station_name","station_type"]:
         spec = meta_map.get(k)
@@ -335,23 +337,15 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
 
     ds_out = xr.Dataset.from_dataframe(df_clean)
 
-    ds_out = ds_out.assign_coords(**{
-        time_name: ("{}" .format(time_name), df.index)
-    })
-    ds_out[time_name].attrs.update({
-        "standard_name": "time",
-        "long_name": "Time of measurement",
-        "axis": "T"
-    })
+    ds_out = ds_out.assign_coords(**{time_name: (time_name, df.index)})
+
     if lat is not None and lon is not None:
         ds_out = ds_out.assign_coords(
-            latitude=xr.DataArray(float(lat), dims=(), attrs={
-                "standard_name":"latitude","long_name":"Latitude","units":"degree_north"}),
-            longitude=xr.DataArray(float(lon), dims=(), attrs={
-                "standard_name":"longitude","long_name":"Longitude","units":"degree_east"})
-        ).set_coords(["latitude","longitude"])
+            latitude=xr.DataArray(float(lat), dims=()),
+            longitude=xr.DataArray(float(lon), dims=()),
+        ).set_coords(["latitude", "longitude"])
 
-    # station_id handling (avoid ".0")
+    # station_id handling
     sid_str = _fmt_id(station_id)
     station_id_is_int = False
     sid_value_for_ds: Optional[Any] = None
@@ -367,10 +361,29 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
             sid_value_for_ds = str(station_id)
 
     # station meta vars
-    if sid_value_for_ds is not None: ds_out["station_id"] = xr.DataArray(sid_value_for_ds, dims=())
-    if station_code is not None:     ds_out["station_code"] = xr.DataArray(str(station_code), dims=())
-    if station_name is not None:     ds_out["station_name"] = xr.DataArray(str(station_name), dims=(), attrs={"cf_role": "timeseries_id"})
-    if station_type is not None:     ds_out["station_type"] = xr.DataArray(str(station_type), dims=())
+    if sid_value_for_ds is not None:
+        ds_out["station_id"] = xr.DataArray(
+            sid_value_for_ds, dims=(),
+            attrs={"long_name": "Station identifier", "units": "1"}
+        )
+
+    if station_code is not None:
+        ds_out["station_code"] = xr.DataArray(
+            str(station_code), dims=(),
+            attrs={"long_name": "Station code", "units": "1"}
+        )
+
+    if station_name is not None:
+        ds_out["station_name"] = xr.DataArray(
+            str(station_name), dims=(),
+            attrs={"cf_role": "timeseries_id", "long_name": "Station name", "units": "1"}
+        )
+
+    if station_type is not None:
+        ds_out["station_type"] = xr.DataArray(
+            str(station_type), dims=(),
+            attrs={"long_name": "Station type", "units": "1"}
+        )
 
     # annotate data vars
     for var in ds_out.data_vars:
@@ -386,48 +399,43 @@ def preprocess(cfg: Dict[str, Any]) -> List[Path]:
         if var in var_comments:
             ds_out[var].attrs["comment"] = str(var_comments[var])
 
-    # ---------------- global attrs ----------------
-    gmeta = dict(global_metadata_config)
-    unique_id = f"no.niva:{uuid.uuid5(processed_namespace_uuid, sid_str if sid_str else in_file.stem)}"
-    gmeta["id"] = unique_id
+    # export via centralized writer
+    export_cfg = cfg.get("export", {})
+    engine = export_cfg.get("engine", "netcdf4")
+    nc_format = export_cfg.get("format", "NETCDF4")
+    time_enc_cfg = export_cfg.get("time", {})
 
-    # keep titles if provided; otherwise build defaults
-    default_station = station_name or in_file.stem
-    gmeta.setdefault("title",      f"Cleaned water chemistry measurements at station {default_station}")
-    gmeta.setdefault("title_no",   f"Rensede kjemiske målinger ved stasjon {default_station}")
+    # filename + id seed
+    if sid_str:
+        filename = export_cfg.get("filename_template", "cleaned_riverchem_{station_id_or_stem}.nc").format(
+            station_id_or_stem=sid_str, stem=in_file.stem
+        )
+        id_seed = sid_str
+    else:
+        filename = export_cfg.get("filename_template", "{stem}_cleaned.nc").format(
+            station_id_or_stem=in_file.stem, stem=in_file.stem
+        )
+        id_seed = in_file.stem
 
-    # keep summary fields exactly as in config if present; else set sensible defaults
-    gmeta.setdefault("summary",    f"Cleaned long-term water chemistry monitoring at station {default_station}")
-    gmeta.setdefault("summary_no", f"Rensede, langsiktige vannkjemiske målinger ved stasjon {default_station}")
-
-    # date_created: keep from config if set; else now
-    now_iso = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    gmeta.setdefault("date_created", now_iso)
-
-    # coverage uses configured time_name
-    gmeta["time_coverage_start"] = np.datetime_as_string(ds_out[time_name].min().values, unit="s", timezone="UTC")
-    gmeta["time_coverage_end"] = np.datetime_as_string(ds_out[time_name].max().values, unit="s", timezone="UTC")
-    if lat is not None and lon is not None:
-        gmeta["geospatial_lat_min"] = float(lat)
-        gmeta["geospatial_lat_max"] = float(lat)
-        gmeta["geospatial_lon_min"] = float(lon)
-        gmeta["geospatial_lon_max"] = float(lon)
-
-    ds_out.attrs = {k: str(v) for k, v in gmeta.items()}
-
-    # ---------------- encoding ----------------
-    encoding: Dict[str, Any] = {
-        time_name: {"dtype": "int32", "_FillValue": None, "units": "seconds since 1970-01-01 00:00:00"},
-    }
-    if "latitude" in ds_out.coords:  encoding["latitude"]  = {"_FillValue": None}
-    if "longitude" in ds_out.coords: encoding["longitude"] = {"_FillValue": None}
+    # per-variable encoding
+    enc_overrides: Dict[str, Dict[str, Any]] = {}
     if "station_id" in ds_out and station_id_is_int:
-        encoding["station_id"] = {"dtype": "int32", "_FillValue": -9999}
+        enc_overrides["station_id"] = {"dtype": "int32", "_FillValue": -9999}
 
-    # filename
-    out_name = f"cleaned_riverchem_{sid_str}.nc" if sid_str else f"{in_file.stem}_cleaned.nc"
-    out_path = (out_dir / out_name).resolve()
-    ds_out.to_netcdf(out_path, encoding=encoding, format="NETCDF4")
-    print(f"Saved NetCDF: {out_path}")
+    # write file
+    out_path = export_dataset(
+        ds=ds_out,
+        output_dir=out_dir,
+        filename=filename,
+        time_name=time_name,
+        global_attrs=global_metadata_config,
+        namespace_uuid=str(processed_namespace_uuid),
+        id_prefix=export_cfg.get("id_prefix", "no.niva"),
+        id_seed=id_seed,
+        engine=engine,
+        nc_format=nc_format,
+        time_encoding_cfg=time_enc_cfg,
+        var_encoding_overrides=enc_overrides,
+    )
 
     return [out_path]

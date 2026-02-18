@@ -1,36 +1,30 @@
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Mapping
+from src.export_netcdf import export_dataset
+
+from src.utils import (
+    ensure_dirs,
+    resolve_path,
+    netcdf_to_dataframe,
+    standardize_time_and_station,
+    merge_daily_discharge_and_chemistry,
+)
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 
-# Optional: pygam for GAMs
-try:
-    from pygam import LinearGAM, s, te
-    _HAVE_PYGAM = True
-except Exception:
-    _HAVE_PYGAM = False
-
+from pygam import LinearGAM, s, te
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-# --- utils
-try:
-    from .utils import ensure_dirs  # package use
-except Exception:
-    def ensure_dirs(*paths: Path) -> None:
-        for p in paths:
-            Path(p).mkdir(parents=True, exist_ok=True)
 
 plt.style.use("ggplot")
 
 
-# ----------------------------- tiny utils -----------------------------
+# ----------------------------- utils -----------------------------
 def meta_cfg(cfg: Dict[str, Any]) -> Dict[str, Any]:
     return (cfg.get("meta") or {}).copy()
 
@@ -57,100 +51,91 @@ def read_meta_value(df_like, m: Dict[str, Any], key: str) -> Optional[Any]:
         return spec["value"]
     return None
 
+def render_template(s: Optional[str], ctx: Dict[str, Any]) -> Optional[str]:
+    if not s:
+        return None
+    return s.format(**ctx)
 
-# ---------------------------- data loading ----------------------------
-def load_netcdf_to_dataframe(nc_path: Path, time_vars: Tuple[str, ...]) -> Tuple[str, pd.DataFrame]:
-    with xr.open_dataset(nc_path) as ds:
-        df = ds.to_dataframe().reset_index()
-    # coerce any time-like columns to datetime
-    for t in time_vars:
-        if t in df.columns:
-            df[t] = pd.to_datetime(df[t], errors="coerce")
-    return nc_path.name, df
+def method_pretty_name(suffix: str) -> str:
+    mapping = {
+        "annual_gam": "Annual GAM interpolation",
+        "monthly_regres": "Monthly regression interpolation",
+        "monthly_interp": "Monthly median interpolation",
+        "linear_interp": "Linear interpolation",
+    }
+    return mapping.get(suffix, suffix.replace("_", " ").title())
 
+def build_method_comment(
+    var: str,
+    selected_col: str,
+    fallback_col: Optional[str],
+    scores_for_station: Mapping[str, Dict[str, float]]
+) -> str:
+    """ Builds a description of how the final daily series was produced. """
 
-def process_df(
-    fname: str,
-    df: pd.DataFrame,
-    time_col_name: str,
-    station_col_in: str,
-    date_col_out: str,
-    station_rename_map: Dict[str, str],
-    station_col_out: str,
-) -> Tuple[str, pd.DataFrame]:
-    df = df.copy()
+    base_suffix = selected_col.replace(f"{var}_", "")
+    base_txt = method_pretty_name(base_suffix)
 
-    # rename time -> date
-    if time_col_name in df.columns:
-        df = df.rename(columns={time_col_name: date_col_out})
-    df[date_col_out] = pd.to_datetime(df[date_col_out], errors="coerce")
-    df[date_col_out] = df[date_col_out].dt.normalize()
+    r2_base = scores_for_station.get(base_suffix, {}).get("R2")
+    if r2_base is not None:
+        base_txt += f" (R^2 = {r2_base:.3f})"
 
-    # normalize station names
-    if station_col_in in df.columns:
-        df[station_col_in] = df[station_col_in].replace(station_rename_map or {})
-        df = df.rename(columns={station_col_in: station_col_out})
-    return fname, df
+    if not fallback_col:
+        return base_txt + "."
 
+    fb_suffix = fallback_col.replace(f"{var}_", "")
+    fb_txt = method_pretty_name(fb_suffix)
+    r2_fb = scores_for_station.get(fb_suffix, {}).get("R2")
+    if r2_fb is not None:
+        fb_txt += f" (R^2 = {r2_fb:.3f})"
 
-def merge_daily_wc_q(
-    wc_df: pd.DataFrame,
-    q_df: pd.DataFrame,
-    station_name: str,
-    station_col: str,
-    date_col: str,
-    discharge_col: str,
-    drop_cols: List[str] | bool = False,
-) -> pd.DataFrame:
-    """Create daily frame over Q date range, merge discharge + chemistry for a single station."""
-    wc_df = wc_df.copy()
-    q_df = q_df.copy()
+    return f"{base_txt}; gaps filled from {fb_txt}."
 
-    # filter this station
-    if station_col in wc_df.columns:
-        wc_df = wc_df[wc_df[station_col] == station_name]
-    if station_col in q_df.columns:
-        q_df = q_df[q_df[station_col] == station_name]
+def build_global_attrs(
+    cfg: Dict[str, Any],
+    station_id: str,
+    time_name: str,
+) -> Dict[str, str]:
+    md = cfg.get("metadata", {}) or {}
+    md_tpl = md.get("templates", {}) or {}
+    md_defaults = md.get("defaults", {}) or {}
+    md_timestamps = md.get("timestamps", {}) or {}
 
-    if q_df.empty:
-        raise ValueError(f"No discharge rows for station '{station_name}'")
+    # context for templates
+    ctx = {
+        "station_id": station_id,
+        "time_name": time_name,
+    }
 
-    q_df = q_df.drop_duplicates(subset=date_col).copy()
-    full_dates = pd.date_range(q_df[date_col].min(), q_df[date_col].max(), freq="D")
-    full_df = pd.DataFrame({date_col: full_dates})
+    # base provided attrs
+    base = dict(cfg.get("global_metadata_config", {}) or {})
 
-    merged = pd.merge(full_df, q_df[[date_col, discharge_col]], on=date_col, how="left")
+    # apply defaults only if missing
+    for k, v in md_defaults.items():
+        base.setdefault(k, v)
 
-    if isinstance(drop_cols, list):
-        wc_df = wc_df.drop(columns=drop_cols, errors="ignore")
+    # template-derived fields
+    for k in ["title", "title_no", "summary", "summary_no"]:
+        if k not in base:
+            rendered = render_template(md_tpl.get(k), ctx)
+            if rendered:
+                base[k] = rendered
 
-    merged = pd.merge(merged, wc_df, on=date_col, how="left")
+    # timestamps
+    if md_timestamps.get("date_created") == "auto":
+        base["date_created"] = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        base.setdefault("date_created", md_timestamps.get("date_created"))
 
-    # keep station col last
-    station = station_name
-    if station_col in merged.columns:
-        merged = merged.drop(columns=[station_col], errors="ignore")
-
-    # daily mean on duplicate dates
-    num_cols = merged.select_dtypes(include="number").columns.tolist()
-    agg_df = merged.groupby(date_col)[num_cols].mean(numeric_only=True).reset_index()
-    agg_df[station_col] = station
-
-    # order columns
-    cols = [date_col, station_col]
-    if discharge_col in agg_df.columns:
-        cols.append(discharge_col)
-    rest = [c for c in agg_df.columns if c not in cols]
-    agg_df = agg_df[cols + rest]
-    return agg_df
-
+    # ensure strings
+    return {k: str(v) for k, v in base.items()}
 
 # ------------------------- interpolation -------------------------
 def interpolate_with_gap_limit(series: pd.Series, max_gap: int, method="linear", order=None) -> pd.Series:
+    """Interpolate a series but only across gaps up to max_gap samples."""
     if method in ["spline", "polynomial"] and order is None:
         raise ValueError(f"Interpolation method '{method}' requires 'order'.")
     return series.interpolate(method=method, limit=max_gap, order=order)
-
 
 def interpolate_station_df(
     df: pd.DataFrame,
@@ -161,6 +146,8 @@ def interpolate_station_df(
     method="linear",
     order=None,
 ) -> pd.DataFrame:
+    """Resample to daily frequency and interpolate  variables with a maximum gap limit."""
+
     if not meta_cols:
         raise ValueError("meta_cols required for ffill/bfill (e.g., ['river_name']).")
     out = df.copy()
@@ -186,9 +173,7 @@ def compute_gam(
     n_splines_xy: Tuple[int, int] = (10, 20),
     lam_grid: Optional[np.ndarray] = None,
 ) -> Optional[pd.DataFrame]:
-    if not _HAVE_PYGAM:
-        print("pygam not installed; skipping GAM.")
-        return None
+    """Fit a GAM on discharge and day - of - year and predict within the observed time range."""
 
     out = df.copy()
     out[date_col] = pd.to_datetime(out[date_col])
@@ -221,12 +206,12 @@ def compute_gam(
     out[f"{var}_annual_gam"] = np.nan
     out.loc[mask, f"{var}_annual_gam"] = yp
 
-    # train fit metrics (just to print)
+    # train fit metrics
     yhat = gam.predict(X)
     mae = mean_absolute_error(y, yhat)
     mse = mean_squared_error(y, yhat)
     r2 = r2_score(y, yhat)
-    print(f"GAM {station_name} -> {var}: MAE={mae:.2f}, MSE={mse:.2f}, R2={r2:.3f}")
+    print(f"GAM {station_name} -> {var}: MAE={mae:.2f}, MSE={mse:.2f}, R^2={r2:.3f}")
     return out
 
 
@@ -239,6 +224,7 @@ def apply_gam_to_df(
     n_splines_xy=(10, 20),
     lam_grid=None,
 ) -> pd.DataFrame:
+
     out = df.copy()
     for var in variables:
         if var in out.columns:
@@ -256,6 +242,8 @@ def apply_gam_to_df(
 
 
 def monthly_to_daily_for_year(monthly_df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """ Convert monthly values to daily series for a given year using time interpolation. """
+
     tmp = monthly_df.copy()
     tmp.index = pd.to_datetime(tmp.index.astype(str) + f"-{year}", format="%m-%Y")
     tmp.index = tmp.index + pd.offsets.MonthBegin(1) - pd.Timedelta("17D")
@@ -274,11 +262,12 @@ def monthly_to_daily_for_year(monthly_df: pd.DataFrame, year: int) -> pd.DataFra
         pass
 
     tmp = tmp.interpolate(method="time")
-    tmp = tmp.applymap(lambda x: 0 if pd.notna(x) and x < 0 else x)
+    tmp = tmp.map(lambda x: 0 if pd.notna(x) and x < 0 else x)
     return tmp
 
-
 def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: List[str], date_col="date") -> pd.DataFrame:
+    """ Compute monthly medians per year and interpolate to daily values. """
+
     s = station_df.copy()
     s[date_col] = pd.to_datetime(s[date_col])
     s = s.set_index(date_col)
@@ -286,7 +275,7 @@ def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: List
 
     for year in sorted(s.index.year.unique()):
         ydf = s[s.index.year == year]
-        monthly = ydf[variables].resample("M").median()
+        monthly = ydf[variables].resample("ME").median()
         monthly.index = monthly.index.month
         daily_year = monthly_to_daily_for_year(monthly, year)
         daily_chunks.append(daily_year)
@@ -300,45 +289,77 @@ def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: List
     return daily.reset_index()
 
 
-def monthwise_loglog_regressions(station_df: pd.DataFrame, variables: List[str], discharge_col="discharge", date_col="date") -> pd.DataFrame:
-    out_all = []
+def monthwise_loglog_regressions(
+    station_df: pd.DataFrame,
+    variables: List[str],
+    discharge_col: str = "discharge",
+    date_col: str = "date",
+    min_points: int = 5,
+    bias_correct: bool = True,
+) -> pd.DataFrame:
+    """Fit per-month log–log regressions of var vs discharge and predict daily values."""
+
     s = station_df.copy()
     s[date_col] = pd.to_datetime(s[date_col])
-    s = s.drop_duplicates(subset=[date_col]).copy()
-    s["month"] = s[date_col].dt.month
+    s = s.drop_duplicates(subset=[date_col]).sort_values(date_col)
+
+    out_all = []
 
     for var in variables:
-        if var not in s.columns:
+        if var not in s.columns or discharge_col not in s.columns:
             continue
-        sub = s.copy()
-        # limit to observed span
-        first, last = sub[var].first_valid_index(), sub[var].last_valid_index()
-        if first is None or last is None:
+
+        sub = s[[date_col, "river_name", discharge_col, var]].copy().set_index(date_col)
+
+        obs = sub[var].dropna()
+        if obs.empty:
             continue
-        sub = sub.loc[first:last]
+        first_date, last_date = obs.index.min(), obs.index.max()
+        sub = sub.loc[first_date:last_date].copy()
+
+        sub["month"] = sub.index.month
 
         for _, grp in sub.groupby("month"):
-            train = grp.dropna(subset=[var, discharge_col]).copy()
-            if train.shape[0] < 2:
+            # training data: need positive values for log
+            train = grp[[discharge_col, var]].dropna().copy()
+            train = train[(train[discharge_col] > 0) & (train[var] > 0)]
+            if train.shape[0] < min_points:
                 continue
 
-            train[f"log_{var}"] = np.log10(train[var].replace(0, np.nan)).fillna(0)
-            train["log_q"] = np.log10(train[discharge_col].replace(0, np.nan)).fillna(0)
+            train["log_q"] = np.log10(train[discharge_col].values)
+            train["log_y"] = np.log10(train[var].values)
 
             X = train[["log_q"]].values
-            y = train[f"log_{var}"].values
+            y = train["log_y"].values
             mdl = LinearRegression().fit(X, y)
 
-            X_all = np.log10(grp[discharge_col].replace(0, np.nan)).fillna(0).values.reshape(-1, 1)
-            yhat_log = mdl.predict(X_all)
-            yhat = np.power(10.0, yhat_log)
-
             g2 = grp.copy()
-            g2[f"{var}_monthly_regres"] = yhat
-            out_all.append(g2)
+            pred = np.full(shape=(len(g2),), fill_value=np.nan, dtype=float)
+
+            ok = g2[discharge_col].notna() & (g2[discharge_col] > 0)
+            X_all = np.log10(g2.loc[ok, discharge_col].values).reshape(-1, 1)
+            yhat_log = mdl.predict(X_all)
+
+            if bias_correct:
+                # smearing-style correction in log10 space: residuals are in log10 units; convert variance to multiplicative factor.
+                resid = y - mdl.predict(X)
+                sigma2 = float(np.var(resid, ddof=1)) if len(resid) > 1 else 0.0
+                # corr = 10 ** (0.5 * sigma2 * np.log(10) ** 2 / (np.log(10) ** 2))
+                # # The above simplifies to: corr = 10 ** (0.5 * sigma2)
+                # # Keeping it explicit isn't necessary—see simpler line below:
+                corr = 10 ** (0.5 * sigma2)
+            else:
+                corr = 1.0
+
+            pred_vals = (10 ** yhat_log) * corr
+            pred[ok.values] = pred_vals
+
+            g2[f"{var}_monthly_regres"] = pred
+            out_all.append(g2.reset_index())
 
     if not out_all:
         return pd.DataFrame(columns=station_df.columns)
+
     return pd.concat(out_all, ignore_index=True)
 
 
@@ -387,12 +408,11 @@ def plot_qc(
 def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     """
     Run full daily interpolation for ONE river/station, driven by JSON.
-    Returns NetCDF path.
+    Returns list of NetCDF paths
     """
-    # ---- inputs / paths ----
+
+    # inputs/paths
     inp = cfg["input"]
-    wc_file = Path(inp["waterchem_file"])
-    q_file = Path(inp["discharge_file"])
     wc_time_col = inp.get("wc_time_col", "time")
     q_time_col = inp.get("q_time_col", "time")
     wc_station_col = inp.get("wc_station_col", "station_name")
@@ -400,9 +420,13 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     discharge_var = inp.get("discharge_var", "discharge")
 
     paths = cfg["paths"]
-    figs_all_dir = Path(paths["fig_all_methods_dir"])
-    figs_selected_dir = Path(paths["fig_selected_dir"])
-    out_dir = Path(paths["output_dir"])
+    wc_file = resolve_path(inp["waterchem_file"])
+    q_file = resolve_path(inp["discharge_file"])
+
+    figs_all_dir = resolve_path(paths["fig_all_methods_dir"])
+    figs_selected_dir = resolve_path(paths["fig_selected_dir"])
+    out_dir = resolve_path(paths["output_dir"])
+
     ensure_dirs(figs_all_dir, figs_selected_dir, out_dir)
 
     rename_maps = cfg.get("rename_maps", {})
@@ -413,7 +437,6 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     chem_variables: List[str] = cfg.get("chem_variables", [])
     pars_meta_df = pd.DataFrame(cfg.get("pars_metadata", []))
     standard_name_map: Dict[str, str] = cfg.get("standard_name_map", {})
-    var_comments_cfg: Dict[str, Any] = cfg.get("var_comments", {})
 
     # interpolation
     interp_cfg = cfg.get("interpolation", {})
@@ -434,46 +457,56 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     time_name_out = out_cfg.get("time_name", "date")  # coord name in output
     file_prefix = out_cfg.get("file_prefix", "daily_water_chemistry_modeled_")
 
-    global_metadata_config: Dict[str, Any] = cfg.get("global_metadata_config", {})
-    processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
     meta_map = meta_cfg(cfg)
 
-    # ---- load & harmonize ----
+    # load & harmonize
     if not wc_file.exists():
         raise FileNotFoundError(f"Water chemistry file not found: {wc_file}")
     if not q_file.exists():
         raise FileNotFoundError(f"Discharge file not found: {q_file}")
 
-    wc_fname, wc_df_raw = load_netcdf_to_dataframe(wc_file, time_vars=(wc_time_col, "time", "sample_date"))
-    q_fname, q_df_raw = load_netcdf_to_dataframe(q_file, time_vars=(q_time_col, "time", "date"))
+    wc_df_raw = netcdf_to_dataframe(wc_file, time_vars=(wc_time_col, "time", "sample_date"))
+    q_df_raw = netcdf_to_dataframe(q_file, time_vars=(q_time_col, "time", "date"))
 
-    # station id we will work with (from meta or from wc)
+    # station id we will work with
     station_name_val = read_meta_value(wc_df_raw, meta_map, "station_name")
     if station_name_val is None and wc_station_col in wc_df_raw.columns:
         svals = wc_df_raw[wc_station_col].dropna().unique()
         station_name_val = svals[0] if len(svals) else "UNKNOWN"
     station_id = str(station_name_val)
 
-    _, wc_df = process_df(wc_fname, wc_df_raw, wc_time_col, wc_station_col, "date", wc_rename, "river_name")
-    _, q_df = process_df(q_fname, q_df_raw, q_time_col, q_station_col, "date", q_rename, "river_name")
+    wc_df = standardize_time_and_station(
+        wc_df_raw,
+        time_col_in=wc_time_col,
+        date_col_out="date",
+        station_col_in=wc_station_col,
+        station_col_out="river_name",
+        station_rename_map=wc_rename,
+    )
 
-    # rename discharge column if needed -> 'discharge'
+    q_df = standardize_time_and_station(
+        q_df_raw,
+        time_col_in=q_time_col,
+        date_col_out="date",
+        station_col_in=q_station_col,
+        station_col_out="river_name",
+        station_rename_map=q_rename,
+    )
+
     if discharge_var in q_df.columns and discharge_var != "discharge":
         q_df = q_df.rename(columns={discharge_var: "discharge"})
 
-    # columns to drop from chem before merge (optional)
-    drop_cols = cfg.get("drop_columns", ['latitude', 'longitude', 'station_id', 'station_code', 'station_type'])
 
-    merged = merge_daily_wc_q(
+    merged = merge_daily_discharge_and_chemistry(
         wc_df, q_df,
         station_name=station_id,
         station_col="river_name",
         date_col="date",
         discharge_col="discharge",
-        drop_cols=drop_cols,
+        drop_wc_cols=cfg.get("drop_columns", ['latitude', 'longitude', 'station_id', 'station_code', 'station_type']),
     )
 
-    # ---- run interpolation ----
+    # run interpolation
     # 1) linear (gap-limited)
     df_linear = interpolate_station_df(
         merged,
@@ -506,14 +539,14 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         merged, chem_variables, date_col="date"
     )
 
-    # Attach monthly_interp to the station frame so we carry river_name + discharge for consistent joins
+    # attach monthly_interp to the station frame so we carry river_name + discharge for consistent joins
     st_plus_month = (
         merged.set_index("date")
         .merge(df_month_interp.set_index("date"), left_index=True, right_index=True, how="left")
         .reset_index()
     )
 
-    # ---- combine method outputs ----
+    # combine method outputs
     # A <- linear + GAM
     merged1 = pd.merge(
         df_linear, df_gam,
@@ -538,14 +571,14 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     )
     merged3 = merged3.loc[:, ~merged3.columns.str.endswith("_drop")]
 
-    # --- Group and aggregate daily values
+    # group and aggregate daily values
     df_grouped = (
         merged3.groupby(["date", "river_name"])
         .agg(lambda x: x.mean() if pd.api.types.is_numeric_dtype(x) else x.iloc[0])
         .reset_index()
     )
 
-    # Resample to daily per station
+    # resample to daily per station
     df_daily_all = (
         df_grouped.set_index("date")
         .groupby("river_name")
@@ -555,10 +588,10 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         .sort_values(["river_name", "date"])
     )
 
-    # Copy for plotting/selection
+    # copy for plotting/selection
     df_sel = df_daily_all.copy()
 
-    # ---- method selection per variable ----
+    # method selection per variable
     methods_chosen: Dict[str, Any] = {}
     method_scores: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
 
@@ -582,7 +615,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         y_obs = df_obs_range[var]
         good_methods = []
 
-        # Evaluate candidates
+        # evaluate candidates
         for suffix in candidate_suffixes:
             colname = f"{var}_{suffix}"
             if colname not in df_station.columns:
@@ -592,7 +625,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
             if valid.sum() < 10:
                 continue
             r2 = r2_score(y_obs[valid], y_pred[valid])
-            method_scores[var].setdefault(station_id, {})[suffix] = {"R2": r2}
+            method_scores[var].setdefault(station_id, {})[suffix] = {"R^2": r2}
             if r2 >= r2_threshold:
                 good_methods.append({'suffix': suffix, 'r2': r2, 'colname': colname, 'y_pred': y_pred})
 
@@ -601,7 +634,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         selected_col: Optional[str] = None
         selected_series: Optional[pd.Series] = None
 
-        # Outlier check
+        # outlier check
         for m in good_methods:
             pred = m['y_pred']
             obs = y_obs.dropna()
@@ -612,10 +645,10 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
                 continue
             selected_col = m['colname']
             selected_series = pred.copy()
-            print(f"{station_id} -> {var}: Selected {selected_col} (R2 = {m['r2']:.3f})")
+            print(f"{station_id} -> {var}: Selected {selected_col} (R^2 = {m['r2']:.3f})")
             break
 
-        # Fallback to linear
+        # fallback to linear
         if selected_col is None:
             fallback_col = f"{var}_{fallback_method}"
             if fallback_col in df_obs_range.columns:
@@ -626,7 +659,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
                 print(f"{station_id} -> {var}: No valid method available")
                 continue
 
-        # Fill gaps from best of {annual_gam, monthly_regres}
+        # fill gaps from best of {annual_gam, monthly_regres}
         filled_series = selected_series.copy()
         missing_mask = filled_series.loc[obs_start:obs_end].isna()
         fallback_used = None
@@ -646,7 +679,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
                 if valid.sum() < 10:
                     continue
                 r2b = r2_score(y_obs[valid], y_pred[valid])
-                method_scores[var].setdefault(station_id, {})[suffix] = {"R2": r2b}
+                method_scores[var].setdefault(station_id, {})[suffix] = {"R^2": r2b}
 
                 if long_gap:
                     obs_min, obs_max = y_obs.min(), y_obs.max()
@@ -665,12 +698,17 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
                 if avail.any():
                     filled_series.loc[avail] = best_fb['series'].loc[avail]
                     fallback_used = best_fb['colname']
-                    print(f"{station_id} -> {var}: Gaps filled from fallback {fallback_used} (R2 = {best_fb['r2']:.3f})")
+                    print(f"{station_id} -> {var}: Gaps filled from fallback {fallback_used} (R^2 = {best_fb['r2']:.3f})")
 
-        # Save decision
-        methods_chosen[var][station_id] = [selected_col, fallback_used] if fallback_used else selected_col
+        # save decision
+        methods_chosen[var][station_id] = {
+            "selected_col": selected_col,
+            "selected_suffix": selected_col.replace(f"{var}_", ""),
+            "fallback_col": fallback_used,
+            "fallback_suffix": fallback_used.replace(f"{var}_", "") if fallback_used else None,
+        }
 
-        # Write back as *_final — align by date
+        # write back
         mask = df_daily_all["river_name"] == station_id
         dates = pd.DatetimeIndex(df_daily_all.loc[mask, "date"].values)
         aligned = filled_series.reindex(dates)
@@ -682,22 +720,24 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
             pred_df, on="date", how="left"
         )
 
-        # Label + R2 for the legend/title
+        # label + R^2 for the legend/title
         entry = methods_chosen[var][station_id]
-        if isinstance(entry, str):
-            method_label = entry
-            suf_base = entry.replace(f"{var}_", "")
-            r2_for_label = method_scores.get(var, {}).get(station_id, {}).get(suf_base, {}).get("R2", None)
-        else:
-            base_col, fb_col = entry[0], entry[1]
-            method_label = base_col if not fb_col else f"{base_col} + {fb_col}"
-            suf_fb = fb_col.replace(f"{var}_", "") if fb_col else None
-            suf_base = base_col.replace(f"{var}_", "")
-            r2_for_label = None
-            if suf_fb:
-                r2_for_label = method_scores.get(var, {}).get(station_id, {}).get(suf_fb, {}).get("R2", None)
-            if r2_for_label is None:
-                r2_for_label = method_scores.get(var, {}).get(station_id, {}).get(suf_base, {}).get("R2", None)
+        selected_col = entry["selected_col"]
+        fallback_col = entry["fallback_col"]
+
+        scores_for_station = method_scores.get(var, {}).get(station_id, {})
+
+        # method label
+        method_label = build_method_comment(
+            var=var,
+            selected_col=selected_col,
+            fallback_col=fallback_col,
+            scores_for_station=scores_for_station,
+        )
+
+        # optionally show only base R^2 in title
+        base_suffix = entry["selected_suffix"]
+        r2_for_label = scores_for_station.get(base_suffix, {}).get("R2")
 
         plot_qc(
             df_plot,
@@ -710,7 +750,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
             save_path=figs_selected_dir / f"{station_id}_{var}_selected_method.png",
         )
 
-    # ---- big overview plots
+    # overview plots
     stations = [station_id]
     for var in chem_variables:
         fig, axes = plt.subplots(nrows=1, ncols=len(stations), figsize=(6 * len(stations), 6))
@@ -738,13 +778,13 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         plt.savefig(figs_all_dir / f"{var}_all_interp_methods.png", dpi=300, bbox_inches="tight")
         plt.close()
 
-    # ---- export final
+    # export final
     final_cols = [c for c in df_daily_all.columns if c.endswith("_final")]
     export = df_daily_all[["date", "river_name"] + final_cols].copy()
     export = export.rename(columns={c: c.replace("_final", "") for c in final_cols})
     export = export.sort_values(["river_name", "date"])
 
-    # -> xarray per station (here one station)
+    # xarray per station
     df_station = export[export["river_name"] == station_id].copy()
     df_station["date"] = pd.to_datetime(df_station["date"])
     df_station = df_station.set_index("date")
@@ -755,7 +795,6 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     ds = ds.swap_dims({"date": time_name_out})
     if time_name_out != "date":
         ds = ds.drop_vars("date")
-    ds[time_name_out].attrs.update({"standard_name": "time", "long_name": "Time of measurement", "axis": "T"})
 
     # coordinates (lat/lon from meta if present)
     lat = read_meta_value(wc_df_raw, meta_map, "latitude")
@@ -766,12 +805,16 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
         lon = meta_map.get("longitude", {}).get("value")
     if lat is not None and lon is not None:
         ds = ds.assign_coords(
-            latitude=xr.DataArray(float(lat), dims=(), attrs={"standard_name": "latitude", "long_name": "Latitude", "units": "degree_north"}),
-            longitude=xr.DataArray(float(lon), dims=(), attrs={"standard_name": "longitude", "long_name": "Longitude", "units": "degree_east"}),
+            latitude=xr.DataArray(float(lat), dims=()),
+            longitude=xr.DataArray(float(lon), dims=()),
         ).set_coords(["latitude", "longitude"])
 
-    # river_name as scalar id
-    ds["river_name"] = xr.DataArray(station_id, dims=(), attrs={"cf_role": "timeseries_id"})
+
+    # station_name as scalar
+    ds["station_name"] = xr.DataArray(
+        station_id, dims=(),
+        attrs={"cf_role": "timeseries_id", "long_name": "Station name", "units": "1"}
+    )
 
     # annotate variables
     for var in ds.data_vars:
@@ -781,51 +824,65 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
             row = pars_meta_df[pars_meta_df["parameter_name"] == var].iloc[0]
             ds[var].attrs["units"] = str(row["unit"])
             ds[var].attrs["long_name"] = str(standard_name_map.get(var, var))
-        # comments can be dict per station or single string
-        vc = var_comments_cfg.get(var)
-        if isinstance(vc, dict):
-            com = vc.get(station_id)
-            if com:
-                ds[var].attrs["comment"] = str(com)
-        elif isinstance(vc, str):
-            ds[var].attrs["comment"] = vc
 
-    # global attrs (keep what's in JSON; only fill missing)
-    gmeta = dict(global_metadata_config)
-    unique_id = f"no.niva:{uuid.uuid5(processed_namespace_uuid, station_id)}"
-    gmeta["id"] = unique_id
+        # method comment
+        chosen = (methods_chosen.get(var) or {}).get(station_id)
+        if chosen:
+            scores_for_station = method_scores.get(var, {}).get(station_id, {})
+            auto_comment = build_method_comment(
+                var=var,
+                selected_col=chosen["selected_col"],
+                fallback_col=chosen["fallback_col"],
+                scores_for_station=scores_for_station,
+            )
+            ds[var].attrs["comment"] = auto_comment
 
-    gmeta.setdefault("title", f"Daily water chemistry concentrations estimated for river {station_id}")
-    gmeta.setdefault("title_no", f"Estimerte daglige konsentrasjoner av vannkjemi for elv {station_id}")
-    gmeta.setdefault(
-        "summary",
-        f"Daily time series of water chemistry for river {station_id}, estimated by harmonizing observed "
-        f"data and interpolating missing values (linear, GAM, monthly regressions, monthly medians).",
+    # global attrs
+    ds.attrs = build_global_attrs(
+        cfg=cfg,
+        # ds=ds,
+        station_id=station_id,
+        time_name=time_name_out,
+        # lat=float(lat) if lat is not None else None,
+        # lon=float(lon) if lon is not None else None,
     )
-    gmeta.setdefault(
-        "summary_no",
-        f"Daglige tidsserier for vannkjemi ved elv {station_id}, beregnet ved å harmonisere observerte målinger "
-        f"og interpolere manglende verdier (lineær, GAM, månedlige regresjoner, månedlige medianer).",
+
+    export_cfg = cfg.get("export", {})
+    engine = export_cfg.get("engine", "netcdf4")
+    nc_format = export_cfg.get("format", "NETCDF4")
+    time_enc_cfg = export_cfg.get("time", {})
+
+    # filename + stable id seed
+    filename = export_cfg.get(
+        "filename_template",
+        f"{file_prefix}{station_id.lower().replace(' ', '_')}.nc"
+    ).format(station_id_or_stem=station_id, station_id=station_id)
+
+    # export metadata/id settings
+    md = cfg.get("metadata") or {}
+    md_id = md.get("id") or {}
+
+    namespace_uuid = md_id.get("namespace_uuid") or cfg.get("processed_namespace_uuid")
+    id_prefix = md_id.get("prefix") or (export_cfg.get("id_prefix") if export_cfg else None)
+
+    id_seed = render_template(md_id.get("seed_template", "{station_id}"),
+                              {"station_id": station_id, "time_name": time_name_out}) or station_id
+
+    out_path = export_dataset(
+        ds=ds,
+        output_dir=out_dir,
+        filename=filename,
+        time_name=time_name_out,
+        global_attrs=ds.attrs,
+        namespace_uuid=namespace_uuid,
+        id_prefix=id_prefix,
+        id_seed=id_seed,
+        engine=engine,
+        nc_format=nc_format,
+        time_encoding_cfg=time_enc_cfg,
+        var_encoding_overrides=None,
     )
-    gmeta.setdefault("date_created", pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"))
-    gmeta["time_coverage_start"] = np.datetime_as_string(ds[time_name_out].min().values, unit="s", timezone="UTC")
-    gmeta["time_coverage_end"] = np.datetime_as_string(ds[time_name_out].max().values, unit="s", timezone="UTC")
-    if lat is not None and lon is not None:
-        gmeta["geospatial_lat_min"] = float(lat); gmeta["geospatial_lat_max"] = float(lat)
-        gmeta["geospatial_lon_min"] = float(lon); gmeta["geospatial_lon_max"] = float(lon)
-    ds.attrs = {k: str(v) for k, v in gmeta.items()}
-
-    # encoding
-    encoding = {
-        time_name_out: {"dtype": "int32", "_FillValue": None, "units": "seconds since 1970-01-01 00:00:00"},
-    }
-    if "latitude" in ds.coords:  encoding["latitude"]  = {"_FillValue": None}
-    if "longitude" in ds.coords: encoding["longitude"] = {"_FillValue": None}
-
-    out_name = f"{file_prefix}{station_id.lower().replace(' ', '_')}.nc"
-    out_path = (out_dir / out_name).resolve()
-    ds.to_netcdf(out_path, encoding=encoding, format="NETCDF4")
-    print(f"Saved NetCDF: {out_path}")
 
     return [out_path]
+
 
