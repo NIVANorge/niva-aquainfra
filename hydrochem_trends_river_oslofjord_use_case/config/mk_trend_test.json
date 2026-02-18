@@ -1,0 +1,31 @@
+{
+  "variables": [
+    "DOC","Color","NH4-N","NO3-N","TRP","POC","TOC_calc","SPM",
+    "SiO2","TOC","TOTN","TOTP","TDP","DIN","DON","PP","TSM",
+    "UV_Abs_254nm","UV_Abs_410nm"
+  ],
+  "unit_options": {
+  "non_mass_vars": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
+  "undefined_unit_label": "undefined"
+  },
+  "inputs": {
+    "annual":  { "mode": "folder", "path": "output/fluxes/annual" },
+    "monthly": { "mode": "folder", "path": "output/fluxes/monthly" }
+  },
+  "stations": ["Drammenselva"],
+  "output_dir": "output/mk_trends",
+  "results": {
+    "figures_dir": "figures",
+    "tables_dir": "tables",
+    "combined_table_name": "mk_results.xlsx",
+    "write_per_station_tables": false
+  },
+  "trend_options": {
+    "alpha": 0.05,
+    "min_points": { "monthly": 36, "annual": 5 },
+    "period": { "start": null, "end": null }
+  },
+  "plot_options": { "ncols": 3, "non_sig_alpha": 0.25 }
+}
+
+

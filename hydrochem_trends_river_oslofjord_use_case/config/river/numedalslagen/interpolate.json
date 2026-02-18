@@ -1,7 +1,7 @@
 {
   "input": {
-    "waterchem_file": "data/processed/river/cleaned_riverchem_40352.nc",
-    "discharge_file": "data/processed/river/Q_daily_mean_Drammenselva_Mjondalen_bru_12_534_0_cleaned.nc",
+    "waterchem_file": "data/processed/river/cleaned_riverchem_40355.nc",
+    "discharge_file": "data/processed/river/Q_daily_mean_Numedalslagen_Holmfoss_15_61_0_cleaned.nc",
     "wc_time_col": "sample_date",
     "q_time_col": "time",
     "wc_station_col": "station_name",
@@ -9,22 +9,22 @@
     "discharge_var": "discharge"
   },
   "paths": {
-    "fig_all_methods_dir": "output/figures/river/daily_estimates/drammenselva/all_methods",
-    "fig_selected_dir": "output/figures/river/daily_estimates/drammenselva/selected",
+    "fig_all_methods_dir": "output/figures/river/daily_estimates/numedalslagen/all_methods",
+    "fig_selected_dir": "output/figures/river/daily_estimates/numedalslagen/selected",
     "output_dir": "output/data/daily_estimates"
   },
   "rename_maps": {
     "wc": {
-      "Drammenselva": "Drammenselva"
+      "Numedalslagen v/E18": "Numedalslagen"
     },
     "q": {
-      "Mjondalen bru": "Drammenselva"
+      "Holmfoss": "Numedalslagen"
     }
   },
   "meta": {
-    "station_name": { "value": "Drammenselva" },
-    "latitude":     { "value": 59.75257593 },
-    "longitude":    { "value": 10.00789751 }
+    "station_name": { "value": "Numedalslagen" },
+    "latitude":     { "value": 59.10128295 },
+    "longitude":    { "value": 11.13411158 }
   },
   "drop_columns": ["latitude", "longitude", "station_id", "station_code", "station_type"],
   "chem_variables": [
