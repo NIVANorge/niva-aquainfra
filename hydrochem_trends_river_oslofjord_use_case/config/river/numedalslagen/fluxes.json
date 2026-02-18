@@ -1,14 +1,14 @@
 {
-  "wc_interp_data_path": "output/data/daily_estimates/daily_water_chemistry_modeled_Drammenselva.nc",
-  "q_cleaned_data_path": "data/processed/river/Q_daily_mean_Drammenselva_Mjondalen_bru_12_534_0_cleaned.nc",
+  "wc_interp_data_path": "output/data/daily_estimates/daily_water_chemistry_modeled_Numedalslagen.nc",
+  "q_cleaned_data_path": "data/processed/river/Q_daily_mean_Numedalslagen_Holmfoss_15_61_0_cleaned.nc",
 
   "unit_options": {
-    "non_mass_vars": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
-    "undefined_unit_label": "undefined"
+  "non_mass_vars": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
+  "undefined_unit_label": "undefined"
   },
 
   "q_station_rename_map": {
-    "Mjondalen bru": "Drammenselva"
+    "Holmfoss": "Numedalslagen"
   },
 
   "date_col": "date",
@@ -17,8 +17,8 @@
 
   "columns_to_drop": ["latitude", "longitude", "station_id", "station_code", "station_type"],
 
-  "river": "Drammenselva",
-  "river_coords": { "lat": 59.75257593, "lon": 10.00789751 },
+  "river": "Numedalslagen",
+  "river_coords": { "lat": 59.10128295, "lon": 11.13411158 },
 
   "flux_metadata": {
     "parameter_name": [
@@ -91,13 +91,13 @@
 
   "var_comments": {
     "Color": {
-      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
     },
     "UV_Abs_254nm": {
-      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
     },
     "UV_Abs_410nm": {
-      "Drammenselva": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret these qualitatively, not quantitatively."
     }
   },
 
@@ -123,7 +123,7 @@
     }
   },
 
-  "global_metadata_config": {
+   "global_metadata_config": {
     "naming_authority": "no.niva",
     "project": "AquaINFRA",
     "iso_topic_category": "inlandWaters",

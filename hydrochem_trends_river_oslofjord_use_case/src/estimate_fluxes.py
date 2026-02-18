@@ -1,0 +1,593 @@
+from __future__ import annotations
+
+import math
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+from src.export_netcdf import export_dataset
+# from src.utils import ensure_dirs
+from src.utils import (
+    ensure_dirs,
+    resolve_path,
+    netcdf_to_dataframe,
+    standardize_time_and_station,
+    merge_daily_discharge_and_chemistry,
+)
+
+plt.style.use("ggplot")
+
+
+# # ---------------------------- path handling ----------------------------
+# PROJECT_ROOT = Path(__file__).resolve().parents[1]  # hydrochem project root
+
+
+# def _p(p: str | Path) -> Path:
+#     """Resolve path relative to project root if not absolute."""
+#     pp = Path(p)
+#     return pp if pp.is_absolute() else (PROJECT_ROOT / pp)
+
+
+# # ---------------------------- IO helpers ----------------------------
+# def load_netcdf_to_dataframe(filepath: Path, time_vars=("sample_date", "time", "date")) -> pd.DataFrame:
+#     with xr.open_dataset(filepath) as ds:
+#         df = ds.to_dataframe().reset_index()
+#
+#     for time_var in time_vars:
+#         if time_var in df.columns:
+#             df[time_var] = pd.to_datetime(df[time_var], errors="coerce")
+#
+#     return df
+
+#
+# def process_river_df(
+#     df: pd.DataFrame,
+#     *,
+#     time_col_name: str,
+#     station_rename_map: Dict[str, str],
+#     date_col: str = "date",
+#     station_col_in: str = "station_name",
+#     station_col_out: str = "river_name",
+# ) -> pd.DataFrame:
+#     df = df.copy()
+#
+#     if time_col_name in df.columns:
+#         df = df.rename(columns={time_col_name: date_col})
+#     df[date_col] = pd.to_datetime(df[date_col], errors="coerce").dt.normalize()
+#
+#     if station_col_in in df.columns:
+#         df[station_col_in] = df[station_col_in].replace(station_rename_map or {})
+#         df = df.rename(columns={station_col_in: station_col_out})
+#
+#     return df
+
+
+def extract_units_from_netcdf(netcdf_path: Path, skip_vars=("date", "latitude", "longitude", "river_name")) -> pd.DataFrame:
+    with xr.open_dataset(netcdf_path) as ds:
+        metadata = []
+        for var in ds.data_vars:
+            if var in skip_vars:
+                continue
+            unit = ds[var].attrs.get("units", "unknown")
+            metadata.append({"parameter_name": var, "unit": unit})
+    return pd.DataFrame(metadata)
+
+
+# # ---------------------------- merge + flux ----------------------------
+# def merge_daily_river_data(
+#     wc_df: pd.DataFrame,
+#     q_df: pd.DataFrame,
+#     *,
+#     station_name: str,
+#     station_col: str,
+#     date_col: str,
+#     discharge_col: str,
+#     drop_cols: list[str] | bool = False,
+# ) -> pd.DataFrame:
+#     wc_df = wc_df.copy()
+#     q_df = q_df.copy()
+#
+#     # filter to station (IMPORTANT)
+#     if station_col in wc_df.columns:
+#         wc_df = wc_df[wc_df[station_col] == station_name]
+#     if station_col in q_df.columns:
+#         q_df = q_df[q_df[station_col] == station_name]
+#
+#     if q_df.empty:
+#         raise ValueError(f"No discharge rows after filtering for station '{station_name}'")
+#
+#     q_df = q_df.drop_duplicates(subset=[date_col]).copy()
+#
+#     full_dates = pd.date_range(start=q_df[date_col].min(), end=q_df[date_col].max(), freq="D")
+#     full_df = pd.DataFrame({date_col: full_dates})
+#
+#     merged = pd.merge(full_df, q_df[[date_col, discharge_col]], on=date_col, how="left")
+#
+#     if isinstance(drop_cols, list):
+#         wc_df = wc_df.drop(columns=drop_cols, errors="ignore")
+#
+#     merged = pd.merge(merged, wc_df, on=date_col, how="left")
+#
+#     # average duplicates by day (numeric only)
+#     num_cols = merged.select_dtypes(include="number").columns.tolist()
+#     out = merged.groupby(date_col)[num_cols].mean(numeric_only=True).reset_index()
+#
+#     # add station col back as constant
+#     out[station_col] = station_name
+#
+#     # order columns
+#     cols = [date_col, station_col]
+#     if discharge_col in out.columns:
+#         cols.append(discharge_col)
+#     rest = [c for c in out.columns if c not in cols]
+#     return out[cols + rest]
+
+
+def compute_fluxes(
+    df: pd.DataFrame,
+    *,
+    param_unit_map: Dict[str, str],
+    discharge_col: str = "discharge",
+    keep_cols: list[str] = None,
+) -> pd.DataFrame:
+    if keep_cols is None:
+        keep_cols = ["date"]
+
+    df = df.copy()
+    q_m3_per_day = df[discharge_col] * 86400.0  # m3/s -> m3/day
+
+    flux_df = pd.DataFrame(index=df.index)
+
+    for var in df.columns:
+        if var in keep_cols or var == discharge_col:
+            continue
+        if var not in param_unit_map:
+            continue
+
+        unit = str(param_unit_map[var])
+
+        # Concentration to kg/m3
+        if unit.endswith(("mg/l", "mg/l C", "mg Pt/l")):
+            conc_kg_m3 = df[var] * 1e-3
+        elif unit.endswith(("µg/l", "μg/l", "µg/l P")):
+            conc_kg_m3 = df[var] * 1e-6
+        elif unit.endswith("Abs/cm"):
+            # not mass concentration; keep as-is (proxy)
+            conc_kg_m3 = df[var]
+        else:
+            # unknown unit
+            continue
+
+        # tonnes/day (kg/m3 * m3/day = kg/day; /1000 = tonnes/day)
+        flux_df[var] = conc_kg_m3 * q_m3_per_day / 1000.0
+
+    # carry metadata cols
+    for col in keep_cols:
+        if col in df.columns:
+            flux_df[col] = df[col]
+
+    return flux_df
+
+
+# ---------------------------- plotting ----------------------------
+def plot_daily_fluxes(
+    df: pd.DataFrame,
+    station_name: str,
+    *,
+    non_mass_vars: set[str],
+    save_path: Optional[Path] = None,
+) -> None:
+    df = df.copy().sort_values("date")
+    flux_vars = df.select_dtypes(include="number").columns.tolist()
+
+    cols = 3
+    rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3 * rows), sharex=False)
+    axes = np.array(axes).flatten()
+
+    for i, var in enumerate(flux_vars):
+        axes[i].plot(df["date"], df[var])
+        axes[i].set_title(var)
+        axes[i].tick_params(axis="x", labelrotation=45)
+        if var not in non_mass_vars:
+            axes[i].set_ylabel("tonnes/day")
+        axes[i].grid(True)
+
+    for j in range(len(flux_vars), len(axes)):
+        axes[j].axis("off")
+
+    fig.suptitle(f"{station_name} – Daily Fluxes", fontsize=16)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+    if save_path:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
+
+def plot_monthly_fluxes(
+    df: pd.DataFrame,
+    station_name: str,
+    *,
+    non_mass_vars: set[str],
+    save_path: Optional[Path] = None,
+) -> None:
+    flux_vars = df.select_dtypes(include="number").columns.tolist()
+    cols = 3
+    rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3 * rows), sharex=False)
+    axes = np.array(axes).flatten()
+
+    for i, var in enumerate(flux_vars):
+        axes[i].plot(df.index, df[var], marker="o")
+        axes[i].set_title(var)
+        axes[i].tick_params(axis="x", labelrotation=45)
+        if var not in non_mass_vars:
+            axes[i].set_ylabel("tonnes/month")
+        axes[i].grid(True)
+
+    for j in range(len(flux_vars), len(axes)):
+        axes[j].axis("off")
+
+    fig.suptitle(f"{station_name} – Monthly Fluxes", fontsize=16)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+    if save_path:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
+
+def plot_annual_fluxes(
+    df: pd.DataFrame,
+    station_name: str,
+    *,
+    non_mass_vars: set[str],
+    save_path: Optional[Path] = None,
+) -> None:
+    df = df.copy().sort_values("year")
+    flux_vars = df.select_dtypes(include="number").columns.difference(["year"]).tolist()
+
+    cols = 3
+    rows = math.ceil(len(flux_vars) / cols) if flux_vars else 1
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 3 * rows), sharex=False)
+    axes = np.array(axes).flatten()
+
+    for i, var in enumerate(flux_vars):
+        axes[i].plot(df["year"], df[var], marker="o")
+        axes[i].set_title(var)
+        axes[i].tick_params(axis="x", labelrotation=45)
+        if var not in non_mass_vars:
+            axes[i].set_ylabel("tonnes/year")
+        axes[i].grid(True)
+
+    for j in range(len(flux_vars), len(axes)):
+        axes[j].axis("off")
+
+    fig.suptitle(f"{station_name} – Annual Fluxes", fontsize=16)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+    if save_path:
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
+
+# ---------------------------- export via export_dataset ----------------------------
+def _flux_unit_for_frequency(
+    base_unit: str,
+    *,
+    frequency: str,
+    var_name: str,
+    non_mass_vars: set[str],
+    undefined_unit_label: str = "undefined",
+) -> str:
+    base_unit = (base_unit or "").strip()
+
+    # Non-mass vars: keep their dataset/base unit as-is
+    if var_name in non_mass_vars:
+        return base_unit if base_unit else undefined_unit_label
+
+    # If base unit is undefined/unknown, don't invent a flux unit
+    if base_unit.lower() in {"undefined", "unknown", ""}:
+        return base_unit if base_unit else undefined_unit_label
+
+    # flux variables are computed as tonnes per period
+    if frequency == "daily":
+        return "tonnes/day"
+    if frequency == "monthly":
+        return "tonnes/month"
+    if frequency == "annual":
+        return "tonnes/year"
+
+    return base_unit
+
+def df_to_dataset(
+    df: pd.DataFrame,
+    *,
+    time_name: str,
+    river: str,
+    river_coords: Optional[dict],
+    flux_metadata_df: pd.DataFrame,
+    standard_name_map: Dict[str, str],
+    var_comments: Dict[str, Any],
+    frequency: str,
+    non_mass_vars: set[str],
+    undefined_unit_label: str = "undefined",
+) -> xr.Dataset:
+    df = df.copy()
+
+    # ensure time index
+    if time_name in df.columns:
+        df[time_name] = pd.to_datetime(df[time_name])
+        df = df.set_index(time_name)
+    elif not pd.api.types.is_datetime64_any_dtype(df.index):
+        raise ValueError(f"Expected '{time_name}' column or datetime index.")
+
+    df.index.name = time_name
+
+    ds = xr.Dataset.from_dataframe(df)
+
+    # time coord attrs
+    ds[time_name].attrs.update({"standard_name": "time", "long_name": "Time of measurement", "axis": "T"})
+
+    # lat/lon
+    if river_coords and ("lat" in river_coords) and ("lon" in river_coords):
+        ds = ds.assign_coords(
+            latitude=xr.DataArray(float(river_coords["lat"]), dims=(), attrs={"standard_name": "latitude", "units": "degree_north"}),
+            longitude=xr.DataArray(float(river_coords["lon"]), dims=(), attrs={"standard_name": "longitude", "units": "degree_east"}),
+        ).set_coords(["latitude", "longitude"])
+
+    # id variable
+    ds["river_name"] = xr.DataArray(river, dims=(), attrs={"cf_role": "timeseries_id"})
+
+    # variable attrs (units/long_name/comment)
+    for var in ds.data_vars:
+        if var == "river_name":
+            continue
+
+        # base unit from metadata (fallback to existing)
+        if not flux_metadata_df.empty and var in set(flux_metadata_df["parameter_name"]):
+            base_unit = flux_metadata_df.loc[flux_metadata_df["parameter_name"] == var, "unit"].iloc[0]
+        else:
+            base_unit = ds[var].attrs.get("units", "undefined")
+
+        ds[var].attrs["units"] = _flux_unit_for_frequency(
+            str(base_unit),
+            frequency=frequency,
+            var_name=var,
+            non_mass_vars=non_mass_vars,
+            undefined_unit_label=undefined_unit_label,
+        )
+
+        ds[var].attrs["long_name"] = str(standard_name_map.get(var, var))
+
+        vc = var_comments.get(var)
+        if isinstance(vc, dict):
+            com = vc.get(river)
+            if com:
+                ds[var].attrs["comment"] = str(com)
+        elif isinstance(vc, str):
+            ds[var].attrs["comment"] = vc
+
+    return ds
+
+
+def flux(cfg: Dict[str, Any]) -> list[Path]:
+    # ---- resolve paths relative to hydrochem project ----
+    # wc_path = _p(cfg["wc_interp_data_path"])
+    # q_path = _p(cfg["q_cleaned_data_path"])
+
+    # plots_output_dir = _p(cfg["plots_output_dir"])
+    # base_output_dir = _p(cfg["output_dir"])
+    # ensure_dirs(plots_output_dir, base_output_dir)
+
+    wc_path = resolve_path(cfg["wc_interp_data_path"])
+    q_path = resolve_path(cfg["q_cleaned_data_path"])
+
+    plots_output_dir = resolve_path(cfg["plots_output_dir"])
+    base_output_dir = resolve_path(cfg["output_dir"])
+    ensure_dirs(plots_output_dir, base_output_dir)
+
+    river = cfg["river"]
+    station_col = cfg.get("station_col", "river_name")
+    date_col = cfg.get("date_col", "date")
+    discharge_col = cfg.get("discharge_col", "discharge")
+
+    processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
+    global_metadata_config = cfg.get("global_metadata_config", {})
+
+    # export config
+    export_cfg = cfg.get("export", {})
+    engine = export_cfg.get("engine", "netcdf4")
+    nc_format = export_cfg.get("format", "NETCDF4")
+    time_enc_cfg = export_cfg.get("time", {})
+    time_name = time_enc_cfg.get("name", "date")
+    filename_template = export_cfg.get("filename_template", "{frequency}_water_chemistry_fluxes_{station_id_or_stem}.nc")
+    id_prefix = export_cfg.get("id_prefix", "no.niva")
+
+    # metadata tables
+    flux_metadata_df = pd.DataFrame(cfg.get("flux_metadata", {}))
+    standard_name_map = cfg.get("standard_name_map", {})
+    var_comments = cfg.get("var_comments", {})
+    river_coords = cfg.get("river_coords")
+
+    unit_opt = cfg.get("unit_options", {})
+    non_mass_vars = set(unit_opt.get("non_mass_vars", []))
+    undefined_unit_label = str(unit_opt.get("undefined_unit_label", "undefined"))
+
+    # ---- load data ----
+    # wc_df_raw = load_netcdf_to_dataframe(wc_path, time_vars=("date", "sample_date", "time"))
+    # q_df_raw = load_netcdf_to_dataframe(q_path, time_vars=("date", "sample_date", "time"))
+    wc_df_raw = netcdf_to_dataframe(wc_path, time_vars=("date", "sample_date", "time"))
+    q_df_raw = netcdf_to_dataframe(q_path, time_vars=("date", "sample_date", "time"))
+
+    # ---- harmonize columns ----
+    # q_df = process_river_df(
+    #     q_df_raw,
+    #     time_col_name="time",
+    #     station_rename_map=cfg.get("q_station_rename_map", {}),
+    #     date_col=date_col,
+    #     station_col_in="station_name",
+    #     station_col_out=station_col,
+    # )
+
+    q_df = standardize_time_and_station(
+        q_df_raw,
+        time_col_in="time",
+        date_col_out=date_col,
+        station_col_in="station_name",
+        station_col_out=station_col,
+        station_rename_map=cfg.get("q_station_rename_map", {}),
+    )
+
+    # NOTE: your interpolated WC file probably uses "date" already; keep it robust:
+    # wc_time_guess = "date" if "date" in wc_df_raw.columns else "sample_date"
+    # wc_df = process_river_df(
+    #     wc_df_raw,
+    #     time_col_name=wc_time_guess,
+    #     station_rename_map=cfg.get("q_station_rename_map", {}),
+    #     date_col=date_col,
+    #     station_col_in="station_name",
+    #     station_col_out=station_col,
+    # )
+
+    wc_time_guess = "date" if "date" in wc_df_raw.columns else "sample_date"
+    wc_df = standardize_time_and_station(
+        wc_df_raw,
+        time_col_in=wc_time_guess,
+        date_col_out=date_col,
+        station_col_in="station_name",
+        station_col_out=station_col,
+        station_rename_map=cfg.get("q_station_rename_map", {}),
+    )
+
+    # ---- merge ----
+    # merged = merge_daily_river_data(
+    #     wc_df,
+    #     q_df,
+    #     station_name=river,
+    #     station_col=station_col,
+    #     date_col=date_col,
+    #     discharge_col=discharge_col,
+    #     drop_cols=cfg.get("columns_to_drop", False),
+    # )
+    merged = merge_daily_discharge_and_chemistry(
+        wc_df, q_df,
+        station_name=river,
+        station_col=station_col,
+        date_col=date_col,
+        discharge_col=discharge_col,
+        drop_wc_cols=cfg.get("columns_to_drop", False),
+    )
+
+    # ---- compute daily fluxes ----
+    param_meta_df = extract_units_from_netcdf(wc_path)
+    param_unit_map = dict(zip(param_meta_df["parameter_name"], param_meta_df["unit"]))
+
+    daily_flux = compute_fluxes(
+        merged,
+        param_unit_map=param_unit_map,
+        discharge_col=discharge_col,
+        keep_cols=[date_col, station_col],
+    )
+    daily_flux[date_col] = pd.to_datetime(daily_flux[date_col])
+
+    # ---- monthly + annual aggregation ----
+    daily_idx = daily_flux.set_index(date_col)
+
+    # Do not aggregate discharge as a "flux"
+    if discharge_col in daily_idx.columns:
+        daily_idx_no_q = daily_idx.drop(columns=[discharge_col])
+    else:
+        daily_idx_no_q = daily_idx
+
+    monthly_flux = daily_idx_no_q.resample("M").sum(min_count=25)
+    annual_flux = daily_idx_no_q.resample("Y").sum(min_count=350)
+
+    # annual needs year column for plotting
+    annual_plot = annual_flux.copy()
+    annual_plot["year"] = annual_plot.index.year
+
+    # ---- plots ----
+    plot_daily_fluxes(
+        daily_flux, river,
+        non_mass_vars=non_mass_vars,
+        save_path=plots_output_dir / f"{river.lower()}_daily_fluxes.png",
+    )
+    plot_monthly_fluxes(
+        monthly_flux, river,
+        non_mass_vars=non_mass_vars,
+        save_path=plots_output_dir / f"{river.lower()}_monthly_fluxes.png",
+    )
+    plot_annual_fluxes(
+        annual_plot.reset_index(drop=True), river,
+        non_mass_vars=non_mass_vars,
+        save_path=plots_output_dir / f"{river.lower()}_annual_fluxes.png",
+    )
+
+    # ---- export netcdf (via export_dataset) ----
+    outputs: list[Path] = []
+
+    for frequency, df_freq in [
+        ("daily", daily_flux.rename(columns={date_col: time_name})),
+        ("monthly", monthly_flux.reset_index().rename(columns={date_col: time_name})),
+        ("annual", annual_flux.reset_index().rename(columns={date_col: time_name})),
+    ]:
+        ds = df_to_dataset(
+            df_freq,
+            time_name=time_name,
+            river=river,
+            river_coords=river_coords,
+            flux_metadata_df=flux_metadata_df,
+            standard_name_map=standard_name_map,
+            var_comments=var_comments,
+            frequency=frequency,
+            non_mass_vars=non_mass_vars,
+            undefined_unit_label=undefined_unit_label,
+        )
+        # global attrs (export_dataset will set id + coverage + geospatial)
+        gmeta = dict(global_metadata_config)
+        gmeta.setdefault("title", f"{frequency.capitalize()} water chemistry fluxes for river {river}")
+        gmeta.setdefault("summary", f"{frequency.capitalize()} fluxes derived from daily concentration estimates and discharge.")
+
+        filename = filename_template.format(
+            frequency=frequency,
+            station_id_or_stem=river.lower().replace(" ", "_"),
+            station_id=river,
+        )
+
+        out_path = export_dataset(
+            ds=ds,
+            output_dir=(base_output_dir / frequency),
+            filename=filename,
+            time_name=time_name,
+            global_attrs=gmeta,
+            namespace_uuid=str(processed_namespace_uuid),
+            id_prefix=id_prefix,
+            id_seed=f"{river}:{frequency}",
+            engine=engine,
+            nc_format=nc_format,
+            time_encoding_cfg={
+                "dtype": time_enc_cfg.get("dtype", "int32"),
+                "_FillValue": time_enc_cfg.get("_FillValue", None),
+                "units": time_enc_cfg.get("units", "seconds since 1970-01-01 00:00:00"),
+                "calendar": time_enc_cfg.get("calendar", None),
+            },
+            var_encoding_overrides=None,  # keep floats for fluxes
+        )
+        outputs.append(out_path)
+
+    return outputs
