@@ -22,13 +22,12 @@ as_null_if_blank <- function(x) {
 }
 
 
-
 assessment_plot <- function(
-    river_df = NULL,          # df with lon/lat (or x/y), and a label col (default "river")
-    waterbody_shp = NULL,     # sf polygons
-    data_fb = NULL,           # df with lon/lat (or x/y)
+    river_df,          # df with lon/lat (or x/y), and a label col (default "river")
+    study_area,     # sf polygons
+    data_fb,           # df with lon/lat (or x/y)
     world_sf,                 # sf polygons for basemap
-    river_label_col = "river"# change if your label column is called something else
+    river_label_col
 ) {
   stopifnot(!is.null(data_fb), !is.null(world_sf))
   
@@ -73,7 +72,7 @@ assessment_plot <- function(
   
   fb_sf_pts <- st_as_sf(fb_clean, coords = c("longitude","latitude"), crs = 4326, remove = FALSE)
   
-
+  
   
   # --- River sf (optional) ---
   river_sf <- NULL
@@ -96,15 +95,15 @@ assessment_plot <- function(
   
   # --- Waterbodies sf (optional) ---
   water_sf <- NULL
-  if (!is.null(waterbody_shp)) {
-    if (!inherits(waterbody_shp, "sf")) stop("waterbody_shp must be an sf object")
-    water_sf <- waterbody_shp
+  if (!is.null(study_area)) {
+    if (!inherits(study_area, "sf")) stop("study_area must be an sf object")
+    water_sf <- study_area
   }
   
   # --- Compute bbox across provided layers ---
   bbox_all <- sf::st_bbox(fb_sf_pts)
   
-
+  
   # --- Plot (structure matching your example) ---
   p <- ggplot() +
     geom_sf(data = world_sf, fill = "grey92", color = "grey60") +
@@ -117,7 +116,7 @@ assessment_plot <- function(
         aes(label = .data[[river_label_col]], geometry = geometry),
         stat = "sf_coordinates",
         size = 5,
-        nudge_y = 0.02
+        nudge_y = 0.1
       )
     } +
     ggspatial::annotation_scale(
@@ -173,22 +172,30 @@ input_fb_file  <- args[1] # csv file with fb data
 save_png_path <- args[2] # output folder path
 
 input_river_file   <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL #csv file with river names and location
-input_waterbody_shp   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL #shapefile with waterbody
-river_label_col   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL # label of river name column in river input csv
+river_label_col   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL # label of river name column in river input csv
+
+input_study_area   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL #shapefile with assessment area
+
+
+
+if(!is.null(input_river_file) & is.null(river_label_col)){
+  stop("River file provided with no specification of river label name. Speficy column with river name.")
+}
+
 
 # message depending on input files
-if (is.null(input_river_file) && is.null(input_waterbody_shp)) {
+if (is.null(input_river_file) && is.null(input_study_area)) {
   message("Reading input ferrybox CSV: ", input_fb_file)
-
-} else if (!is.null(input_river_file) && is.null(input_waterbody_shp)) {
+  
+} else if (!is.null(input_river_file) && is.null(input_study_area)) {
   message("Reading input ferrybox and river CSV: ", input_fb_file, " and ", input_river_file)
-
-} else if (is.null(input_river_file) && !is.null(input_waterbody_shp)) {
-  message("Reading input ferrybox CSV and waterbody shapefile: ", input_fb_file, " and ", input_waterbody_shp)
-
+  
+} else if (is.null(input_river_file) && !is.null(input_study_area)) {
+  message("Reading input ferrybox CSV and waterbody shapefile: ", input_fb_file, " and ", input_study_area)
+  
 } else {
   message("Reading input ferrybox CSV, river CSV and waterbody shapefile: ",
-          input_fb_file, ", ", input_river_file, " and ", input_waterbody_shp)
+          input_fb_file, ", ", input_river_file, " and ", input_study_area)
 }
 
 ferrybox_df <- readr::read_csv(input_fb_file, show_col_types = FALSE)
@@ -199,22 +206,75 @@ river_df <- if (!is.null(input_river_file)) {
   NULL
 }
 
-waterbody_shp <- if (!is.null(input_waterbody_shp)) {
-  sf::st_read(input_waterbody_shp, quiet = TRUE)
-} else {
-  NULL
-}
+# Read Study area if provided
+# study area is NULL.
+# If study area is NULL, then the function will create a bbox around provided coordinates (min to max) and plot that area.
+if (tolower(is.null(input_study_area))) {
+  
+  study_area <- NULL
+  
+  # study area is URL or file
+} else if (startsWith(input_study_area, "http") | file.exists(input_study_area)) {
+  
+  input_path <- input_study_area
+  
+  # If URL points to ZIP -> download and unzip
+  if (startsWith(input_study_area, "http") & endsWith(tolower(input_study_area), "zip")) {
+    
+    message("DEBUG: Downloading ZIP: ", input_study_area)
+    
+    temp_zip <- tempfile(fileext = ".zip")
+    extract_dir <- tempfile()
+    dir.create(extract_dir)
+    
+    download.file(input_study_area, temp_zip, mode = "wb")
+    unzip(temp_zip, exdir = extract_dir)
+    
+    message("DEBUG: Files extracted:")
+    print(list.files(extract_dir, recursive = TRUE))
+    
+    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
+    
+    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
+    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
+    
+    if (length(shp_files) > 0) {
+      input_path <- shp_files[1]
+      message("DEBUG: Found shapefile: ", input_path)
+      
+    } else if (length(geojson_files) > 0) {
+      input_path <- geojson_files[1]
+      message("DEBUG: Found GeoJSON: ", input_path)
+      
+    } else {
+      stop("No .shp or .geojson/.json file found in ZIP")
+    }
+  }
+  
+  # Remote shapefile (not zipped)
+  else if (startsWith(input_study_area, "http") & endsWith(tolower(input_study_area), "shp")) {
+    stop("Remote shapefile must be provided as ZIP")
+  }
+  
+  message("DEBUG: Reading spatial data: ", input_path)
+  
+  study_area <- sf::st_read(input_path, quiet = TRUE)
+  
+  message("DEBUG: st_read resulted in class: ", class(study_area))
+  
+} 
 
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
 
 # -------------------------------------------------------------------
 # Create plot
 # -------------------------------------------------------------------
 p <- assessment_plot(
   data_fb = ferrybox_df,
-  river_df = river_df,          # uses station_name if river column doesn't exist
-  waterbody_shp = waterbody_shp,
+  river_df = river_df,          
+  study_area = study_area,
   world_sf = world,
   river_label_col = river_label_col
 )
