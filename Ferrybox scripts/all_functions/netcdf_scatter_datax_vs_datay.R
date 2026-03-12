@@ -20,8 +20,8 @@ as_null_if_blank <- function(x) {
 scatter_from_joined <- function(
     df_joined,
     waterbodies,          # sf polygons (optional)
-    waterbody_ids,        # vector (optional)
     waterbody_id_col,     # column name in waterbodies (optional)
+    waterbody_ids,        # vector with station names (optional)
     lat_range,            # c(min, max) required if no waterbodies
     tz = "UTC",
     agg_fun = mean,
@@ -148,22 +148,74 @@ lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
 } else {
   NULL
 }
-  
+
 message("Reading input CSV: ", input_path)
 df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
 
-waterbody_shp <- if (!is.null(waterbodies_path)) {
-  sf::st_read(waterbodies_path, quiet = TRUE)
-} else {
-  NULL
-}
+
+## Read waterbodies to aggregate (optional)
+if (tolower(is.null(waterbodies_path))) {
+  
+  study_area <- NULL
+  
+  # study area is URL or file
+} else if (startsWith(waterbodies_path, "http") | file.exists(waterbodies_path)) {
+  
+  input_path <- waterbodies_path
+  
+  # If URL points to ZIP -> download and unzip
+  if (startsWith(waterbodies_path, "http") & endsWith(tolower(waterbodies_path), "zip")) {
+    
+    message("DEBUG: Downloading ZIP: ", waterbodies_path)
+    
+    temp_zip <- tempfile(fileext = ".zip")
+    extract_dir <- tempfile()
+    dir.create(extract_dir)
+    
+    download.file(waterbodies_path, temp_zip, mode = "wb")
+    unzip(temp_zip, exdir = extract_dir)
+    
+    message("DEBUG: Files extracted:")
+    print(list.files(extract_dir, recursive = TRUE))
+    
+    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
+    
+    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
+    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
+    
+    if (length(shp_files) > 0) {
+      input_path <- shp_files[1]
+      message("DEBUG: Found shapefile: ", input_path)
+      
+    } else if (length(geojson_files) > 0) {
+      input_path <- geojson_files[1]
+      message("DEBUG: Found GeoJSON: ", input_path)
+      
+    } else {
+      stop("No .shp or .geojson/.json file found in ZIP")
+    }
+  }
+  
+  # Remote shapefile (not zipped)
+  else if (startsWith(waterbodies_path, "http") & endsWith(tolower(waterbodies_path), "shp")) {
+    stop("Remote shapefile must be provided as ZIP")
+  }
+  
+  message("DEBUG: Reading spatial data: ", input_path)
+  
+  waterbody_shp <- sf::st_read(input_path, quiet = TRUE)
+  
+  message("DEBUG: st_read resulted in class: ", class(waterbody_shp))
+  
+} 
+
 
 
 scatter_fb_stat <- scatter_from_joined(
   df_joined = df_joined,
   waterbodies = waterbody_shp,
-  waterbody_ids = waterbody_ids,
   waterbody_id_col = waterbody_id_col,
+  waterbody_ids = waterbody_ids,
   lat_range = lat_range,
   tz = "UTC",
   agg_fun = mean,
