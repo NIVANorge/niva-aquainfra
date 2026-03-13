@@ -161,7 +161,7 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
             end_date
         ]
 
-        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
+       #r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
         LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
