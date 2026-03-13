@@ -56,7 +56,7 @@
         "type": "string"
       },
       "minOccurs": 0,
-      "maxOccurs": 1
+      "maxOccurs": 10
     }
   },
   "outputs": {
