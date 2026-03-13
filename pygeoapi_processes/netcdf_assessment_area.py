@@ -93,13 +93,20 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         # Retrieve user inputs:
         url_input_csv = data.get('url_input_csv')
         url_input_river_logger_csv = data.get('url_input_river_logger_csv')
+        river_label_col = data.get('river_label_col', None) #Need to specify the columns name where the river names are available
         url_input_waterbody = data.get('url_input_waterbody', None) # optional
 
         # Check user inputs:
-        if url_input_csv is None:
-            raise ProcessorExecuteError("Missing parameter 'url_input_csv'. Please provide a URL.")
-        if url_input_river_logger_csv is None:
-            raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
+      if url_input_csv is None:
+        raise ProcessorExecuteError("Missing parameter 'url_input_csv'. Please provide a URL.")
+
+    if url_input_river_logger_csv is None:
+        raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
+
+    if url_input_river_logger_csv is not None and river_label_col is None:
+        raise ProcessorExecuteError(
+        "Parameter 'river_label_col' must be provided when 'url_input_river_logger_csv' is used."
+    ) # added error if the name column is not provided
 
 
         ##################
@@ -142,7 +149,7 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         ###########
 
        # params = ','.join(parameters) parameter not used in script
-        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
+        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, river_label_col, url_input_waterbody] #added river_label_col
         LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
