@@ -20,7 +20,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 --data '{
     "inputs": {
        "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-       "parameters": "NULL",
+       "parameters": null,
        "start_date": "2023-01-01",
        "end_date": "2023-12-31"
     }
@@ -152,7 +152,11 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
         ### Run ###
         ###########
 
-        params_string = ','.join(parameters)
+        # Make a proper string from the parameters that we can pass over to the R script:
+        if parameters is None:
+            params_string = 'NULL'
+        else:
+            params_string = ','.join(parameters)
 
         r_args = [
             url_thredds,
