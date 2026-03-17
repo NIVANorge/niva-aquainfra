@@ -12,9 +12,9 @@ from src.mk_trend_test import analyze_trends
 plt.style.use("ggplot")
 
 # Choose exactly which steps to run (any combination), or use ["all"].
-STEPS_OVERRIDE = ["fluxes"] # e.g. ["interpolate", "fluxes", "trends"]
+STEPS_OVERRIDE = ["trends"] # e.g. ["interpolate", "fluxes", "trends"]
 
-# Choose which rivers to run (any list), or ["all"], or None (use argparse defaults)
+# Choose which rivers to run (any list), or ["all"], or None
 RIVERS_OVERRIDE = ["all"]  # e.g. ["drammenselva"] or ["all"] or None
 
 # Choose which marine datasets to run (any list), or ["all"], or None
@@ -50,7 +50,6 @@ def run_river(
         cfg = load_cfg(river_dir / "fluxes.json")
         flux(cfg)
 
-    # --- trends stays as an IF (as you requested) ---
     if "trends" in steps:
         trends_path = Path("config") / "mk_trend_test.json"
         if not trends_path.exists():
@@ -70,8 +69,7 @@ def run_river(
 #     ds_dir = cfg_base / dataset
 #     print(f"\n=== Marine: {dataset} ===")
 #
-#     # If later you add preprocess/interpolate/flux for marine, you can mirror river logic here.
-#     # For now: only trends makes sense.
+#     # For marine only trends!
 #
 #     if "trends" in steps:
 #         trends_path = ds_dir / "mk_trend_test.json"
@@ -91,7 +89,6 @@ def main():
     ap.add_argument("--rivers", nargs="+", default=["drammenselva"], help="River folder names, or: all")
     ap.add_argument("--marine", nargs="+", default=[], help="Marine dataset folder names, or: all")
 
-    # --- trends knobs ---
     ap.add_argument("--trend_freq", default="both", choices=["monthly", "annual", "both"])
     ap.add_argument("--mk_mode", default="auto", choices=["auto", "original", "seasonal"])
     ap.add_argument(
@@ -103,7 +100,6 @@ def main():
 
     args = ap.parse_args()
 
-    # --- overrides for running from PyCharm (no terminal args) ---
     if STEPS_OVERRIDE is not None:
         if "all" in STEPS_OVERRIDE:
             args.step = "all"
@@ -122,30 +118,24 @@ def main():
     rivers_all = available_names(cfg_river_base)
     marine_all = available_names(cfg_marine_base)
 
-    # Steps parsing (supports "all" or comma list)
     if args.step == "all":
         steps = ["preprocess", "interpolate", "fluxes", "trends"]
     else:
         steps = [s.strip() for s in str(args.step).split(",") if s.strip()]
 
-    # Rivers selection
     rivers = rivers_all if args.rivers == ["all"] else args.rivers
 
-    # Marine selection
     marine = marine_all if args.marine == ["all"] else args.marine
 
-    # Validate rivers (only if river pipeline steps are requested OR if trends is requested for rivers)
     missing_rivers = [r for r in rivers if r not in rivers_all]
     if missing_rivers:
         raise SystemExit(f"Unknown rivers: {missing_rivers}. Available: {rivers_all}")
 
-    # Validate marine (only if any marine selection was given)
     if marine:
         missing_marine = [m for m in marine if m not in marine_all]
         if missing_marine:
             raise SystemExit(f"Unknown marine datasets: {missing_marine}. Available: {marine_all}")
 
-    # --- Run rivers ---
     for r in rivers:
         run_river(
             r,
@@ -156,8 +146,7 @@ def main():
             trend_sites=args.trend_sites,
         )
 
-    # # --- Run marine trends (only if user provided --marine something) ---
-    # # This does NOT interfere with river trends. It's additive.
+    # # Run marine trends
     # for ds in marine:
     #     run_marine(
     #         ds,

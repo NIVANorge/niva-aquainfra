@@ -17,7 +17,6 @@ from src.utils import resolve_path, ensure_dirs
 plt.style.use("ggplot")
 
 
-# # ------------------------- path helpers -------------------------
 # def _project_root() -> Path:
 #     # src/mk_trend_test.py -> parents[1] = project root if src/ is inside the project
 #     return Path(__file__).resolve().parents[1]
@@ -32,7 +31,6 @@ plt.style.use("ggplot")
 #     p.mkdir(parents=True, exist_ok=True)
 
 
-# ------------------------- dataset helpers -------------------------
 def _infer_time_name(ds: xr.Dataset) -> Optional[str]:
     for c in ("date", "time", "datetime", "timestamp", "sample_date"):
         if c in ds.coords:
@@ -125,10 +123,17 @@ def _open_series_and_unit_from_nc(
 
     da = ds[var]
 
-    # Multi-station selection (future marine style)
+    # Multi-station selection (TO DO - Marine)
     if station is not None and station_dim is not None and station_dim in da.dims:
         if station_coord and station_coord in ds.coords:
-            labels = [str(x) for x in ds[station_coord].values]
+            # labels = [str(x) for x in ds[station_coord].values]
+            labels = []
+            for x in ds[station_coord].values:
+                if isinstance(x, bytes):
+                    labels.append(x.decode("utf-8"))
+                else:
+                    labels.append(str(x))
+
             if station in labels:
                 da = da.isel({station_dim: labels.index(station)})
             else:
@@ -152,7 +157,6 @@ def _open_series_and_unit_from_nc(
     return y, (str(unit) if unit is not None else None)
 
 
-# ------------------------- unit helpers -------------------------
 def _display_unit_for_plot(
     base_unit: Optional[str],
     *,
@@ -185,7 +189,6 @@ def _display_unit_for_plot(
 
     return bu
 
-# ------------------------- results helpers -------------------------
 def _period_str(idx: pd.Index) -> str:
     if idx is None or len(idx) == 0:
         return ""
@@ -226,7 +229,6 @@ def _sen_slope_intercept(y: pd.Series, x: np.ndarray) -> tuple[float, float]:
     slope, intercept, *_ = theilslopes(yv, xv, 0.95)
     return float(slope), float(intercept)
 
-
 def _classify_sen_trend(slope: float, p: float, alpha: float) -> str:
     if not np.isfinite(p) or p > alpha or not np.isfinite(slope):
         return "no trend"
@@ -237,7 +239,6 @@ def _classify_sen_trend(slope: float, p: float, alpha: float) -> str:
     return "no trend"
 
 
-# ------------------------- MK helper -------------------------
 def _mk_test(
     y: pd.Series,
     *,
@@ -245,7 +246,7 @@ def _mk_test(
     mk_mode: str,
     alpha: float,
 ) -> Optional[Dict[str, Any]]:
-    y = y.dropna()
+    y = y.dropna().sort_index()
     if y.empty:
         return None
 
@@ -264,7 +265,6 @@ def _mk_test(
     return {"mk_mode_used": mode, "trend": getattr(res, "trend", None), "p": getattr(res, "p", None)}
 
 
-# ------------------------- plotting: station grid -------------------------
 def _plot_station_grid(
     station: str,
     frequency: str,
@@ -300,7 +300,6 @@ def _plot_station_grid(
 
         ax.scatter(s.index, s.values, s=100, color="dimgrey", alpha=0.9)
 
-        # y label: variable + unit
         unit_lbl = units_by_var.get(var, "undefined")
         ax.set_ylabel(f"{var} [{unit_lbl}]")
 
@@ -339,17 +338,14 @@ def _plot_station_grid(
     for j in range(nvars, len(axes)):
         axes[j].axis("off")
 
-    # title only station name
     fig.suptitle(f"{station}", fontsize=18, y=0.99)
     fig.tight_layout(rect=[0, 0, 1, 0.985])
 
-    # _ensure_dir(out_png.parent)
     ensure_dirs(out_png.parent)
     plt.savefig(out_png, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
-# ------------------------- plotting: trend matrix per variable -------------------------
 def _plot_trend_matrix_for_variable(
     df_freq: pd.DataFrame,
     *,
@@ -376,7 +372,6 @@ def _plot_trend_matrix_for_variable(
     if "sen_trend" not in d.columns:
         d["sen_trend"] = d.get("mk_trend", "no trend")
 
-    # Significance from mk_p_val
     d["significant"] = np.isfinite(d["mk_p_val"].to_numpy()) & (d["mk_p_val"].astype(float) <= float(alpha))
 
     trend_order = ["decreasing", "no trend", "increasing"]
@@ -390,10 +385,8 @@ def _plot_trend_matrix_for_variable(
         "error": "darkgrey",
     }
 
-    # y order fixed by stations_order
     y_map = {st: i for i, st in enumerate(stations_order)}
 
-    # build point lists
     xs, ys, cols, alphas = [], [], [], []
     for _, r in d.iterrows():
         st = str(r["station_id"])
@@ -406,7 +399,6 @@ def _plot_trend_matrix_for_variable(
         cols.append(trend_colors.get(tr, "darkgrey"))
         alphas.append(1.0 if bool(r["significant"]) else non_sig_alpha)
 
-    # drop points with unknown station
     mask = np.isfinite(np.array(ys, dtype=float))
     xs = np.array(xs, dtype=float)[mask]
     ys = np.array(ys, dtype=float)[mask]
@@ -419,7 +411,6 @@ def _plot_trend_matrix_for_variable(
     plt.figure(figsize=(6.5, max(2.5, 0.45 * len(stations_order))))
     ax = plt.gca()
 
-    # Draw each point (so alpha can vary)
     for x, y, c, a in zip(xs, ys, cols, alphas):
         ax.scatter(x, y, s=220, color=c, alpha=float(a), edgecolors="black", linewidths=0.5)
 
@@ -440,20 +431,17 @@ def _plot_trend_matrix_for_variable(
         spine.set_linewidth(1.5)
 
     plt.tight_layout()
-    # _ensure_dir(out_png.parent)
     ensure_dirs(out_png.parent)
     plt.savefig(out_png, dpi=300, bbox_inches="tight")
     plt.close()
 
 
-# ------------------------- IO helpers -------------------------
 def _write_station_excel(
     out_xlsx: Path,
     *,
     monthly_df: Optional[pd.DataFrame],
     annual_df: Optional[pd.DataFrame],
 ) -> None:
-    # _ensure_dir(out_xlsx.parent)
     ensure_dirs(out_xlsx.parent)
     with pd.ExcelWriter(out_xlsx, engine="openpyxl") as xl:
         if monthly_df is not None and not monthly_df.empty:
@@ -462,7 +450,6 @@ def _write_station_excel(
             annual_df.to_excel(xl, sheet_name="annual", index=False)
 
 
-# ------------------------- public API -------------------------
 def analyze_trends(
     cfg: Dict[str, Any],
     *,
@@ -492,18 +479,15 @@ def analyze_trends(
     Notes on append mode:
       - If the combined file exists, we read its monthly/annual sheets, append new rows,
         and drop duplicates using a key (default: frequency+station_id+variable+period).
-      - If you want a different de-duplication rule, edit `dedupe_cols`.
     """
     vars_to_test: List[str] = cfg.get("variables", [])
     if not vars_to_test:
         raise ValueError("No variables in cfg['variables'].")
 
-    # out_root = _abs_path(cfg["output_dir"])
     out_root = resolve_path(cfg["output_dir"])
     figures_dir = cfg.get("results", {}).get("figures_dir", "figures")
     tables_dir = cfg.get("results", {}).get("tables_dir", "tables")
 
-    # Combined table name from config
     combined_name = cfg.get("results", {}).get("combined_table_name", "mk_results.xlsx")
 
     trend_opt = cfg.get("trend_options", {})
@@ -525,7 +509,6 @@ def analyze_trends(
     ncols = int(plot_opt.get("ncols", 3))
     non_sig_alpha = float(plot_opt.get("non_sig_alpha", 0.25))
 
-    # Frequencies
     freq_list: List[str] = []
     if frequency in ("both", "monthly"):
         freq_list.append("monthly")
@@ -541,16 +524,13 @@ def analyze_trends(
     if not stations_to_use:
         raise ValueError("No stations provided (cfg['stations'] empty and no override).")
 
-    # Results per station
     results_by_station: Dict[str, Dict[str, pd.DataFrame]] = {}
 
-    # Collect all rows for combined output
     all_rows: List[Dict[str, Any]] = []
 
     for freq in freq_list:
         fcfg = inputs.get(freq, {})
         mode = str(fcfg.get("mode", "folder")).lower()
-        # src_path = _abs_path(fcfg.get("path", ""))
         src_path = resolve_path(fcfg.get("path", ""))
 
         if not src_path.exists():
@@ -562,7 +542,14 @@ def analyze_trends(
 
         stations_local = stations_to_use
 
-        # Multi-station file mode ("marine later")
+        if isinstance(stations_local, str):
+            stations_local = [stations_local]
+
+        if isinstance(stations_local, (list, tuple)) and len(stations_local) == 1:
+            if str(stations_local[0]).strip().lower() == "all":
+                stations_local = ["all"]
+
+        # Multi-station file mode (for marine - TO DO)
         if mode == "file" and stations_local == ["all"]:
             with xr.open_dataset(src_path) as ds:
                 if not station_dim:
@@ -597,7 +584,6 @@ def analyze_trends(
 
                 s = s.dropna()
 
-                # optional time window filtering
                 s = _slice_period(s, start=start_date, end=end_date)
 
                 if s.empty:
@@ -644,7 +630,7 @@ def analyze_trends(
                         "sen_trend": "insufficient_data",
                         "frequency": freq,
                         "mk_mode_used": "n/a",
-                        "file": file_used,
+                        # "file": file_used,
                     })
                     continue
 
@@ -673,14 +659,13 @@ def analyze_trends(
                         "frequency": freq,
                         "mk_mode_used": res.get("mk_mode_used"),
                         "error": res.get("error"),
-                        "file": file_used,
+                        # "file": file_used,
                     })
                     continue
 
                 pval = res.get("p", np.nan)
                 mk_trend = _mk_trend_label(res.get("trend"))
 
-                # Sen slope/intercept on correct x-scale
                 x = _x_for_fit(s, freq)
                 sen_slp, sen_incpt = _sen_slope_intercept(s, x)
                 sen_trend = _classify_sen_trend(sen_slp, float(pval) if np.isfinite(pval) else np.nan, alpha)
@@ -704,10 +689,8 @@ def analyze_trends(
                     "sen_trend": sen_trend,
                     "frequency": freq,
                     "mk_mode_used": res.get("mk_mode_used"),
-                    "file": file_used,
                 })
 
-            # Station grid figure (one per station per freq)
             if series_by_var:
                 mk_df_station = pd.DataFrame(
                     [r for r in mk_rows_all if r["station_id"] == st and r["frequency"] == freq]
@@ -724,7 +707,6 @@ def analyze_trends(
                     ncols=ncols,
                 )
 
-        # Save per-station tables and trend-matrix plots
         if mk_rows_all:
             df_all = pd.DataFrame(mk_rows_all)
             all_rows.extend(mk_rows_all)
@@ -736,12 +718,10 @@ def analyze_trends(
             extras = [c for c in df_all.columns if c not in preferred]
             df_all = df_all[preferred + extras]
 
-            # store per station for excel
             for st in df_all["station_id"].unique():
                 results_by_station.setdefault(st, {})
                 results_by_station[st][freq] = df_all[df_all["station_id"] == st].copy()
 
-            # trend matrix plots (one per variable per freq)
             stations_order = list(stations_local)
             for var in vars_to_test:
                 out_png = out_root / figures_dir / freq / "trend_matrix" / f"{var}.png"
@@ -755,7 +735,6 @@ def analyze_trends(
                     non_sig_alpha=non_sig_alpha,
                 )
 
-    # ---- Combined table ----
     if all_rows:
         df_new = pd.DataFrame(all_rows)
 
@@ -763,11 +742,9 @@ def analyze_trends(
         # _ensure_dir(out_all.parent)
         ensure_dirs(out_all.parent)
 
-        # Split new rows
         df_new_m = df_new[df_new["frequency"] == "monthly"].copy()
         df_new_a = df_new[df_new["frequency"] == "annual"].copy()
 
-        # Read existing (if any)
         if out_all.exists():
             try:
                 existing = pd.read_excel(out_all, sheet_name=None, engine="openpyxl")
@@ -780,7 +757,6 @@ def analyze_trends(
             df_old_m = pd.DataFrame()
             df_old_a = pd.DataFrame()
 
-        # Append + de-duplicate
         dedupe_cols = ["frequency", "station_id", "variable", "period"]
 
         def _append_dedup(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
@@ -808,7 +784,6 @@ def analyze_trends(
 
         print(f"[trends] Saved combined table (append): {out_all}")
 
-    # ---- Per-station files (optional) ----
     write_per_station = bool(cfg.get("results", {}).get("write_per_station_tables", True))
 
     written_excels: Dict[str, Path] = {}
