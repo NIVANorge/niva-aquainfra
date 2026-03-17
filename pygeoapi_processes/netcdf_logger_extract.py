@@ -14,7 +14,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# TESTED, works only with NULL parameters, 2026-03-17
+# TESTED by Merret, 2026-03-17
 curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -26,16 +26,15 @@ curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
     }
 }'; date
 
-# NOT TESTED YET
-# NEED EXAMPLE PARAMETERS FROM NIVA (these were copied from some other process)
-curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
+# TESTED by Merret, 2026-03-17
+curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution --header 'Content-Type: application/json'  --data '{
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
         "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
+        "parameters": ["temp_water_avg", "phvalue_avg", "condvalue_avg", "turbidity_avg", "cdomdigitalfinal"],
         "start_date": "2023-01-01",
-        "end_date": "2023-12-31",
-        "parameters": ["temperature", "salinity", "oxygen_sat", "chlorophyll", "turbidity", "fdom"]
+        "end_date": "2023-12-31"
     }
 }'; date
 '''
