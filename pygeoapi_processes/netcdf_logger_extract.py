@@ -19,10 +19,10 @@ curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 --header 'Content-Type: application/json' \
 --data '{
   "source": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-  "save_path": "/out/logger_test3.csv",
-  "parameters": "temp_water_avg",  # Can be NULL or all or one of temp_water_avg, phvalue_avg, condvalue_avg, turbidity_avg, cdomdigitalfinal
-  "start_date": "",
-  "end_date": "",
+  "save_path": "/out/logger_test.csv",
+  "parameters": "NULL",  # Can be NULL or all or one of temp_water_avg, phvalue_avg, condvalue_avg, turbidity_avg, cdomdigitalfinal
+  "start_date": "2023-01-01",
+  "end_date": "2023-12-31",
   "image": "ferry-rscripts:latest"
 }
 }'; date
