@@ -33,6 +33,30 @@ join_x_y <- function(df_x,
       "Available columns: ", paste(names(df_y), collapse = ", ")
     )
   }
+
+  # Check if parameter is available in dataframe
+  # --- Validate parameters ---
+  
+  param_vars_x <- unique(df_x$parameter)
+
+  invalid_param_x <- setdiff(parameter_x, param_vars_x)
+  if (length(invalid_param_x)) {
+    stop(
+      "Invalid parameter_x specified: ", paste(invalid_param_x, collapse = ", "),
+      "\nAvailable: ", paste(param_vars_x, collapse = ", ")
+    )
+  }
+  
+  param_vars_y <- unique(df_y$parameter)
+
+  invalid_param_y <- setdiff(parameter_y, param_vars_y)
+  if (length(invalid_param_y)) {
+    stop(
+      "Invalid parameter_y specified: ", paste(invalid_param_y, collapse = ", "),
+      "\nAvailable: ", paste(param_vars_y, collapse = ", ")
+    )
+  }
+  
   
   # Proceed, and create station values with unique stations
   station_vals <- unique(df_y[[station_col]])
