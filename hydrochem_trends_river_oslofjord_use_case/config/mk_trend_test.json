@@ -9,10 +9,18 @@
   "undefined_unit_label": "undefined"
   },
   "inputs": {
-    "annual":  { "mode": "folder", "path": "output/fluxes/annual" },
-    "monthly": { "mode": "folder", "path": "output/fluxes/monthly" }
+    "annual":  { "mode": "folder", "path": "output/data/fluxes/annual" },
+    "monthly": { "mode": "folder", "path": "output/data/fluxes/monthly" }
   },
-  "stations": ["Drammenselva"],
+  "inputs": {
+  "monthly": {
+    "mode": "file",
+    "path": "output/data/marine/monthly.nc",
+    "station_dim": "station",
+    "station_coord": "station_name"
+  }
+},
+  "stations": ["Drammenselva", "Glomma", "Numedalslagen"],
   "output_dir": "output/mk_trends",
   "results": {
     "figures_dir": "figures",
