@@ -25,6 +25,17 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
     }
 }'; date
 
+# This should be the format. 
+#{
+#  "input_fb_file": "/out/myferryboxtest.csv",
+#  "save_png_path": "/out/",
+#  "input_river_file": "/out/logger_test.csv",
+#  "river_label_col": "station_name",
+#  "input_study_area": "null",  # This does work, but the study area from https://karteksport.miljodirektoratet.no/ doesnt send the correct data. 
+#  "image": "ferry-rscripts:latest"
+#}
+
+
 # NOT TESTED YET
 curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 --header 'Content-Type: application/json' \
