@@ -1,0 +1,78 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-scatter-datax-vs-datay",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "netcdf_scatter_datax_vs_datay"
+  },
+  "description": {
+    "en": "netcdf_scatter_datax_vs_datay"
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "inputs": {
+    "url_input_csv": {
+      "title": "Input joined CSV",
+      "description": "URL to Input joined CSV file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_input_waterbody": {
+      "title": "Waterbody shapefile",
+      "description": "Waterbody shapefile. Can be omitted.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "waterbody_ids_to_summarize": {
+      "title": "Waterbody IDs/names to summarise across",
+      "description": "Waterbody IDs/names to summarise across. Can be omitted.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "waterbody_id_to_be_used": {
+      "title": "Waterbody ID column name in shapefile",
+      "description": "Waterbody ID column name in shapefile. Can be omitted.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "latitude_min": {
+      "title": "Latitude range to summarise across: Minimum latitude.",
+      "description": "Latitude range to summarise across: Minimum latitude. Can be omitted.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "latitude_max": {
+      "title": "Latitude range to summarise across: Maximum latitude.",
+      "description": "Latitude range to summarise across: Maximum latitude. Can be omitted.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "scatterplot": {
+      "title": "Output plot ",
+      "description": "Link to output plot.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_input_csv": "https://something.csv",
+      "url_input_waterbody": "https://something.zip",
+      "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
+      "waterbody_id_to_be_used": "id3",
+      "latitude_min": 59.1,
+      "latitude_max": 59.2
+    }
+  }
+}
+

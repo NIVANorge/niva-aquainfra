@@ -1,5 +1,5 @@
 # aquainfra
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NIVANorge/niva-aquainfra/main?urlpath=%2Fdoc%2Ftree%2Fcode%2Faquainfra_presentation.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NIVANorge/niva-aquainfra/main?urlpath=%2Fdoc%2Ftree%2Fnotebooks%2Faquainfra_presentation.ipynb)
 
 Jupyter Notebooks for Oslo Fjord use cases, Aquainfra project 
 

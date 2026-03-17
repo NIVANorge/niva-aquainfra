@@ -1,0 +1,88 @@
+{
+  "version": "0.1.0",
+  "id": "netcdf-tile-plot",
+  "use_case": "NIVA Ferrybox Scripts",
+  "title": {
+    "en": "FerryBox tile plot (Hovmöller-style) for one or more parameters"
+  },
+  "description": {
+    "en": "Reads a FerryBox CSV and generates one or more Hovmöller-style tile plots over time and latitude for selected parameters. Optional filters: date interval, latitude bounds, storm date marker. Outputs a PNG."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Tile plot", "Hovmoller"],
+  "inputs": {
+    "input_csv": {
+      "title": "input_csv",
+      "description": "Path (inside container mount) or URL to FerryBox CSV containing datetime, latitude, longitude, parameter and value.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "start_date": {
+      "title": "start_date",
+      "description": "Optional start date (YYYY-MM-DD). Use null or omit for no filter.",
+      "schema": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "end_date": {
+      "title": "end_date",
+      "description": "Optional end date (YYYY-MM-DD). Use null or omit for no filter.",
+      "schema": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "parameters": {
+      "title": "parameters",
+      "description": "Optional list of parameters to plot. If omitted or empty, all available parameters are used.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 10
+    },
+    "lat_min": {
+      "title": "lat_min",
+      "description": "Optional minimum latitude filter.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "lat_max": {
+      "title": "lat_max",
+      "description": "Optional maximum latitude filter.",
+      "schema": { "type": "number" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "storm_date": {
+      "title": "storm_date",
+      "description": "Optional storm date (YYYY-MM-DD) to mark with a dashed vertical line.",
+      "schema": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "png_result": {
+      "title": "Tile plot PNG",
+      "description": "Link to generated ferrybox_tile.png.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "input_csv": "/out/data/myferryboxtest.csv",
+      "start_date": "2023-01-01",
+      "end_date": "2023-12-31",
+      "parameters": ["salinity", "chlorophyll"],
+      "lat_min": 58.5,
+      "lat_max": 60.0,
+      "storm_date": "2023-08-08"
+    }
+  }
+}
+
+
+
