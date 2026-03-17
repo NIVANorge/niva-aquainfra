@@ -34,7 +34,7 @@
     { "operation": "sum", "target": "TOC_calc", "sources": ["POC", "DOC"] },
     { "operation": "fill_from_other", "target": "TDP", "expression": "TOTP - PP", "condition": "TDP.isna() & PP.notna()", "requires": ["TDP", "PP", "TOTP"] },
     { "operation": "fill_from_other", "target": "PP", "expression": "TOTP - TDP", "condition": "PP.isna() & TDP.notna()", "requires": ["TDP", "PP", "TOTP"] },
-      { "operation": "rowwise_sum", "target": "DIN", "sources": ["NO3-N", "NH4-N"], "only_when_all_present": true },
+    { "operation": "rowwise_sum", "target": "DIN", "sources": ["NO3-N", "NH4-N"], "only_when_all_present": true },
     { "operation": "difference", "target": "DON", "expression": "TOTN - DIN", "requires": ["TOTN", "DIN"]},
     { "operation": "mask_date_before", "target": "DOC", "file_contains": "40352", "date_column": "sample_date", "before": "2016-01-01" }
   ],
