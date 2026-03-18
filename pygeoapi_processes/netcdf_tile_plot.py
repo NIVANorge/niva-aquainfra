@@ -115,8 +115,9 @@ class NivaTilePlotProcessor(BaseProcessor):
         if lat2 is not None:
             float(lat2)
 
-        # Check existence:
-        requests.head(url_input_csv), raise_for_status()
+        # Check existence:        
+        #raise_for_status returns error in other scripts, so also removed here.
+       # requests.head(url_input_csv), raise_for_status()
 
 
         ##################
