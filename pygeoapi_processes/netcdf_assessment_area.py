@@ -125,11 +125,13 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         # Not needed, no input data is downloaded!
         readonly_dir = None
 
+
+        #raise_for_status returns error in other scripts, so also removed here.
         # Check existence:
-        requests.head(url_input_csv), raise_for_status()
-        requests.head(url_input_river_logger_csv), raise_for_status()
-        if url_input_waterbody is not None:
-            requests.head(url_input_waterbody), raise_for_status()
+        #requests.head(url_input_csv), raise_for_status()
+        #requests.head(url_input_river_logger_csv), raise_for_status()
+        #if url_input_waterbody is not None:
+        #    requests.head(url_input_waterbody), raise_for_status()
 
 
         ###############
