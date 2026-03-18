@@ -13,6 +13,19 @@ as_posixct_safe <- function(x, tz = "UTC") {
   stop("Unsupported time class: ", paste(class(x), collapse = "/"))
 }
 
+library(dplyr)
+library(lubridate)
+
+as_posixct_safe <- function(x, tz = "UTC") {
+  if (inherits(x, "POSIXct")) return(x)
+  if (inherits(x, "Date"))   return(as.POSIXct(x, tz = tz))
+  if (is.character(x)) {
+    out <- parse_date_time(x, orders = c("Y-m-d HMS", "Y-m-d HM", "Y-m-d"), tz = tz)
+    return(out)
+  }
+  stop("Unsupported time class: ", paste(class(x), collapse = "/"))
+}
+
 join_x_y <- function(df_x,
                      df_y,
                      parameter_x,
@@ -23,76 +36,56 @@ join_x_y <- function(df_x,
                      time_col_y,
                      tz = "UTC") {
   
-  stopifnot(is.data.frame(df_x), is.data.frame(df_y), is.character(parameter_x), is.character(parameter_y),
-            is.character(time_col_x),is.character(time_col_y))
+  stopifnot(
+    is.data.frame(df_x),
+    is.data.frame(df_y),
+    is.character(parameter_x),
+    is.character(parameter_y),
+    is.character(time_col_x),
+    is.character(time_col_y),
+    is.character(station_col),
+    is.character(station_ID)
+  )
   
-  # station_col check if null, na or empty
-  if (is.null(station_col) || is.na(station_col) ||  !nzchar(station_col)) {
+  if (is.null(station_col) || is.na(station_col) || !nzchar(station_col)) {
     stop(
-      "Provide station column name \n",
+      "Provide station column name\n",
       "Available columns: ", paste(names(df_y), collapse = ", ")
     )
   }
-
-  # Check if parameter is available in dataframe
-  # --- Validate parameters ---
   
-  param_vars_x <- unique(df_x$parameter)
-
-  invalid_param_x <- setdiff(parameter_x, param_vars_x)
-  if (length(invalid_param_x)) {
-    stop(
-      "Invalid parameter_x specified: ", paste(invalid_param_x, collapse = ", "),
-      "\nAvailable: ", paste(param_vars_x, collapse = ", ")
-    )
-  }
+  # lowercase user input once
+  station_ID <- tolower(station_ID)
+ 
+  # maps original names safely
+  x_map <- setNames(names(df_x), tolower(names(df_x)))
+  y_map <- setNames(names(df_y), tolower(names(df_y)))
   
-  param_vars_y <- unique(df_y$parameter)
-
-  invalid_param_y <- setdiff(parameter_y, param_vars_y)
-  if (length(invalid_param_y)) {
-    stop(
-      "Invalid parameter_y specified: ", paste(invalid_param_y, collapse = ", "),
-      "\nAvailable: ", paste(param_vars_y, collapse = ", ")
-    )
-  }
-  
-  
-  # Proceed, and create station values with unique stations
-  station_vals <- unique(df_y[[station_col]])
-  
-  if(is.null(station_ID) || is.na(station_ID) || !nzchar(station_ID)){
-    stop(
-      "Provide unique station ID \n",
-      "Available station IDs: ", paste(station_vals, collapse = ", ")
-    )
-  }
-  
-  df_y <- df_y %>%filter(.data[[station_col]] == station_ID)
-
-  # Lowercase all col
-  station_col <- tolower(station_col)
-  time_col_x  <- tolower(time_col_x)
-  time_col_y  <- tolower(time_col_y)
+  station_col_lc <- tolower(station_col)
+  time_col_x_lc  <- tolower(time_col_x)
+  time_col_y_lc  <- tolower(time_col_y)
   
   col_names_x <- tolower(names(df_x))
   col_names_y <- tolower(names(df_y))
   
-  x_map <- setNames(names(df_x), tolower(names(df_x)))
-  y_map <- setNames(names(df_y), tolower(names(df_y)))
-  
-  # Check time columns
-  if (!(time_col_x %in% col_names_x) || !(time_col_y %in% col_names_y)) {
+  # check requested columns exist
+  if (!(station_col_lc %in% col_names_y)) {
     stop(
-      "Time column is missing from at least one dataframe.\n",
-      "df_x columns: ", paste(col_names_x, collapse = ", "), "\n",
-      "df_y columns: ", paste(col_names_y, collapse = ", ")
+      "station_col not found in df_y: ", station_col, "\n",
+      "Available columns: ", paste(names(df_y), collapse = ", ")
     )
   }
   
-  # Check other columns
-  req_x <- c("latitude", "longitude", time_col_x, "value", "parameter")
-  req_y <- c(station_col, time_col_y, "value", "parameter")
+  if (!(time_col_x_lc %in% col_names_x) || !(time_col_y_lc %in% col_names_y)) {
+    stop(
+      "Time column is missing from at least one dataframe.\n",
+      "df_x columns: ", paste(names(df_x), collapse = ", "), "\n",
+      "df_y columns: ", paste(names(df_y), collapse = ", ")
+    )
+  }
+  
+  req_x <- c("latitude", "longitude", time_col_x_lc, "value", "parameter")
+  req_y <- c(station_col_lc, time_col_y_lc, "value", "parameter")
   
   miss_x <- setdiff(req_x, col_names_x)
   miss_y <- setdiff(req_y, col_names_y)
@@ -105,48 +98,81 @@ join_x_y <- function(df_x,
     )
   }
   
-  # Create POSIXct time column
+  # validate parameters
+  param_vars_x <- unique(df_x$parameter)
+  invalid_param_x <- setdiff(parameter_x, param_vars_x)
+  if (length(invalid_param_x)) {
+    stop(
+      "Invalid parameter_x specified: ", paste(invalid_param_x, collapse = ", "),
+      "\nAvailable: ", paste(param_vars_x, collapse = ", ")
+    )
+  }
+  
+  param_vars_y <- unique(df_y$parameter)
+  invalid_param_y <- setdiff(parameter_y, param_vars_y)
+  if (length(invalid_param_y)) {
+    stop(
+      "Invalid parameter_y specified: ", paste(invalid_param_y, collapse = ", "),
+      "\nAvailable: ", paste(param_vars_y, collapse = ", ")
+    )
+  }
+  
+  # create lowercase helper column from the actual station column
+  df_y <- df_y %>%
+    mutate(
+      station_lower = tolower(.data[[y_map[[station_col_lc]]]])
+    )
+  
+  station_vals <- unique(df_y$station_lower)
+  
+  if (!(station_ID %in% station_vals)) {
+    stop(
+      "station_ID not found: ", station_ID, "\n",
+      "Available station IDs: ", paste(head(station_vals, 20), collapse = ", "),
+      if (length(station_vals) > 20) "\n... (truncated)"
+    )
+  }
+  
+  if (is.null(station_ID) || is.na(station_ID) || !nzchar(station_ID)) {
+    stop(
+      "Provide unique station ID\n",
+      "Available station IDs: ", paste(station_vals, collapse = ", ")
+    )
+  }
+  
+  # parse time
   df_x <- df_x %>%
-    mutate(time = as_posixct_safe(.data[[ x_map[[time_col_x]] ]], tz = tz))
+    mutate(time = as_posixct_safe(.data[[x_map[[time_col_x_lc]]]], tz = tz))
   
   df_y <- df_y %>%
-    mutate(time = as_posixct_safe(.data[[ y_map[[time_col_y]] ]], tz = tz))
+    mutate(time = as_posixct_safe(.data[[y_map[[time_col_y_lc]]]], tz = tz))
   
   if (any(is.na(df_x$time))) {
-    stop("Could not parse time in df_x. Example: ", df_x[[ x_map[[time_col_x]] ]][1])
+    stop("Could not parse time in df_x. Example: ", df_x[[x_map[[time_col_x_lc]]]][1])
   }
   if (any(is.na(df_y$time))) {
-    stop("Could not parse time in df_y. Example: ", df_y[[ y_map[[time_col_y]] ]][1])
+    stop("Could not parse time in df_y. Example: ", df_y[[y_map[[time_col_y_lc]]]][1])
   }
   
-  # Summarise data
   data_x <- df_x %>%
     filter(parameter == parameter_x) %>%
     mutate(year = year(time), month = month(time), day = day(time)) %>%
     group_by(year, month, day, latitude, longitude, parameter) %>%
     summarise(value_x = mean(value, na.rm = TRUE), .groups = "drop") %>%
-    rename("parameter_x" = "parameter")
+    rename(parameter_x = parameter)
   
   data_y <- df_y %>%
-    filter(parameter == parameter_y,
-           .data[[ y_map[[station_col]] ]] == station_ID) %>%
+    filter(parameter == parameter_y, station_lower == station_ID) %>%
     mutate(year = year(time), month = month(time), day = day(time)) %>%
-    group_by(year, month, day, .data[[ y_map[[station_col]] ]], parameter) %>%
+    group_by(year, month, day, station_lower, parameter) %>%
     summarise(value_y = mean(value, na.rm = TRUE), .groups = "drop") %>%
-    rename("parameter_y" = "parameter")
+    rename(parameter_y = parameter)
   
-  # Join dataframes by day
-  df_comb <- left_join(
-    data_x,
-    data_y,
-    by = c("year", "month", "day")
-  ) %>%
-    filter(!is.na(value_x),
-           !is.na(value_y))
+  df_comb <- left_join(data_x, data_y, by = c("year", "month", "day")) %>%
+    filter(!is.na(value_x), !is.na(value_y))
   
   df_comb
 }
-
 # Args command for reading input
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
@@ -157,12 +183,12 @@ if (length(args) < 9) {
 
 input_path_x  <- args[1] #csv input path
 input_path_y  <- args[2] #csv input path
-parameter_x <- args[3] # Charachter 
-parameter_y <- args[4] # Charachter 
-station_col <- args[5] # Charachter 
-station_ID <- args[6] # Charachter 
-time_col_x <- args[7] # Charachter 
-time_col_y <- args[8] # Charachter 
+parameter_x <- args[3] # Charachter
+parameter_y <- args[4] # Charachter
+station_col <- args[5] # Charachter
+station_ID <- args[6] # Charachter
+time_col_x <- args[7] # Charachter
+time_col_y <- args[8] # Charachter
 save_path  <- args[9] #path to save, can inlude name of file, if not default name is used "joined.csv"
 
 
@@ -178,8 +204,6 @@ df_x <- readr::read_csv(input_path_x, show_col_types = FALSE)
 df_y <- readr::read_csv(input_path_y, show_col_types = FALSE)
 
 
-
-
 df_joined <- join_x_y(
   df_x = df_x,
   df_y = df_y,
@@ -191,8 +215,6 @@ df_joined <- join_x_y(
   time_col_y   = time_col_y,
   tz = "UTC"
 )
-
-
 
 
 # If .csv name is pased in save_path using that as saving name else default "joined.csv" is used. 
