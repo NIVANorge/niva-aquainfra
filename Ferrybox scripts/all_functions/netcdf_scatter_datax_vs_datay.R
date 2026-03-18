@@ -222,8 +222,10 @@ scatter_fb_stat <- scatter_from_joined(
   add_lm = TRUE
 )
 
-scatter_fb_stat$plot
-
+# Show plot in interactive sessions (RStudio, interactive VS Code)
+if (interactive()) {
+  print(plot)
+}
 
 # Save PNG
 if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
