@@ -265,7 +265,7 @@ if (tolower(is.null(input_study_area))) {
 } 
 
 
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+world_sf <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
 
 # -------------------------------------------------------------------
@@ -273,9 +273,9 @@ world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 # -------------------------------------------------------------------
 p <- assessment_plot(
   data_fb = ferrybox_df,
-  river_df = river_df,          
+  river_df = river_df, 
+  world_sf = world_sf
   study_area = study_area,
-  world_sf = world,
   river_label_col = river_label_col
 )
 
