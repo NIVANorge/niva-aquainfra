@@ -197,8 +197,13 @@ tile_plot_func <- tile_plot(
 )
 
 # Show plot only in interactive sessions
-if (interactive()) print(tile_plot_func)
+if (interactive()){ 
+  print(tile_plot_func)
+}
 
+
+
+  
 # If .csv name is pased in save_path using that as saving name else default "ferrybox_tile.png" is used. 
 if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
   file_path <- save_path
