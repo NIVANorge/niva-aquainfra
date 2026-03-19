@@ -136,6 +136,7 @@ waterbody_ids <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 waterbody_id_col <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
 lat_range_min <- if (length(args) >= 6) as.numeric(args[6]) else NULL # vector e.g c(58.1,58.2)
 lat_range_max <- if (length(args) >= 7) as.numeric(args[7]) else NULL # vector e.g c(58.1,58.2)
+waterbodies_layer <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
 if (startsWith(input_path, 'http')) {
   message('Input CSV provided as URL')
@@ -153,18 +154,54 @@ message("Reading input CSV: ", input_path)
 df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
 
 
+
+read_sf_layer <- function(path_to_file, layer_input = NULL) {
+  
+  lyr_info <- sf::st_layers(path_to_file)
+  n_row <- nrow(lyr_info)
+  
+  if (n_row != 1 && is.null(layer_input)) {
+    available_layers <- paste(lyr_info$name, collapse = ", ")
+    stop(
+      "Input spatial file contains more than one layer. ",
+      "Specify layer name.\n",
+      "Available layers: ", available_layers
+    )
+  }
+  
+  if (n_row == 1 && is.null(layer_input)) {
+    layer_input <- lyr_info$name[1]
+  }
+  
+  if (!is.null(layer_input)) {
+    diff_name <- setdiff(layer_input, lyr_info$name)
+    
+    if (length(diff_name) != 0) {
+      stop(
+        "Input layer name does not exist.\n",
+        "Available layers: ", paste(lyr_info$name, collapse = ", ")
+      )
+    }
+  }
+  
+  sf::st_read(path_to_file, layer = layer_input, quiet = TRUE)
+}
+
+
+  
+
 ## Read waterbodies to aggregate (optional)
-if (tolower(is.null(waterbodies_path))) {
+waterbody_shp <- NULL
+
+if (is.null(waterbodies_path)) {
   
-  study_area <- NULL
+  waterbody_shp <- NULL
   
-  # study area is URL or file
-} else if (startsWith(waterbodies_path, "http") | file.exists(waterbodies_path)) {
+} else if (startsWith(waterbodies_path, "http") || file.exists(waterbodies_path)) {
   
-  input_path <- waterbodies_path
+  spatial_input_path <- waterbodies_path
   
-  # If URL points to ZIP -> download and unzip
-  if (startsWith(waterbodies_path, "http") & endsWith(tolower(waterbodies_path), "zip")) {
+  if (startsWith(waterbodies_path, "http") && endsWith(tolower(waterbodies_path), "zip")) {
     
     message("DEBUG: Downloading ZIP: ", waterbodies_path)
     
@@ -184,30 +221,33 @@ if (tolower(is.null(waterbodies_path))) {
     geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
     
     if (length(shp_files) > 0) {
-      input_path <- shp_files[1]
-      message("DEBUG: Found shapefile: ", input_path)
+      spatial_input_path <- shp_files[1]
+      message("DEBUG: Found shapefile: ", spatial_input_path)
       
     } else if (length(geojson_files) > 0) {
-      input_path <- geojson_files[1]
-      message("DEBUG: Found GeoJSON: ", input_path)
+      spatial_input_path <- geojson_files[1]
+      message("DEBUG: Found GeoJSON: ", spatial_input_path)
       
     } else {
       stop("No .shp or .geojson/.json file found in ZIP")
     }
-  }
-  
-  # Remote shapefile (not zipped)
-  else if (startsWith(waterbodies_path, "http") & endsWith(tolower(waterbodies_path), "shp")) {
+  } else if (startsWith(waterbodies_path, "http") && endsWith(tolower(waterbodies_path), "shp")) {
     stop("Remote shapefile must be provided as ZIP")
   }
   
-  message("DEBUG: Reading spatial data: ", input_path)
+  message("DEBUG: Reading spatial data: ", spatial_input_path)
   
-  waterbody_shp <- sf::st_read(input_path, quiet = TRUE)
+  waterbody_shp <- read_sf_layer(
+    path_to_file = spatial_input_path,
+    layer_input = waterbodies_layer
+  )
   
-  message("DEBUG: st_read resulted in class: ", class(waterbody_shp))
+  message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
   
-} 
+} else {
+  stop("waterbodies_path must be NULL, a valid file path, or a valid URL.")
+}
+
 
 
 
