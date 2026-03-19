@@ -175,6 +175,7 @@ input_river_file   <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 river_label_col   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL # label of river name column in river input csv
 
 input_study_area   <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL #shapefile with assessment area
+study_area_layer <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL # Layer name for geo if multiple are available
 
 
 
@@ -207,18 +208,48 @@ river_df <- if (!is.null(input_river_file)) {
 }
 
 # Read Study area if provided
+# # Read Study area function to identify multiple layers in geo file if provided
+read_study_area <- function(path_to_study_area, layer_input = NULL) {
+  
+  lyr_info <- sf::st_layers(path_to_study_area)
+  n_row <- nrow(lyr_info)
+  
+  if (n_row != 1 && is.null(layer_input)) {
+    available_layers <- paste(lyr_info$name, collapse = ", ")
+    
+    stop(
+      "Input study area contains more than one layer. ",
+      "Specify layer name.\n",
+      "Available layers: ", available_layers
+    )
+  }
+  
+  if (n_row == 1 && is.null(layer_input)) {
+    layer_input <- lyr_info$name[1]
+  }
+  
+  if (!is.null(layer_input)) {
+    diff_name <- setdiff(layer_input, lyr_info$name)
+    
+    if (length(diff_name) != 0) {
+      stop(
+        "Input layer name does not exist.\n",
+        "Available layers: ", paste(lyr_info$name, collapse = ", ")
+      )
+    }
+  }
+  
+  sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
+}
 # study area is NULL.
-# If study area is NULL, then the function will create a bbox around provided coordinates (min to max) and plot that area.
-if (tolower(is.null(input_study_area))) {
+if (is.null(input_study_area)) {
   
   study_area <- NULL
   
-  # study area is URL or file
 } else if (startsWith(input_study_area, "http") | file.exists(input_study_area)) {
   
   input_path <- input_study_area
   
-  # If URL points to ZIP -> download and unzip
   if (startsWith(input_study_area, "http") & endsWith(tolower(input_study_area), "zip")) {
     
     message("DEBUG: Downloading ZIP: ", input_study_area)
@@ -251,18 +282,22 @@ if (tolower(is.null(input_study_area))) {
     }
   }
   
-  # Remote shapefile (not zipped)
   else if (startsWith(input_study_area, "http") & endsWith(tolower(input_study_area), "shp")) {
     stop("Remote shapefile must be provided as ZIP")
   }
   
   message("DEBUG: Reading spatial data: ", input_path)
   
-  study_area <- sf::st_read(input_path, quiet = TRUE)
+  study_area <- read_study_area(
+    path_to_study_area = input_path,
+    layer_input = study_area_layer
+  )
   
-  message("DEBUG: st_read resulted in class: ", class(study_area))
+  message("DEBUG: st_read resulted in class: ", paste(class(study_area), collapse = ", "))
   
-} 
+} else {
+  stop("input_study_area must be NULL, a valid file path, or a valid URL.")
+}
 
 
 world_sf <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
