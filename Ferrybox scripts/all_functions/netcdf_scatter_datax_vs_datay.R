@@ -136,7 +136,7 @@ waterbody_ids <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 waterbody_id_col <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
 lat_range_min <- if (length(args) >= 6) as.numeric(args[6]) else NULL # vector e.g c(58.1,58.2)
 lat_range_max <- if (length(args) >= 7) as.numeric(args[7]) else NULL # vector e.g c(58.1,58.2)
-waterbodies_layer <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+study_area_layer <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
 if (startsWith(input_path, 'http')) {
   message('Input CSV provided as URL')
@@ -239,7 +239,7 @@ if (is.null(waterbodies_path)) {
   
   waterbody_shp <- read_sf_layer(
     path_to_file = spatial_input_path,
-    layer_input = waterbodies_layer
+    layer_input = study_area_layer
   )
   
   message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
