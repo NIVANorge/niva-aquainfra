@@ -33,6 +33,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
     "inputs": {
         "url_input_csv": "https://something.csv",
         "url_input_waterbody": "https://something.zip",
+        "study_area_layer": "VannforekomstKyst",
         "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
         "waterbody_id_to_be_used": "id3",
         "latitude_min": 59.1,
