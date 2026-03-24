@@ -100,16 +100,16 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         url_input_waterbody = data.get('url_input_waterbody', None) # optional
 
         # Check user inputs:
-      if url_input_csv is None:
-        raise ProcessorExecuteError("Missing parameter 'url_input_csv'. Please provide a URL.")
+        if url_input_csv is None:
+            raise ProcessorExecuteError("Missing parameter 'url_input_csv'. Please provide a URL.")
 
-    if url_input_river_logger_csv is None:
-        raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
+        if url_input_river_logger_csv is None:
+            raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
 
-    if url_input_river_logger_csv is not None and river_label_col is None:
-        raise ProcessorExecuteError(
-        "Parameter 'river_label_col' must be provided when 'url_input_river_logger_csv' is used."
-    ) # added error if the name column is not provided
+        if url_input_river_logger_csv is not None and river_label_col is None:
+            raise ProcessorExecuteError(
+                "Parameter 'river_label_col' must be provided when 'url_input_river_logger_csv' is used."
+            ) # added error if the name column is not provided
 
 
         ##################
