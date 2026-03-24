@@ -19,10 +19,10 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://csv-output-from-extraction-process.csv",  # this the fb data. Bad labeling by me.
+        "url_input_csv": "https://csv-output-from-extraction-process.csv",
         "url_input_river_logger_csv": "https://bla-something.csv",
         "river_label_col": "station_name", 
-        "url_input_waterbody": "NULL",  #https://karteksport.miljodirektoratet.no/ pick vannforekomster and "egendefinert område" and square around Oslofjord for example. (example https://nedlasting.miljodirektoratet.no/Miljodata/egendefinert/Vannforekomster_202603200841.zip)
+        "url_input_waterbody": null,
         "study_area_layer": "VannforekomstKyst"
     }
 }'; date
