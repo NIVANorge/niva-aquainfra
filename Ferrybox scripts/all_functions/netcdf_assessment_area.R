@@ -144,7 +144,7 @@ assessment_plot <- function(
     theme(
       panel.grid = element_blank(),
       legend.position = "bottom",
-      axis.text.x = element_text(size = 16, face = "bold"),
+      axis.text.x = element_text(size = 16,angle = 90, face = "bold"),
       axis.text.y = element_text(size = 16, face = "bold"),
       legend.text = element_text(size = 16, face = "bold"),
       plot.title = element_text(size = 20, face = "bold")
