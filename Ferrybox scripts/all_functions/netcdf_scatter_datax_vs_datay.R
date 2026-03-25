@@ -3,13 +3,13 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 library(sf)
+library(readr)
 
 as_null_if_blank <- function(x) {
   if (is.null(x)) return(NULL)
   x <- trimws(x)
   if (!nzchar(x) || tolower(x) == "null") NULL else x
 }
-
 
 `%||%` <- function(x, y) {
   if (is.null(x)) return(y)
@@ -19,74 +19,84 @@ as_null_if_blank <- function(x) {
 
 scatter_from_joined <- function(
     df_joined,
-    waterbodies,          # sf polygons (optional)
-    waterbody_id_col,     # column name in waterbodies (optional)
-    waterbody_ids,        # vector with station names (optional)
-    lat_range,            # c(min, max) required if no waterbodies
+    waterbodies = NULL,
+    waterbody_id_col = NULL,
+    waterbody_ids = NULL,
+    lat_range = NULL,
     tz = "UTC",
     agg_fun = mean,
     add_lm = TRUE
 ) {
   stopifnot(is.data.frame(df_joined))
   
-  # --- required cols ---
   req <- c("year", "month", "day", "value_x", "value_y")
   miss <- setdiff(req, names(df_joined))
-  if (length(miss) > 0) stop("df_joined is missing: ", paste(miss, collapse = ", "))
+  if (length(miss) > 0) {
+    stop("df_joined is missing: ", paste(miss, collapse = ", "))
+  }
   
   has_coords <- all(c("latitude", "longitude") %in% names(df_joined))
   
-  # --- enforce spatial rule ---
   using_waterbodies <- !is.null(waterbodies) || !is.null(waterbody_ids) || !is.null(waterbody_id_col)
+  
   if (using_waterbodies) {
     if (is.null(waterbodies) || is.null(waterbody_ids) || is.null(waterbody_id_col)) {
       stop("If using waterbodies you must provide: waterbodies, waterbody_ids, waterbody_id_col.")
     }
-    if (!inherits(waterbodies, "sf")) stop("waterbodies must be an sf object.")
-    if (!(waterbody_id_col %in% names(waterbodies))) stop("waterbody_id_col not found in waterbodies.")
-    if (!has_coords) stop("To filter by waterbodies, df_joined must have latitude and longitude.")
+    if (!inherits(waterbodies, "sf")) {
+      stop("waterbodies must be an sf object.")
+    }
+    if (!(waterbody_id_col %in% names(waterbodies))) {
+      stop("waterbody_id_col not found in waterbodies.")
+    }
+    if (!has_coords) {
+      stop("To filter by waterbodies, df_joined must have latitude and longitude.")
+    }
   } else {
-    if (is.null(lat_range)) stop("Provide lat_range (e.g. c(59.0, 59.3)) when waterbodies is not provided.")
-    if (length(lat_range) != 2) stop("lat_range must be length 2.")
-    if (!has_coords) stop("To filter by lat_range, df_joined must have latitude and longitude.")
+    if (is.null(lat_range)) {
+      stop("Provide lat_range (e.g. c(59.0, 59.3)) when waterbodies is not provided.")
+    }
+    if (length(lat_range) != 2) {
+      stop("lat_range must be length 2.")
+    }
+    if (!has_coords) {
+      stop("To filter by lat_range, df_joined must have latitude and longitude.")
+    }
   }
   
-  # --- make a date key ---
-  df <- df_joined |>
-    dplyr::mutate(
+  df <- df_joined %>%
+    mutate(
       date = as.Date(sprintf("%04d-%02d-%02d", year, month, day)),
       date = as.POSIXct(date, tz = tz)
     )
   
-  # --- spatial filter ---
   if (!using_waterbodies) {
-    df <- df |>
-      dplyr::filter(.data$latitude >= min(lat_range), .data$latitude <= max(lat_range))
+    df <- df %>%
+      filter(.data$latitude >= min(lat_range), .data$latitude <= max(lat_range))
     if (nrow(df) == 0) stop("No rows left after lat_range filtering.")
   } else {
-    if (!requireNamespace("sf", quietly = TRUE)) stop("Need sf for waterbodies filtering.")
     pts <- sf::st_as_sf(df, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
     keep <- sf::st_join(pts, waterbodies[, waterbody_id_col, drop = FALSE], left = FALSE)
-    df <- keep |>
-      sf::st_drop_geometry() |>
-      dplyr::filter(.data[[waterbody_id_col]] %in% waterbody_ids)
+    df <- keep %>%
+      sf::st_drop_geometry() %>%
+      filter(.data[[waterbody_id_col]] %in% waterbody_ids)
     if (nrow(df) == 0) stop("No rows left after waterbody filtering.")
   }
   
-  # --- aggregate across space per day (avoids multiple points per day) ---
-  daily <- df |>
-    dplyr::group_by(.data$date) |>
-    dplyr::summarise(
+  daily <- df %>%
+    group_by(.data$date) %>%
+    summarise(
       x_value = agg_fun(.data$value_x, na.rm = TRUE),
       y_value = agg_fun(.data$value_y, na.rm = TRUE),
       n_pairs = sum(is.finite(.data$value_x) & is.finite(.data$value_y)),
       .groups = "drop"
-    ) |>
-    dplyr::filter(is.finite(.data$x_value), is.finite(.data$y_value))
+    ) %>%
+    filter(is.finite(.data$x_value), is.finite(.data$y_value))
   
-  if (nrow(daily) < 3) stop("Too few points after filtering/aggregation (n = ", nrow(daily), ").")
+  if (nrow(daily) < 3) {
+    stop("Too few points after filtering/aggregation (n = ", nrow(daily), ").")
+  }
   
-  # --- labels from df_joined if present ---
   px <- if ("parameter_x" %in% names(df_joined)) unique(na.omit(df_joined$parameter_x)) else "x"
   py <- if ("parameter_y" %in% names(df_joined)) unique(na.omit(df_joined$parameter_y)) else "y"
   px <- if (length(px) == 1) px else "x"
@@ -100,9 +110,9 @@ scatter_from_joined <- function(
     paste0("Transect vs station (lat ", paste(range(lat_range), collapse = "–"), ")")
   }
   
-  p <- ggplot2::ggplot(daily, ggplot2::aes(x = x_value, y = y_value)) +
-    ggplot2::geom_point() +
-    ggplot2::labs(
+  p <- ggplot(daily, aes(x = x_value, y = y_value)) +
+    geom_point() +
+    labs(
       x = paste0(px, " (value_x)"),
       y = paste0(py, " (value_y)"),
       title = title_txt,
@@ -110,7 +120,7 @@ scatter_from_joined <- function(
     )
   
   if (add_lm) {
-    p <- p + ggplot2::geom_smooth(method = "lm", se = TRUE)
+    p <- p + geom_smooth(method = "lm", se = TRUE)
   }
   
   list(
@@ -120,28 +130,99 @@ scatter_from_joined <- function(
   )
 }
 
+resolve_spatial_input_path <- function(input_path) {
+  if (is.null(input_path)) return(NULL)
+  
+  if (!(startsWith(input_path, "http") || file.exists(input_path))) {
+    stop("Spatial input must be NULL, a valid file path, or a valid URL.")
+  }
+  
+  resolved_path <- input_path
+  
+  if (startsWith(input_path, "http") && endsWith(tolower(input_path), "zip")) {
+    message("DEBUG: Downloading ZIP: ", input_path)
+    
+    temp_zip <- tempfile(fileext = ".zip")
+    extract_dir <- tempfile()
+    dir.create(extract_dir)
+    
+    download.file(input_path, temp_zip, mode = "wb")
+    unzip(temp_zip, exdir = extract_dir)
+    
+    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
+    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
+    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
+    spatial_files <- c(shp_files, geojson_files)
+    
+    message("DEBUG: Extracted files:")
+    print(list.files(extract_dir, recursive = TRUE))
+    
+    if (length(spatial_files) == 0) {
+      stop("No .shp or .geojson/.json file found in ZIP.")
+    }
+    
+    if (length(spatial_files) > 1) {
+      stop(
+        "ZIP contains multiple spatial files. This script requires exactly one spatial file inside the ZIP.\n",
+        "Available files: ", paste(basename(spatial_files), collapse = ", ")
+      )
+    }
+    
+    resolved_path <- spatial_files[1]
+    message("DEBUG: Selected spatial file: ", resolved_path)
+    
+  } else if (startsWith(input_path, "http") && endsWith(tolower(input_path), "shp")) {
+    stop("Remote shapefile must be provided as ZIP.")
+  }
+  
+  resolved_path
+}
 
+read_sf_layer <- function(path_to_file, layer_input) {
+  lyr_info <- sf::st_layers(path_to_file)
+  available_layers <- paste(lyr_info$name, collapse = ", ")
+  
+  if (is.null(layer_input)) {
+    stop(
+      "waterbodies_path was provided, so waterbodies_layer is required.\n",
+      "Available layers: ", available_layers
+    )
+  }
+  
+  if (!(layer_input %in% lyr_info$name)) {
+    stop(
+      "Input layer name does not exist.\n",
+      "Requested layer: ", layer_input, "\n",
+      "Available layers: ", available_layers
+    )
+  }
+  
+  sf::st_read(path_to_file, layer = layer_input, quiet = TRUE)
+}
 
-# Args command for reading input
+# -------------------------------------------------------------------
+# CLI args
+# -------------------------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
 
-if (length(args) < 2) stop("Provide source (URL/CSV) and path to save")
+if (length(args) < 2) {
+  stop("Provide source (URL/CSV) and path to save.")
+}
 
-input_path  <- args[1] #csv input path with joined dataframe
-save_path  <- args[2 ] #path to PNG, can inlude name of file, if not default name is used "scatter.PNG"
+input_path          <- args[1]
+save_path           <- args[2]
+waterbodies_path    <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+waterbody_ids       <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+waterbody_id_col    <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+lat_range_min       <- if (length(args) >= 6) as.numeric(args[6]) else NULL
+lat_range_max       <- if (length(args) >= 7) as.numeric(args[7]) else NULL
+waterbodies_layer   <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
-waterbodies_path <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-waterbody_ids <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-waterbody_id_col <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-lat_range_min <- if (length(args) >= 6) as.numeric(args[6]) else NULL # vector e.g c(58.1,58.2)
-lat_range_max <- if (length(args) >= 7) as.numeric(args[7]) else NULL # vector e.g c(58.1,58.2)
-study_area_layer <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
-
-if (startsWith(input_path, 'http')) {
-  message('Input CSV provided as URL')
-} else {
-  if (!file.exists(input_path)) stop("Input CSV not found: ", input_path)
+if (startsWith(input_path, "http")) {
+  message("Input CSV provided as URL.")
+} else if (!file.exists(input_path)) {
+  stop("Input CSV not found: ", input_path)
 }
 
 lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
@@ -150,107 +231,35 @@ lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
   NULL
 }
 
+if (!is.null(waterbody_ids)) {
+  waterbody_ids <- strsplit(waterbody_ids, ",")[[1]]
+  waterbody_ids <- trimws(waterbody_ids)
+}
+
 message("Reading input CSV: ", input_path)
 df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
 
-
-
-read_sf_layer <- function(path_to_file, layer_input = NULL) {
-  
-  lyr_info <- sf::st_layers(path_to_file)
-  n_row <- nrow(lyr_info)
-  
-  if (n_row != 1 && is.null(layer_input)) {
-    available_layers <- paste(lyr_info$name, collapse = ", ")
-    stop(
-      "Input spatial file contains more than one layer. ",
-      "Specify layer name.\n",
-      "Available layers: ", available_layers
-    )
-  }
-  
-  if (n_row == 1 && is.null(layer_input)) {
-    layer_input <- lyr_info$name[1]
-  }
-  
-  if (!is.null(layer_input)) {
-    diff_name <- setdiff(layer_input, lyr_info$name)
-    
-    if (length(diff_name) != 0) {
-      stop(
-        "Input layer name does not exist.\n",
-        "Available layers: ", paste(lyr_info$name, collapse = ", ")
-      )
-    }
-  }
-  
-  sf::st_read(path_to_file, layer = layer_input, quiet = TRUE)
-}
-
-
-  
-
-## Read waterbodies to aggregate (optional)
+# -------------------------------------------------------------------
+# Read waterbodies (optional)
+# -------------------------------------------------------------------
 waterbody_shp <- NULL
 
-if (is.null(waterbodies_path)) {
-  
-  waterbody_shp <- NULL
-  
-} else if (startsWith(waterbodies_path, "http") || file.exists(waterbodies_path)) {
-  
-  spatial_input_path <- waterbodies_path
-  
-  if (startsWith(waterbodies_path, "http") && endsWith(tolower(waterbodies_path), "zip")) {
-    
-    message("DEBUG: Downloading ZIP: ", waterbodies_path)
-    
-    temp_zip <- tempfile(fileext = ".zip")
-    extract_dir <- tempfile()
-    dir.create(extract_dir)
-    
-    download.file(waterbodies_path, temp_zip, mode = "wb")
-    unzip(temp_zip, exdir = extract_dir)
-    
-    message("DEBUG: Files extracted:")
-    print(list.files(extract_dir, recursive = TRUE))
-    
-    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
-    
-    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
-    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
-    
-    if (length(shp_files) > 0) {
-      spatial_input_path <- shp_files[1]
-      message("DEBUG: Found shapefile: ", spatial_input_path)
-      
-    } else if (length(geojson_files) > 0) {
-      spatial_input_path <- geojson_files[1]
-      message("DEBUG: Found GeoJSON: ", spatial_input_path)
-      
-    } else {
-      stop("No .shp or .geojson/.json file found in ZIP")
-    }
-  } else if (startsWith(waterbodies_path, "http") && endsWith(tolower(waterbodies_path), "shp")) {
-    stop("Remote shapefile must be provided as ZIP")
-  }
+if (!is.null(waterbodies_path)) {
+  spatial_input_path <- resolve_spatial_input_path(waterbodies_path)
   
   message("DEBUG: Reading spatial data: ", spatial_input_path)
   
   waterbody_shp <- read_sf_layer(
     path_to_file = spatial_input_path,
-    layer_input = study_area_layer
+    layer_input = waterbodies_layer
   )
   
   message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
-  
-} else {
-  stop("waterbodies_path must be NULL, a valid file path, or a valid URL.")
 }
 
-
-
-
+# -------------------------------------------------------------------
+# Run analysis
+# -------------------------------------------------------------------
 scatter_fb_stat <- scatter_from_joined(
   df_joined = df_joined,
   waterbodies = waterbody_shp,
@@ -262,12 +271,14 @@ scatter_fb_stat <- scatter_from_joined(
   add_lm = TRUE
 )
 
-# Show plot in interactive sessions (RStudio, interactive VS Code)
+# Show plot in interactive sessions
 if (interactive()) {
-  print(plot)
+  print(scatter_fb_stat$plot)
 }
 
+# -------------------------------------------------------------------
 # Save PNG
+# -------------------------------------------------------------------
 if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
   file_path <- save_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
