@@ -99,6 +99,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         # Retrieve user inputs:
         url_input_csv = data.get('url_input_csv')
         url_input_waterbody = data.get('url_input_waterbody', None) # optional
+        study_area_layer = data.get('study_area_layer', None) # If url_input_waterbody is given, this need to be specified
         waterbody_ids_to_summarize = data.get('waterbody_ids_to_summarize', None) # optional
         waterbody_id_to_be_used = data.get('waterbody_id_to_be_used', None) # optional
         latitude_min = data.get('latitude_min', None) # optional
@@ -157,6 +158,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
             url_input_csv,
             out_result_path,
             url_input_waterbody,
+            study_area_layer,
             waterbody_ids_to_summarize,
             waterbody_id_to_be_used,
             latitude_range
