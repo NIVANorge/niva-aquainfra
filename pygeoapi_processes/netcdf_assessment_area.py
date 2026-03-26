@@ -98,6 +98,7 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         url_input_river_logger_csv = data.get('url_input_river_logger_csv')
         river_label_col = data.get('river_label_col', None) #Need to specify the columns name where the river names are available
         url_input_waterbody = data.get('url_input_waterbody', None) # optional
+        study_area_layer = data.get('study_area_layer', None) # If url_input_waterbody is given, this need to be specified
 
         # Check user inputs:
         if url_input_csv is None:
@@ -154,7 +155,7 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         ###########
 
        # params = ','.join(parameters) parameter not used in script
-        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, river_label_col, url_input_waterbody] #added river_label_col
+        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, river_label_col, url_input_waterbody,study_area_layer] #added river_label_col
         LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
