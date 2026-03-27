@@ -2,11 +2,19 @@
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NIVANorge/niva-aquainfra/main?urlpath=rstudio)
 
-The following scripts extract ferrybox measurements from NIVA thredds for specified parameters.   
+The following scripts extract ferrybox measurements (ttps://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc) and river logger measurements (https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc)from NIVA thredds for marine and freshwater parameters.   
 
-**First** run the script **"netcdf_extract_save_fb.R"** in the **"extract_fb_data"** folder. This script extracts data for a specified time and lon/lat, if no lon/lat is given the full boundary area is returned. The extracted data is then stored in a simple R dataframe and if desired saved/downloaded to the users Downloads folder.  
+All available scripts are located in the "all_functions" folder.
+**First** run the script **"netcdf_extract_fb_data.R"** to exctract ferrybox measurements. Available paramaters are [salinity, chlorophyll, turbidity, fdom, temperature, oxygen_sat]. The ferrybox measurements are collected in a transect from Oslo to Kiel (lat 60N to 54N), and the function can extract all data in this transect or filtered for specific latitudes. Data is collected from 2023 and forward, specific dates can also be extracted. 
 
-The two other scripts can be run as desired. The **netcdf_coords_value_point_plot.R** creates point plot data for the specified parameter with either **longitude or latitude** on the x-axis and measurement values on the y-axis. The **netcdf_time_value_plot.R** creates a point plot with **time** on the x-axis and measurement value on y-axis. Both scripts allows the user to download the figures as PNG files.  
+**Second** run the script **"netcdf_logger_extract.R"** to extract river logger data from Baterod river located inside Glomma in the south-eastern part of Oslofjorden. Available parameters are [temp_water_avg, phvalue_avg, condvalue_avg, turbidity_avg, cdomdigitalfinal]. Data is collected from 2023 and forward, specific dates can also be extracted. 
+
+From here you can run the **"netcdf_assessment_area.R"**, where you can provide an assessment waterbody area that you want to work with. Example from https://karteksport.miljodirektoratet.no/ you can extract "Vannforekomster". You must specify a layer input if the file is geojson and contains multiple geometry layers. The ferrybox and river files extracted previously should also be added to see if the data fits. Similar dataset could be replaced and the assessment area would still be shown. NOTICE: Bounding box is fixed around first input data (i.e. ferrybox data). 
+
+The **"netcdf_join_dataframes.R"** joins the ferrybox and logger csv data frame (or other if provided) by a specific parameter from the joined dataframes and calculates daily mean values. 
+
+**"netcdf_scatter_datax_vs_datay.R"** creates a scatterplot from the joined dataframes from the parameters specfied and **"netcdf_scatter_station_plot.R"** creates scatterplot from a single dataframes from two specified parameters (could be ferrybox salinity vs chlorophyll). 
+**"netcdf_tile_plot.R"** creates a Hovmöller style plot of ferrybox measurements. The plot illustrates the latitude and y-axis, data at x-axis and plot fill is the measurement value of specified parameter. 
 
 ## Docker
 
