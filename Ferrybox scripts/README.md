@@ -2,7 +2,7 @@
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NIVANorge/niva-aquainfra/main?urlpath=rstudio)
 
-The following scripts extract ferrybox measurements (ttps://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc) and river logger measurements (https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc)from NIVA thredds for marine and freshwater parameters.   
+The following scripts extract ferrybox measurements (https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc) and river logger measurements (https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc) from NIVA thredds for marine and freshwater parameters.   
 
 All available scripts are located in the "all_functions" folder.
 **First** run the script **"netcdf_extract_fb_data.R"** to exctract ferrybox measurements. Available paramaters are [salinity, chlorophyll, turbidity, fdom, temperature, oxygen_sat]. The ferrybox measurements are collected in a transect from Oslo to Kiel (lat 60N to 54N), and the function can extract all data in this transect or filtered for specific latitudes. Data is collected from 2023 and forward, specific dates can also be extracted. 
