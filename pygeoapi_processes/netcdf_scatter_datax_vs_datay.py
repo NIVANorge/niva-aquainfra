@@ -153,18 +153,18 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         ### Run ###
         ###########
 
-        latitude_range = f'c({latitude_min}, {latitude_max})'
+        # Assemble R args:
         r_args = [
             url_input_csv,
             out_result_path,
             url_input_waterbody,
-            study_area_layer,
             waterbody_ids_to_summarize,
             waterbody_id_to_be_used,
-            latitude_range
+            latitude_min,
+            latitude_max,
+            study_area_layer,
         ]
 
-       # r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
         LOGGER.debug(f"r_args: {r_args}")
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
