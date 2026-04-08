@@ -15,16 +15,16 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 '''
 # TESTED 2026-01-23
+# TESTED 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-scatter-plot/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://csv-output-from-extraction-process.csv",
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
         "param1": "chlorophyll",
         "param2": "salinity"
     }
 }'; date
-
 
 '''
 

@@ -14,13 +14,13 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# NOT TESTED YET
+# TESTED by Merret, 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-join-dataframes/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_ferrybox_csv": "https://csv-output-from-extraction-process.csv",
-        "url_input_river_logger_csv": "https://bla-csv",
+        "url_input_ferrybox_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+        "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
         "param_dataframe1": "turbidity",
         "param_dataframe2": "turbidity_avg",
         "colname_station2": "station_name",

@@ -17,6 +17,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 # Without a bounding box:
 # Tested 2025-11-12
 # Tested 2026-01-23
+# Tested 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-extract-fb-data/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -32,6 +33,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-extract-fb-data/execution \
 # With a bounding box:
 # Tested 2025-11-18
 # Tested 2026-01-23
+# Tested 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-extract-fb-data/execution \
 --header 'Content-Type: application/json' \
 --data '{

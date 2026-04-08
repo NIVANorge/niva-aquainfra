@@ -15,6 +15,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 '''
 # TESTED by Merret, 2026-03-17
+# TESTED by Merret, 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -27,7 +28,8 @@ curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 }'; date
 
 # TESTED by Merret, 2026-03-17
-curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution --header 'Content-Type: application/json'  --data '{
+# TESTED by Merret, 2026-04-08
+curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
@@ -37,6 +39,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-logger-extract/execution --hea
         "end_date": "2023-12-31"
     }
 }'; date
+
 '''
 
 

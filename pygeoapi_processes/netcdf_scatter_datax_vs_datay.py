@@ -14,14 +14,14 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# NOT TESTED YET
+# TESTED by Merret, 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://something.csv",
-        "lat_min": 59.1,
-        "lat_max": 59.2
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv",
+        "latitude_min": 55.0,
+        "latitude_max": 60.0
     }
 }'; date
 

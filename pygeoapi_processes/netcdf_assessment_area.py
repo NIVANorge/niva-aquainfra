@@ -14,27 +14,34 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# NOT TESTED YET
+# Info about "url_input_waterbody":
+# https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
+
+
+# With "null" waterbody:
+# TESTED by Merret 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://csv-output-from-extraction-process-ferrybox.csv",
-        "url_input_river_logger_csv": "https://csv-output-from-extraction-process-river.csv",
-        "river_label_col": "station_name", 
-        "url_input_waterbody": null,   #https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+        "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
+        "river_label_col": "station_name",
+        "url_input_waterbody": null,
         "study_area_layer": "VannforekomstKyst"
     }
 }'; date
 
 
-# NOT TESTED YET
+# This probably does the same, and makes more sense, as we do not provide an area layer without any containing URL... Right?
+# TESTED by Merret 2026-04-09
 curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://csv-output-from-extraction-process.csv",
-        "url_input_river_logger_csv": "https://bla-something.csv"
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+        "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
+        "river_label_col": "station_name"
     }
 }'; date
 '''
