@@ -102,8 +102,8 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
             raise ProcessorExecuteError("Missing parameter 'url_input_river_logger_csv'. Please provide a URL.")
 
         # Check existence:
-        requests.head(url_input_ferrybox_csv), raise_for_status()
-        requests.head(url_input_river_logger_csv), raise_for_status()
+        requests.head(url_input_ferrybox_csv).raise_for_status()
+        requests.head(url_input_river_logger_csv).raise_for_status()
 
         ##################
         ### Input data ###

@@ -96,7 +96,7 @@ class NivaScatterPlotProcessor(BaseProcessor):
             raise ProcessorExecuteError('Missing parameter "param2". Please provide a string.')
 
         # Check existence:
-        requests.head(url_input_csv), raise_for_status()
+        requests.head(url_input_csv).raise_for_status()
 
 
         ##################
