@@ -89,7 +89,7 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
         url_input_ferrybox_csv = data.get('url_input_ferrybox_csv')
         url_input_river_logger_csv = data.get('url_input_river_logger_csv')
         param_dataframe1 = data.get('param_dataframe1')
-        param_dataframe2 = data.get('param_dataframe1')
+        param_dataframe2 = data.get('param_dataframe2')
         colname_station2 = data.get('colname_station2')
         colname_station_filter2 = data.get('colname_station_filter2')
         colname_time1 = data.get('colname_time1')
