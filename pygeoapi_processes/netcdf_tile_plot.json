@@ -62,7 +62,7 @@
     }
   },
   "outputs": {
-    "png_result": {
+    "tile_plot": {
       "title": "Tile plot PNG",
       "description": "Link to generated ferrybox_tile.png.",
       "schema": {

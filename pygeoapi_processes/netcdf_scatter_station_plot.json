@@ -34,7 +34,7 @@
     }
   },
   "outputs": {
-    "png_result": {
+    "scatter_plot": {
       "title": "Scatterplot PNG",
       "description": "Link to generated scatterplot.png.",
       "schema": {
