@@ -155,15 +155,14 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
         ###########
 
         # Make a proper string from the parameters that we can pass over to the R script:
-        if parameters is None:
-            params_string = 'NULL'
-        else:
-            params_string = ','.join(parameters)
+        if parameters is not None:
+            parameters = ','.join(parameters)
+
 
         r_args = [
             url_thredds,
             out_result_path,
-            params_string,
+            parameters,
             start_date,
             end_date
         ]
