@@ -210,20 +210,20 @@ read_study_area <- function(path_to_study_area, layer_input) {
   available_layers <- paste(lyr_info$name, collapse = ", ")
   
   # Force explicit layer selection whenever study area is provided
-  if (is.null(layer_input)) {
-    stop(
-      "input_study_area was provided, so study_area_layer is required.\n",
-      "Available layers: ", available_layers
-    )
-  }
+if (is.null(layer_input)) {
+  stop(paste0(
+    "input_study_area was provided, so study_area_layer is required.",
+    " Available layers: ", available_layers
+  ))
+}
   
-  if (!(layer_input %in% lyr_info$name)) {
-    stop(
-      "Input layer name does not exist.\n",
-      "Requested layer: ", layer_input, "\n",
-      "Available layers: ", available_layers
-    )
-  }
+if (!(layer_input %in% lyr_info$name)) {
+  stop(paste0(
+    "Input layer name does not exist.",
+    " Requested layer: ", layer_input, ".",
+    " Available layers: ", available_layers
+  ))
+}
   
   sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
 }
