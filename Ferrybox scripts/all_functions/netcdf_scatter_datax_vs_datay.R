@@ -215,16 +215,28 @@ save_path           <- args[2]
 waterbodies_path    <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 waterbody_ids       <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 waterbody_id_col    <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-lat_range_min       <- if (length(args) >= 6) as.numeric(args[6]) else NULL
-lat_range_max       <- if (length(args) >= 7) as.numeric(args[7]) else NULL
+lat_range_min       <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
+lat_range_max       <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
 waterbodies_layer   <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
+# Numbers are passed as strings to this script from python/docker. And if they are
+# passed as numbers, the function "as_null_if_blank()" converts them to characters,
+# so we convert (back) to numeric:
+if (!is.null(lat_range_min)) {
+  lat_range_min <- as.numeric(lat_range_min)
+}
+if (!is.null(lat_range_max)) {
+  lat_range_max <- as.numeric(lat_range_max)
+}
+
+# Check file existance (unless passed as URL):
 if (startsWith(input_path, "http")) {
   message("Input CSV provided as URL.")
 } else if (!file.exists(input_path)) {
   stop("Input CSV not found: ", input_path)
 }
 
+# Make a vector from latitude range
 lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
   c(lat_range_min, lat_range_max)
 } else {
