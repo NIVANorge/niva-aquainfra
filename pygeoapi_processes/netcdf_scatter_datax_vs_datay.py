@@ -39,9 +39,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
         "url_input_waterbody": "https://something.no/Vannforekomster.zip",
         "study_area_layer": "VannforekomstKyst",
         "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
-        "waterbody_id_col": "id3",
-        "latitude_min": 59.1,
-        "latitude_max": 59.2
+        "waterbody_id_col": "id3"
     }
 }'; date
 

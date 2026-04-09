@@ -357,7 +357,6 @@ result_scatter2 = execute_and_retrieve_result(base_url, process_id, inputs, outp
 
 '''
 # TODO: Does not work yet, which ids to use
-# TODO: When I provide the waterbody, do we still need lat range?
 
 process_id = "netcdf-scatter-datax-vs-datay"
 output_name = "scatter_plot"
@@ -366,9 +365,7 @@ inputs = {
     "url_input_waterbody": url_waterbody,
     "study_area_layer": "VannforekomstKyst",
     "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
-    "waterbody_id_col": "id3",
-    "latitude_min": 59.1,
-    "latitude_max": 59.2
+    "waterbody_id_col": "id3"
 }
 result_scatter2 = execute_and_retrieve_result(base_url, process_id, inputs, output_name, force_async)
 '''
