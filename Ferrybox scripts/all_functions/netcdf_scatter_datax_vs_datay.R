@@ -178,26 +178,28 @@ resolve_spatial_input_path <- function(input_path) {
   resolved_path
 }
 
-read_sf_layer <- function(path_to_file, layer_input) {
-  lyr_info <- sf::st_layers(path_to_file)
+
+read_study_area <- function(path_to_study_area, layer_input) {
+  lyr_info <- sf::st_layers(path_to_study_area)
   available_layers <- paste(lyr_info$name, collapse = ", ")
   
-  if (is.null(layer_input)) {
-    stop(
-      "waterbodies_path was provided, so waterbodies_layer is required.\n",
-      "Available layers: ", available_layers
-    )
-  }
+  # Force explicit layer selection whenever study area is provided
+if (is.null(layer_input)) {
+  stop(paste0(
+    "input_study_area was provided, so study_area_layer is required.",
+    " Available layers: ", available_layers
+  ))
+}
   
-  if (!(layer_input %in% lyr_info$name)) {
-    stop(
-      "Input layer name does not exist.\n",
-      "Requested layer: ", layer_input, "\n",
-      "Available layers: ", available_layers
-    )
-  }
+if (!(layer_input %in% lyr_info$name)) {
+  stop(paste0(
+    "Input layer name does not exist.",
+    " Requested layer: ", layer_input, ".",
+    " Available layers: ", available_layers
+  ))
+}
   
-  sf::st_read(path_to_file, layer = layer_input, quiet = TRUE)
+  sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
 }
 
 # -------------------------------------------------------------------
@@ -261,7 +263,7 @@ if (!is.null(waterbodies_path)) {
   
   message("DEBUG: Reading spatial data: ", spatial_input_path)
   
-  waterbody_shp <- read_sf_layer(
+  waterbody_shp <- read_study_area(
     path_to_file = spatial_input_path,
     layer_input = waterbodies_layer
   )
