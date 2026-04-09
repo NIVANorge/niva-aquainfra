@@ -32,7 +32,7 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "waterbody_id_to_be_used": {
+    "waterbody_id_col": {
       "title": "Waterbody ID column name in shapefile",
       "description": "Waterbody ID column name in shapefile. Can be omitted.",
       "schema": { "type": "string" },

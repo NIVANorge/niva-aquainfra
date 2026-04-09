@@ -14,6 +14,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
+# Case 1: Provide latitude range
 # TESTED by Merret, 2026-04-08
 curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/execution \
 --header 'Content-Type: application/json' \
@@ -25,6 +26,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
     }
 }'; date
 
+# Case 2: Provide water bodies
 # NOT TESTED YET
 # Joined dataframe contains a single parameter for data_x and data_y that is plotted. The two parameters are choosen in the "join-dataframes" script.
 # Info about "url_input_waterbody": https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
@@ -37,7 +39,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
         "url_input_waterbody": "https://something.no/Vannforekomster.zip",
         "study_area_layer": "VannforekomstKyst",
         "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
-        "waterbody_id_to_be_used": "id3",
+        "waterbody_id_col": "id3",
         "latitude_min": 59.1,
         "latitude_max": 59.2
     }
@@ -105,7 +107,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         url_input_waterbody = data.get('url_input_waterbody', None) # optional
         study_area_layer = data.get('study_area_layer', None) # If url_input_waterbody is given, this need to be specified
         waterbody_ids_to_summarize = data.get('waterbody_ids_to_summarize', None) # optional
-        waterbody_id_to_be_used = data.get('waterbody_id_to_be_used', None) # optional
+        waterbody_id_col = data.get('waterbody_id_col', None) # optional
         latitude_min = data.get('latitude_min', None) # optional
         latitude_max = data.get('latitude_max', None) # optional
 
@@ -163,7 +165,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
             out_result_path,
             url_input_waterbody,
             waterbody_ids_to_summarize,
-            waterbody_id_to_be_used,
+            waterbody_id_col,
             latitude_min,
             latitude_max,
             study_area_layer,
