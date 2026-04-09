@@ -195,9 +195,9 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         # Return link to output file wrapped in JSON:
         outputs = {
             "outputs": {
-                "scatterplot": {
-                    "title": PROCESS_METADATA['outputs']['scatterplot']['title'],
-                    "description": PROCESS_METADATA['outputs']['scatterplot']['description'],
+                "scatter_plot": {
+                    "title": PROCESS_METADATA['outputs']['scatter_plot']['title'],
+                    "description": PROCESS_METADATA['outputs']['scatter_plot']['description'],
                     "href": out_result_url
                 }
             }

@@ -55,7 +55,7 @@
     }
   },
   "outputs": {
-    "scatterplot": {
+    "scatter_plot": {
       "title": "Output plot ",
       "description": "Link to output plot.",
       "schema": {
