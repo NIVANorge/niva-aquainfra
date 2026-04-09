@@ -118,7 +118,7 @@ class NivaTilePlotProcessor(BaseProcessor):
 
         # Check existence:        
         #raise_for_status returns error when sending http request
-       # requests.head(url_input_csv), raise_for_status()
+        #requests.head(url_input_csv).raise_for_status()
 
 
         ##################
@@ -154,9 +154,21 @@ class NivaTilePlotProcessor(BaseProcessor):
         ### Run ###
         ###########
 
+        # Assemble R args:
         params = ','.join(parameters)
-        r_args = [url_input_csv, out_result_path, start_date, end_date, params, lat1, lat2, storm_date]
+        r_args = [
+            url_input_csv,
+            out_result_path,
+            start_date,
+            end_date,
+            params,
+            lat1,
+            lat2,
+            storm_date
+        ]
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,
@@ -188,6 +200,4 @@ class NivaTilePlotProcessor(BaseProcessor):
 
         return 'application/json', outputs
 
-
-
-
+.

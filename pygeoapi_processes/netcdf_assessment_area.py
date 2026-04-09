@@ -44,6 +44,20 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
         "river_label_col": "station_name"
     }
 }'; date
+
+# NOT TESTED YET:
+curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+        "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
+        "url_input_waterbody": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/waterbody/Vannforekomster_202604090129.zip",
+        "river_label_col": "station_name"
+    }
+}'; date
+
+
 '''
 
 
@@ -137,10 +151,10 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
 
         #raise_for_status returns error in other scripts, so also removed here.
         # Check existence:
-        #requests.head(url_input_csv), raise_for_status()
-        #requests.head(url_input_river_logger_csv), raise_for_status()
+        #requests.head(url_input_csv).raise_for_status()
+        #requests.head(url_input_river_logger_csv).raise_for_status()
         #if url_input_waterbody is not None:
-        #    requests.head(url_input_waterbody), raise_for_status()
+        #    requests.head(url_input_waterbody).raise_for_status()
 
 
         ###############
@@ -161,9 +175,18 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         ### Run ###
         ###########
 
-       # params = ','.join(parameters) parameter not used in script
-        r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, river_label_col, url_input_waterbody,study_area_layer] #added river_label_col
+        # Assemble R args:
+        r_args = [
+            url_input_csv,
+            out_result_path,
+            url_input_river_logger_csv,
+            river_label_col,
+            url_input_waterbody,
+            study_area_layer
+        ]
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,

@@ -119,7 +119,7 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
 
         # Check existence:
         # Note: During testing, this gets HTTP 400. Maybe THREDDS does not reply to HEAD requests.
-        #requests.head(url_thredds), raise_for_status()
+        #requests.head(url_thredds).raise_for_status()
 
         ##################
         ### Input data ###
@@ -158,7 +158,7 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
         if parameters is not None:
             parameters = ','.join(parameters)
 
-
+        # Assemble R args:
         r_args = [
             url_thredds,
             out_result_path,
@@ -166,9 +166,9 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
             start_date,
             end_date
         ]
-
-       #r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,

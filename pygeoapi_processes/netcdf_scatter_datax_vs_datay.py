@@ -40,6 +40,8 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
         "latitude_max": 59.2
     }
 }'; date
+
+
 '''
 
 
@@ -116,9 +118,9 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
             float(latitude_max)
 
         # Check existence:
-        #requests.head(url_input_csv), raise_for_status()
+        #requests.head(url_input_csv).raise_for_status()
         #if url_input_waterbody is not None:
-         #   requests.head(url_input_waterbody), raise_for_status()
+        #    requests.head(url_input_waterbody).raise_for_status()
 
         ##################
         ### Input data ###
@@ -166,6 +168,8 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         ]
 
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,

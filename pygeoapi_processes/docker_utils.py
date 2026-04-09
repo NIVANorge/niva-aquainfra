@@ -293,11 +293,15 @@ def run_docker_container3(
 
 def log_all_docker_output(stdout, stderr):
 
+    LOGGER.debug('______________')
+    LOGGER.debug('Docker stdout:')
     for line in stdout.split('\n'):
         if line:
             LOGGER.debug('Docker stdout: %s' % line)
             # output of print() in R-script
 
+    LOGGER.debug('______________')
+    LOGGER.debug('Docker sterr:')
     for line in stderr.split('\n'):
         if line:
             LOGGER.debug('Docker stderr: %s' % line)

@@ -193,10 +193,12 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         ###########
 
 
-        # Actually call R script:
+        # Assemble R args:
         params_string = ','.join(parameters)
         r_args = [url_thredds, out_result_path, params_string, start_date, end_date, lon_min, lon_max, lat_min, lat_max]
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,

@@ -138,6 +138,7 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
         ### Run ###
         ###########
 
+        # Assemble R args:
         r_args = [
             url_input_ferrybox_csv,
             url_input_river_logger_csv,
@@ -149,9 +150,9 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
             colname_time2,
             out_result_path
         ]
-
-        #r_args = [url_input_csv, out_result_path, url_input_river_logger_csv, url_input_waterbody]
         LOGGER.debug(f"r_args: {r_args}")
+
+        # Actually call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,
