@@ -117,8 +117,9 @@ class NivaTilePlotProcessor(BaseProcessor):
             float(lat2)
 
         # Check existence:        
-        #raise_for_status returns error when sending http request
-        #requests.head(url_input_csv).raise_for_status()
+        # "raise_for_status returns error when sending http request" --> more detail needed,
+        # worked in tests in April 2026
+        requests.head(url_input_csv).raise_for_status()
 
 
         ##################

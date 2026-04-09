@@ -131,7 +131,7 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         if url_input_river_logger_csv is not None and river_label_col is None:
             raise ProcessorExecuteError(
                 "Parameter 'river_label_col' must be provided when 'url_input_river_logger_csv' is used."
-            ) # added error if the name column is not provided
+            )
 
 
         ##################
@@ -148,13 +148,11 @@ class NivaNetcdfAssessmentAreaProcessor(BaseProcessor):
         # Not needed, no input data is downloaded!
         readonly_dir = None
 
-
-        #raise_for_status returns error in other scripts, so also removed here.
         # Check existence:
-        #requests.head(url_input_csv).raise_for_status()
-        #requests.head(url_input_river_logger_csv).raise_for_status()
-        #if url_input_waterbody is not None:
-        #    requests.head(url_input_waterbody).raise_for_status()
+        requests.head(url_input_csv).raise_for_status()
+        requests.head(url_input_river_logger_csv).raise_for_status()
+        if url_input_waterbody is not None:
+            requests.head(url_input_waterbody).raise_for_status()
 
 
         ###############

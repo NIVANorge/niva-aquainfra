@@ -120,9 +120,9 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
             float(latitude_max)
 
         # Check existence:
-        #requests.head(url_input_csv).raise_for_status()
-        #if url_input_waterbody is not None:
-        #    requests.head(url_input_waterbody).raise_for_status()
+        requests.head(url_input_csv).raise_for_status()
+        if url_input_waterbody is not None:
+            requests.head(url_input_waterbody).raise_for_status()
 
         ##################
         ### Input data ###
