@@ -200,4 +200,4 @@ class NivaTilePlotProcessor(BaseProcessor):
 
         return 'application/json', outputs
 
-.
+
