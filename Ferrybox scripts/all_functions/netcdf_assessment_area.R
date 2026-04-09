@@ -240,7 +240,7 @@ if (length(args) < 2) {
 }
 
 input_fb_file     <- args[1]
-save_png_path     <- args[2]
+save_path         <- args[2]
 input_river_file  <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 river_label_col   <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
 input_study_area  <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
@@ -302,14 +302,13 @@ p <- assessment_plot(
 # -------------------------------------------------------------------
 # Save PNG
 # -------------------------------------------------------------------
-
-if (!dir.exists(save_png_path)) {
-  dir.create(save_png_path, recursive = TRUE)
+if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
+  file_path <- save_path
+  dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+} else {
+  dir.create(save_path, recursive = TRUE, showWarnings = FALSE)
+  file_path <- file.path(save_path, "assessment_area.png")
 }
-
-png_name <- "assessment_area.png"
-file_path <- file.path(save_png_path, png_name)
-
 message("Saving PNG to: ", file_path)
 
 ggsave(
