@@ -52,7 +52,7 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
     "inputs": {
         "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
         "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
-        "url_input_waterbody": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/waterbody/Vannforekomster_202604090129.zip",
+        "url_input_waterbody": "https://something.no/Vannforekomster.zip",
         "river_label_col": "station_name"
     }
 }'; date

@@ -27,12 +27,14 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
 
 # NOT TESTED YET
 # Joined dataframe contains a single parameter for data_x and data_y that is plotted. The two parameters are choosen in the "join-dataframes" script.
+# Info about "url_input_waterbody": https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
+
 curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_input_csv": "https://processes/join-dataframes.csv",
-        "url_input_waterbody": "https://something.zip", #https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
+        "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv",
+        "url_input_waterbody": "https://something.no/Vannforekomster.zip",
         "study_area_layer": "VannforekomstKyst",
         "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
         "waterbody_id_to_be_used": "id3",
