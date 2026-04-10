@@ -227,7 +227,7 @@ waterbody_ids       <- if (length(args) >= 4) as_null_if_blank(args[4]) else NUL
 waterbody_id_col    <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
 lat_range_min       <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
 lat_range_max       <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
-waterbodies_layer   <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+study_area_layer    <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
 # Numbers are passed as strings to this script from python/docker. And if they are
 # passed as numbers, the function "as_null_if_blank()" converts them to characters,

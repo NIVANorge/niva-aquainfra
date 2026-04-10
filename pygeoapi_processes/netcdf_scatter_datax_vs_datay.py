@@ -167,7 +167,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
             waterbody_id_col,
             latitude_min,
             latitude_max,
-            study_area_layer,
+            study_area_layer
         ]
 
         LOGGER.debug(f"r_args: {r_args}")
