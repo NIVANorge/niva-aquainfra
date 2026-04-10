@@ -16,7 +16,7 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 '''
 # Info about "url_input_waterbody":
 # https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
-
+# Added test_data to ferrybox script folder to test
 
 # Case 1: Without url_input_waterbody:
 # With "url_input_waterbody": "null":
@@ -49,14 +49,13 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 # Case 2: With url_input_waterbody:
 # TESTED by Merret 2026-04-09
 curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
---header 'Content-Type: application/json' \
---data '{
+{
     "inputs": {
         "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
         "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
-        "url_input_waterbody": "https://something.no/Vannforekomster.zip",
-        "study_area_layer": "VannforekomstKyst",
-        "river_label_col": "station_name"
+        "river_label_col": "station_name",
+        "url_input_waterbody": "https://nedlasting.miljodirektoratet.no/Miljodata/egendefinert/Vannforekomster_202604091250.zip", # Or the .zip file from test data
+        "study_area_layer": "VannforekomstKyst"
     }
 }'; date
 
