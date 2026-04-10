@@ -30,17 +30,20 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
 # NOT TESTED YET
 # Joined dataframe contains a single parameter for data_x and data_y that is plotted. The two parameters are choosen in the "join-dataframes" script.
 # Info about "url_input_waterbody": https://karteksport.miljodirektoratet.no/ examplpe with Norwegian waterbodies. Select "Vannforekomster", define polygon or pick "Nasjonalt", click next, input email and select geojson type.
+# Use the water body zip from:
+# https://nedlasting.miljodirektoratet.no/Miljodata/egendefinert/Vannforekomster_202604091250.zip # (file expires after a couple of days)
+# OR:
+# https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip
 
 curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
         "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv",
-        "url_input_waterbody": "https://something.no/Vannforekomster.zip", ## Use test data, the https file expires after a couple of days
+        "url_input_waterbody": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
         "study_area_layer": "VannforekomstKyst",
         "waterbody_ids_to_summarize": ["Torbjørnskjær", "Nordre og Søndre Søster", "Tjøme", "Færder"],  
-        "waterbody_id_col": "navn",
-        
+        "waterbody_id_col": "navn"
     }
 }'; date
 

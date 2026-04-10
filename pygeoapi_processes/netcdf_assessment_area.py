@@ -48,13 +48,18 @@ curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 
 # Case 2: With url_input_waterbody:
 # TESTED by Merret 2026-04-09
+# Use the water body zip from:
+# https://nedlasting.miljodirektoratet.no/Miljodata/egendefinert/Vannforekomster_202604091250.zip # (file expires after a couple of days)
+# OR:
+# https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip
+
 curl -X POST https://${PYSERVER}/processes/netcdf-assessment-area/execution \
 {
     "inputs": {
         "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
         "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
         "river_label_col": "station_name",
-        "url_input_waterbody": "https://nedlasting.miljodirektoratet.no/Miljodata/egendefinert/Vannforekomster_202604091250.zip", # Or the .zip file from test data
+        "url_input_waterbody": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
         "study_area_layer": "VannforekomstKyst"
     }
 }'; date
