@@ -1,4 +1,5 @@
 
+
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -183,24 +184,31 @@ read_study_area <- function(path_to_study_area, layer_input) {
   lyr_info <- sf::st_layers(path_to_study_area)
   available_layers <- paste(lyr_info$name, collapse = ", ")
   
-  # Force explicit layer selection whenever study area is provided
-if (is.null(layer_input)) {
-  stop(paste0(
-    "input_study_area was provided, so study_area_layer is required.",
-    " Available layers: ", available_layers
-  ))
-}
+  if (is.null(layer_input)) {
+    stop(paste0(
+      "input_study_area was provided, so study_area_layer is required. ",
+      "Available layers: ", available_layers
+    ))
+  }
   
-if (!(layer_input %in% lyr_info$name)) {
-  stop(paste0(
-    "Input layer name does not exist.",
-    " Requested layer: ", layer_input, ".",
-    " Available layers: ", available_layers
-  ))
-}
+  if (!(layer_input %in% lyr_info$name)) {
+    stop(paste0(
+      "Input layer name does not exist.",
+      " Requested layer: ", layer_input, ".",
+      " Available layers: ", available_layers
+    ))
+  }
   
-  sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
+  shp <- sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
+  
+  # Repair invalid geometries from source data (e.g. duplicate vertices)
+  sf::sf_use_s2(FALSE)
+  shp <- sf::st_make_valid(shp)
+  sf::sf_use_s2(TRUE)
+  
+  shp
 }
+
 
 # -------------------------------------------------------------------
 # CLI args
@@ -256,16 +264,16 @@ df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
 # -------------------------------------------------------------------
 # Read waterbodies (optional)
 # -------------------------------------------------------------------
-waterbody_shp <- NULL
 
+waterbody_shp <- NULL
 if (!is.null(waterbodies_path)) {
-  spatial_input_path <- resolve_spatial_input_path(waterbodies_path)
+  input_path <- resolve_spatial_input_path(waterbodies_path)  # was: resolve_study_area_path
   
-  message("DEBUG: Reading spatial data: ", spatial_input_path)
+  message("DEBUG: Reading spatial data: ", input_path)
   
   waterbody_shp <- read_study_area(
-    path_to_file = spatial_input_path,
-    layer_input = waterbodies_layer
+    path_to_study_area = input_path,
+    layer_input = study_area_layer
   )
   
   message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
