@@ -52,7 +52,7 @@ class NivaNetcdfJoinDataframesProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20260409-f9c28ed"
+            self.image_name = "ferry-rscripts:20260410-e5e7433"
             self.script_name = 'netcdf_join_dataframes.R'
 
 
