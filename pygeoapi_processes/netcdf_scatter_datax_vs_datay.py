@@ -36,10 +36,11 @@ curl -X POST https://${PYSERVER}/processes/netcdf-scatter-datax-vs-datay/executi
 --data '{
     "inputs": {
         "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv",
-        "url_input_waterbody": "https://something.no/Vannforekomster.zip",
+        "url_input_waterbody": "https://something.no/Vannforekomster.zip", ## Use test data, the https file expires after a couple of days
         "study_area_layer": "VannforekomstKyst",
-        "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
-        "waterbody_id_col": "id3"
+        "waterbody_ids_to_summarize": ["Torbjørnskjær", "Nordre og Søndre Søster", "Tjøme", "Færder"],  
+        "waterbody_id_col": "navn",
+        
     }
 }'; date
 
