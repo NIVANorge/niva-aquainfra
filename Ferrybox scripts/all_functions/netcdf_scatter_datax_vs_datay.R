@@ -253,10 +253,6 @@ lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
   NULL
 }
 
-if (!is.null(waterbody_ids)) {
-  waterbody_ids <- strsplit(waterbody_ids, ",")[[1]]
-  waterbody_ids <- trimws(waterbody_ids)
-}
 
 message("Reading input CSV: ", input_path)
 df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
