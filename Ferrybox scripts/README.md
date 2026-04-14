@@ -260,6 +260,7 @@ date; docker run \
 ```
 
 ### netcdf_scatter_datax_vs_datay.R
+```bash
 # Case 1: Filter by latitude range (simplest test)
 docker run \
   -v './testresults:/out:rw' \
