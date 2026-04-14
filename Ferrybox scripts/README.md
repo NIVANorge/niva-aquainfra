@@ -260,42 +260,33 @@ date; docker run \
 ```
 
 ### netcdf_scatter_datax_vs_datay.R
-
-```bash
-# netcdf_scatter_datax_vs_datay.R
-date; docker run \
+# Case 1: Filter by latitude range (simplest test)
+docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
-  ferry-rscripts:${today} \
-  '/out/data/myjoinedtest.csv' \
-  '/out/plots/scatter.png' \
-  'NULL' \
-  'NULL' \
-  'NULL' \
-  'c(59.1,59.2)'
+  ferry-rscripts:local \
+  'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv' \
+  '/out/scatter_lat.png' \
+  'null' \
+  'null' \
+  'null' \
+  '59.1' \
+  '59.3' \
+  'null'
 
-date; docker run \
+# Case 2: Filter by waterbody
+docker run \
   -v './testresults:/out:rw' \
   -e 'SCRIPT=netcdf_scatter_datax_vs_datay.R' \
-  ferry-rscripts:${today} \
-
-  # Input joined CSV
-  '/out/data/myjoinedtest.csv' \
-
-  # Output plot (if only a directory is given, defaults to scatter.png)
-  '/out/plots/scatter.png' \
-
-  # Waterbody shapefile (NULL if none)
-  'NULL' \
-
-  # Waterbody IDs/names to summarise across (NULL if none)
-  'NULL' \
-
-  # Waterbody ID column name in shapefile (NULL if none)
-  'NULL' \
-
-  # Latitude range to summarise across (e.g. c(59.1,59.2) as text, or NULL)
-  'c(59.1,59.2)'
+  ferry-rscripts:local \
+  'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv' \
+  '/out/scatter_waterbody.png' \
+  'https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip' \
+  'Torbjørnskjær,Færder' \
+  'navn' \
+  'null' \
+  'null' \
+  'VannforekomstKyst'
 
 ```
 
