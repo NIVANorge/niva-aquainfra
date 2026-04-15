@@ -147,6 +147,7 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         ### Outputs ###
         ###############
 
+
         # Where to store output data
         output_dir = f'{self.download_dir}/out/{self.process_id}/job_{self.job_id}'
         output_url = f'{self.download_url}/out/{self.process_id}/job_{self.job_id}'
@@ -160,6 +161,10 @@ class NivaNetcdfScatterDataxVsDatayProcessor(BaseProcessor):
         ###########
         ### Run ###
         ###########
+    
+        # Make a proper string from the waterbody_ids_to_summarize that we can pass over to the R script:
+        if waterbody_ids_to_summarize is not None:
+            waterbody_ids_to_summarize = ','.join(waterbody_ids_to_summarize)
 
         # Assemble R args:
         r_args = [
