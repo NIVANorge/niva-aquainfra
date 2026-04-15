@@ -1,5 +1,4 @@
 
-
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -220,7 +219,7 @@ if (length(args) < 2) {
   stop("Provide source (URL/CSV) and path to save.")
 }
 
-input_path          <- args[1]
+joined_df_input_path          <- args[1]
 save_path           <- args[2]
 waterbodies_path    <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
 waterbody_ids       <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
@@ -240,10 +239,10 @@ if (!is.null(lat_range_max)) {
 }
 
 # Check file existance (unless passed as URL):
-if (startsWith(input_path, "http")) {
+if (startsWith(joined_df_input_path, "http")) {
   message("Input CSV provided as URL.")
-} else if (!file.exists(input_path)) {
-  stop("Input CSV not found: ", input_path)
+} else if (!file.exists(joined_df_input_path)) {
+  stop("Input CSV not found: ", joined_df_input_path)
 }
 
 # Make a vector from latitude range
@@ -254,9 +253,13 @@ lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
 }
 
 
-message("Reading input CSV: ", input_path)
-df_joined <- readr::read_csv(input_path, show_col_types = FALSE)
+message("Reading input CSV: ", joined_df_input_path)
+df_joined <- readr::read_csv(joined_df_input_path, show_col_types = FALSE)
 
+if (!is.null(waterbody_ids) && length(waterbody_ids) == 1) {
+  waterbody_ids <- strsplit(waterbody_ids, ",")[[1]]
+  waterbody_ids <- trimws(waterbody_ids)
+}
 # -------------------------------------------------------------------
 # Read waterbodies (optional)
 # -------------------------------------------------------------------
@@ -274,6 +277,7 @@ if (!is.null(waterbodies_path)) {
   
   message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
 }
+
 
 # -------------------------------------------------------------------
 # Run analysis
