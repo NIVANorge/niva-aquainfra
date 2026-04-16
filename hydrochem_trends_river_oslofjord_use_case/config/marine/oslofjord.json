@@ -1,0 +1,153 @@
+{
+  "input": {
+    "file": "hydrochem_trends_river_oslofjord_use_case/data/raw/marine/oslofjord_cleaned_standardized_data_2025v1.csv",
+    "time_col": "sample_date",
+    "depth_col": "depth_m",
+    "station_col": "station_name",
+    "station_code_col": "station_code",
+    "latitude_col": "latitude",
+    "longitude_col": "longitude"
+  },
+  "output": {
+    "filename": "hydrochem_trends_river_oslofjord_use_case/data/raw/marine/oslofjord_cleaned_standardized_data.nc",
+    "engine": "netcdf4",
+    "format": "NETCDF4",
+    "time": {
+      "dtype": "int32",
+      "_FillValue": null,
+      "units": "seconds since 1970-01-01 00:00:00",
+      "calendar": "standard"
+    }
+  },
+  "global_metadata": {
+    "title": "Oslofjord Marine Water Chemistry - Cleaned and Standardised Dataset",
+    "title_no": "Oslofjord marin vannkjemi - renset og standardisert datasett",
+    "summary": "Long-term marine water chemistry monitoring at multiple stations in the Oslofjord region (Norway), spanning 1990-2025. Measurements include nutrients, organic carbon, chlorophyll-a, salinity, temperature, turbidity and Secchi depth at discrete depths (0-10 m) from fixed stations. Data have been harmonised and cleaned using percentile-based filtering.",
+    "summary_no": "Langsiktige marine vannkjemiske målinger ved flere stasjoner i Oslofjordregionen (Norge), for perioden 1990-2025. Målingene inkluderer næringssalter, organisk karbon, klorofyll-a, salinitet, temperatur, turbiditet og siktdyp på diskrete dyp (0-10 m) fra faste stasjoner. Dataene er harmonisert og renset ved hjelp av persentilbasert filtrering.",
+    "naming_authority": "no.niva",
+    "project": "AquaINFRA",
+    "iso_topic_category": "oceans",
+    "featureType": "timeSeriesProfile",
+    "spatial_representation": "point",
+    "Conventions": "CF-1.13, ACDD-1.3",
+    "creator_type": "institution",
+    "creator_institution": "Norwegian Institute for Water Research (NIVA)",
+    "institution": "Norwegian Institute for Water Research (NIVA)",
+    "institution_short_name": "NIVA",
+    "creator_name": "Areti Balkoni",
+    "creator_email": "areti.balkoni@niva.no",
+    "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
+    "data_owner": "Norwegian Institute for Water Research (NIVA)",
+    "processing_level": "Harmonized and cleaned",
+    "publisher_name": "Norwegian Institute for Water Research (NIVA)",
+    "publisher_email": "miljoinformatikk@niva.no",
+    "publisher_institution": "Norwegian Institute for Water Research (NIVA)",
+    "publisher_url": "https://niva.no",
+    "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
+    "keywords": "GCMDSK:EARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > NUTRIENTS, GCMDSK:EARTH SCIENCE > OCEANS > OCEAN OPTICS > CHLOROPHYLL, GCMDSK:EARTH SCIENCE > OCEANS > SALINITY/DENSITY > SALINITY, GCMDSK:EARTH SCIENCE > OCEANS > OCEAN TEMPERATURE > WATER TEMPERATURE, GCMDLOC:OCEAN > ATLANTIC OCEAN > NORTH ATLANTIC OCEAN > NORWEGIAN SEA, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+    "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
+    "date_created": "2025-07-08T00:00:00Z",
+    "history": "Harmonized and cleaned from raw NIVA monitoring data using percentile-based filtering. Standardised to common variable names and units."
+  },
+  "variables": {
+    "CDOM_abs_443_1perm": {
+      "standard_name": "volume_absorption_coefficient_of_radiative_flux_in_sea_water_due_to_dissolved_organic_matter",
+      "long_name": "CDOM Absorption Coefficient at 443 nm",
+      "units": "m-1",
+      "comment": "Coloured dissolved organic matter absorption coefficient at 443 nm"
+    },
+    "Chl-a_µgperl": {
+      "standard_name": "mass_concentration_of_chlorophyll_a_in_sea_water",
+      "long_name": "Chlorophyll-a Concentration",
+      "units": "ug L-1"
+    },
+    "DIN_µgperl": {
+      "standard_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water",
+      "long_name": "Dissolved Inorganic Nitrogen",
+      "units": "ug L-1",
+      "comment": "Sum of nitrate-N, nitrite-N and ammonium-N"
+    },
+    "DIN:DIP": {
+      "long_name": "Dissolved Inorganic Nitrogen to Dissolved Inorganic Phosphorus Ratio",
+      "units": "1",
+      "comment": "Molar ratio DIN:DIP"
+    },
+    "DOC_mgperl": {
+      "long_name": "Dissolved Organic Carbon",
+      "units": "mg L-1",
+      "short_name": "mass_concentration_of_dissolved_organic_carbon_in_sea_water"
+    },
+    "DOC:DIN": {
+      "long_name": "Dissolved Organic Carbon to Dissolved Inorganic Nitrogen Ratio",
+      "units": "1"
+    },
+    "DOC:TOTN": {
+      "long_name": "Dissolved Organic Carbon to Total Nitrogen Ratio",
+      "units": "1"
+    },
+    "NH4-N_µgperl": {
+      "standard_name": "mole_concentration_of_ammonium_in_sea_water",
+      "long_name": "Ammonium-N Concentration",
+      "units": "ug L-1"
+    },
+    "NO2-N_µgperl": {
+      "standard_name": "mole_concentration_of_nitrite_in_sea_water",
+      "long_name": "Nitrite-N Concentration",
+      "units": "ug L-1"
+    },
+    "NO3+NO2-N_µgperl": {
+      "long_name": "Nitrate plus Nitrite Nitrogen Concentration",
+      "units": "ug L-1"
+    },
+    "NO3-N_µgperl": {
+      "standard_name": "mole_concentration_of_nitrate_in_sea_water",
+      "long_name": "Nitrate-N Concentration",
+      "units": "ug L-1"
+    },
+    "PO4-P_µgperl": {
+      "standard_name": "mole_concentration_of_phosphate_in_sea_water",
+      "long_name": "Phosphate-P Concentration",
+      "units": "ug L-1"
+    },
+    "SSS_PSU": {
+      "standard_name": "sea_water_practical_salinity",
+      "long_name": "Sea Water Practical Salinity",
+      "units": "1",
+      "comment": "Reported in practical salinity units (PSU)"
+    },
+    "SST_degC": {
+      "standard_name": "sea_water_temperature",
+      "long_name": "Sea Water Temperature",
+      "units": "degree_Celsius",
+      "units_metadata": "temperature: on_scale"
+    },
+    "TOC_mgperl": {
+      "long_name": "Total Organic Carbon",
+      "units": "mg L-1",
+      "short_name": "mass_concentration_of_organic_carbon_in_sea_water"
+    },
+    "TOTN_µgperl": {
+      "long_name": "Total Nitrogen",
+      "units": "ug L-1",
+      "short_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water"
+    },
+    "TOTN:TOTP": {
+      "long_name": "Total Nitrogen to Total Phosphorus Ratio",
+      "units": "1"
+    },
+    "TOTP_µgperl": {
+      "long_name": "Total Phosphorus",
+      "units": "ug L-1"
+    },
+    "TSM_mgperl": {
+      "standard_name": "mass_concentration_of_suspended_matter_in_sea_water",
+      "long_name": "Total Suspended Matter",
+      "units": "mg L-1"
+    },
+    "secchi_depth_m": {
+      "standard_name": "secchi_depth_of_sea_water",
+      "long_name": "Secchi Disk Depth",
+      "units": "m"
+    }
+  }
+}
