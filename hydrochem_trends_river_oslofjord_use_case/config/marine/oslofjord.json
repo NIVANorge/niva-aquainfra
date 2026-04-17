@@ -56,18 +56,18 @@
       "units": "m-1",
       "comment": "Coloured dissolved organic matter absorption coefficient at 443 nm"
     },
-    "Chl-a_µgperl": {
+    "Chl_a_ugperl": {
       "standard_name": "mass_concentration_of_chlorophyll_a_in_sea_water",
       "long_name": "Chlorophyll-a Concentration",
       "units": "ug L-1"
     },
-    "DIN_µgperl": {
+    "DIN_ugperl": {
       "standard_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water",
       "long_name": "Dissolved Inorganic Nitrogen",
       "units": "ug L-1",
       "comment": "Sum of nitrate-N, nitrite-N and ammonium-N"
     },
-    "DIN:DIP": {
+    "DIN_to_DIP": {
       "long_name": "Dissolved Inorganic Nitrogen to Dissolved Inorganic Phosphorus Ratio",
       "units": "1",
       "comment": "Molar ratio DIN:DIP"
@@ -77,34 +77,34 @@
       "units": "mg L-1",
       "short_name": "mass_concentration_of_dissolved_organic_carbon_in_sea_water"
     },
-    "DOC:DIN": {
+    "DOC_to_DIN": {
       "long_name": "Dissolved Organic Carbon to Dissolved Inorganic Nitrogen Ratio",
       "units": "1"
     },
-    "DOC:TOTN": {
+    "DOC_to_TOTN": {
       "long_name": "Dissolved Organic Carbon to Total Nitrogen Ratio",
       "units": "1"
     },
-    "NH4-N_µgperl": {
+    "NH4_N_ugperl": {
       "standard_name": "mole_concentration_of_ammonium_in_sea_water",
       "long_name": "Ammonium-N Concentration",
       "units": "ug L-1"
     },
-    "NO2-N_µgperl": {
+    "NO2_N_ugperl": {
       "standard_name": "mole_concentration_of_nitrite_in_sea_water",
       "long_name": "Nitrite-N Concentration",
       "units": "ug L-1"
     },
-    "NO3+NO2-N_µgperl": {
+    "NO3_plus_NO2_N_ugperl": {
       "long_name": "Nitrate plus Nitrite Nitrogen Concentration",
       "units": "ug L-1"
     },
-    "NO3-N_µgperl": {
+    "NO3_N_ugperl": {
       "standard_name": "mole_concentration_of_nitrate_in_sea_water",
       "long_name": "Nitrate-N Concentration",
       "units": "ug L-1"
     },
-    "PO4-P_µgperl": {
+    "PO4_P_ugperl": {
       "standard_name": "mole_concentration_of_phosphate_in_sea_water",
       "long_name": "Phosphate-P Concentration",
       "units": "ug L-1"
@@ -126,16 +126,16 @@
       "units": "mg L-1",
       "short_name": "mass_concentration_of_organic_carbon_in_sea_water"
     },
-    "TOTN_µgperl": {
+    "TOTN_ugperl": {
       "long_name": "Total Nitrogen",
       "units": "ug L-1",
       "short_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water"
     },
-    "TOTN:TOTP": {
+    "TOTN_to_TOTP": {
       "long_name": "Total Nitrogen to Total Phosphorus Ratio",
       "units": "1"
     },
-    "TOTP_µgperl": {
+    "TOTP_ugperl": {
       "long_name": "Total Phosphorus",
       "units": "ug L-1"
     },
