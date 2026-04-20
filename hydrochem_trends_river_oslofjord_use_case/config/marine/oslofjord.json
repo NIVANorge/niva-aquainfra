@@ -20,8 +20,8 @@
     }
   },
   "global_metadata": {
-    "title": "Oslofjord Marine Water Chemistry - Cleaned and Standardised Dataset",
-    "title_no": "Oslofjord marin vannkjemi - renset og standardisert datasett",
+    "title": "Oslofjord Marine Water Chemistry 1990-2025 - Cleaned and Standardised Dataset",
+    "title_no": "Oslofjord marin vannkjemi 1990-2025 - renset og standardisert datasett",
     "summary": "Long-term marine water chemistry monitoring at multiple stations in the Oslofjord region (Norway), spanning 1990-2025. Measurements include nutrients, organic carbon, chlorophyll-a, salinity, temperature, turbidity and Secchi depth at discrete depths (0-10 m) from fixed stations. Data have been harmonised and cleaned using percentile-based filtering.",
     "summary_no": "Langsiktige marine vannkjemiske målinger ved flere stasjoner i Oslofjordregionen (Norge), for perioden 1990-2025. Målingene inkluderer næringssalter, organisk karbon, klorofyll-a, salinitet, temperatur, turbiditet og siktdyp på diskrete dyp (0-10 m) fra faste stasjoner. Dataene er harmonisert og renset ved hjelp av persentilbasert filtrering.",
     "naming_authority": "no.niva",
