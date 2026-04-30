@@ -45,7 +45,7 @@
         "type": "string"
       },
       "minOccurs": 0,
-      "maxOccurs": 1
+      "maxOccurs": 10
     },
     "start_date": {
       "title": "start_date",
