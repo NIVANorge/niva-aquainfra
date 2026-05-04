@@ -23,18 +23,7 @@
     "source": {
       "title": "source",
       "description": "THREDDS URL to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc).",
-      "schema": {
-        "type": "string"
-      },
-      "minOccurs": 1,
-      "maxOccurs": 1
-    },
-    "save_path": {
-      "title": "Save path",
-      "description": "Output save path. If it ends with .csv it is used as the output file. Otherwise it is treated as an output directory and the file name defaults to ferrybox.csv.",
-      "schema": {
-        "type": "string"
-      },
+      "schema": {"type": "string"},
       "minOccurs": 1,
       "maxOccurs": 1
     },
