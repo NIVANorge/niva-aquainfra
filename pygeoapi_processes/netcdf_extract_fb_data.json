@@ -22,7 +22,7 @@
   "inputs": {
     "source": {
       "title": "source",
-      "description": "THREDDS/OPeNDAP URL to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc).",
+      "description": "THREDDS URL to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc).",
       "schema": {
         "type": "string"
       },
