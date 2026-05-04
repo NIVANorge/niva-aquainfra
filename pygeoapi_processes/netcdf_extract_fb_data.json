@@ -67,43 +67,26 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "lon_min": {
-      "title": "Longitude minimum boundary",
-      "description": "Minimum longitude for bounding box filter. Use NULL to use the dataset minimum.",
+    "study_area_bbox": {
+      "title": "study_area_bbox",
+      "description": "Optional bounding box filter. Order: [lat_min, lon_min, lat_max, lon_max]. Example: {\"bbox\": [58.5, 9.5, 59.9, 11.9]}. Omit to use the full dataset extent.",
       "schema": {
-        "type": "number"
+        "type": "object",
+        "properties": {
+          "bbox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          }
+        },
+        "required": ["bbox"]
       },
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "lon_max": {
-      "title": "Longitude maximum",
-      "description": "Maximum longitude for bounding box filter. Use NULL to use the dataset maximum.",
-      "schema": {
-        "type": "number"
-      },
-      "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "lat_min": {
-      "title": "Latitude minimum",
-      "description": "Minimum latitude for bounding box filter. Use NULL to use the dataset minimum.",
-      "schema": {
-        "type": "number"
-      },
-      "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "lat_max": {
-      "title": "Latitude maximum",
-      "description": "Maximum latitude for bounding box filter. Use NULL to use the dataset maximum.",
-      "schema": {
-        "type": "number"
-      },
-      "minOccurs": 0,
-      "maxOccurs": 1
-    }
-  },
   "outputs": {
     "csv results": {
       "title": "CSV output",
