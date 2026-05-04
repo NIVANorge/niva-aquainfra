@@ -9,7 +9,7 @@
     "en": "Extract river logger environmental monitoring data from a THREDDS-hosted NetCDF file. Supports optional filtering by date. Outputs a CSV containing datetime, value, unit, parameter, and derived time fields."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Logger","River","Baterod", "NetCDF", "THREDDS"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Logger","River","Baterod", "NetCDF", "THREDDS", "Oslofjorden"],
   "links": [
     {
       "type": "text/html",
