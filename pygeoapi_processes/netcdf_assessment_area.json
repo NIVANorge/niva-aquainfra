@@ -3,13 +3,13 @@
   "id": "netcdf-assessment-area",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
-    "en": "Plot assessment area"
+    "en": "Assessment area plot"
   },
   "description": {
     "en": "Plot FerryBox and Logger location on world map. Supports optional input with waterbodies of assessment area."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Logger", "Oslfjorden"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Logger", "Map",,"Assessment area", "Oslfjorden"],
   "inputs": {
     "url_input_csv": {
       "title": "Input FerryBox CSV",
@@ -50,7 +50,7 @@
   ,
   "outputs": {
     "assessment_area": {
-      "title": "Path to the assessment area plot created by the process.",
+      "title": "Path to the assessment area PNG file created by the process.",
       "description": "Link to generated plot.",
       "schema": {
         "type": "object",
