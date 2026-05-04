@@ -9,7 +9,7 @@
     "en": "Extract FerryBox environmental monitoring data from a THREDDS-hosted NetCDF file. Supports optional filtering by date interval and bounding box. Outputs a CSV containing datetime, latitude, longitude, value, unit, parameter, and derived time fields."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "NetCDF", "THREDDS"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "NetCDF", "THREDDS", "Oslofjorden"],
   "links": [
     {
       "type": "text/html",
