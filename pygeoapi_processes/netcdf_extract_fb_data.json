@@ -88,7 +88,7 @@
       "maxOccurs": 1
     },
   "outputs": {
-    "csv results": {
+    "CSV results": {
       "title": "CSV output",
       "description": "Path to the CSV file written by the process.",
       "schema": {
