@@ -71,7 +71,7 @@
   "outputs": {
     "joined_csv": {
       "title": "Output joined CSV ",
-      "description": "Link to output joined CSV.",
+      "description": "Link joined CSV dataframe from the process.",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"
@@ -80,8 +80,8 @@
   },
   "example": {
     "inputs": {
-      "url_input_ferrybox_csv": "https://csv-output-from-extraction-process.csv",
-      "url_input_river_logger_csv": "https://bla-csv",
+      "url_input_ferrybox_csv": "https://csv-output-from-ferrybox-extraction-process.csv",
+      "url_input_river_logger_csv": "https://csv-output-from-logger-extraction-process.csv",
       "param_dataframe1": "turbidity",
       "param_dataframe2": "turbidity_avg",
       "colname_station2": "station_name",
