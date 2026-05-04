@@ -3,13 +3,13 @@
   "id": "netcdf-join-dataframes",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
-    "en": "netcdf_join_dataframes"
+    "en": "Join dataframes"
   },
   "description": {
-    "en": "netcdf_join_dataframes"
+    "en": "Join FerryBox and logger dataframe by date and specified parameters. Contains information for each latitudal sampling point."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "join","Oslofjorden"],
   "inputs": {
     "url_input_ferrybox_csv": {
       "title": "FerryBox dataframe CSV",
