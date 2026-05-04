@@ -62,7 +62,7 @@
   "outputs": {
     "CSV result": {
       "title": "CSV output",
-      "description": "CSV file written by the process.",
+      "description": "Path to CSV file written by the process.",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"
