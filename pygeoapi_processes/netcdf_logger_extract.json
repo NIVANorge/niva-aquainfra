@@ -49,7 +49,7 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "parameters": {
+    "Parameters": {
       "title": "parameters",
       "description": "List of parameters. Use null (or omit) to extract all available parameters.",
       "schema": {
@@ -71,10 +71,10 @@
   },
   "example": {
     "inputs": {
-      "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-      "parameters": null,
-      "start_date": "2023-01-01",
-      "end_date": "2023-12-31"
+      "source": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
+      "Parameters": null,
+      "Start date": "2023-01-01",
+      "End date": "2023-12-31"
     }
   }
 }
