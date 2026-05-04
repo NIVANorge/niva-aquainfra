@@ -50,7 +50,7 @@
   ,
   "outputs": {
     "assessment_area": {
-      "title": "Assessment area plot output path",
+      "title": "Path to the assessment area plot created by the process.",
       "description": "Link to generated plot.",
       "schema": {
         "type": "object",
