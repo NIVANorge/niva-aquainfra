@@ -24,6 +24,8 @@ curl -X POST https://${PYSERVER}/processes/netcdf-tile-plot/execution \
         "start_date": "2023-01-01",
         "end_date": "2023-12-31",
         "parameters": ["salinity", "chlorophyll"],
+        "lat1": "58.90",
+        "lat2": "59.50",
         "storm_date": "2023-08-08"
     }
 }'; date
