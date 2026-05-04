@@ -6,7 +6,7 @@
     "en": "Scatterplot FerryBox against logger parameter"
   },
   "description": {
-    "en": "Scatterplot FerryBox against logger based on the filtered parameter in joined dataframe. Option to filter for specific waterbodies or latitudal transect of the FerryBox data against the logger data."
+    "en": "Scatterplot FerryBox against logger based on the filtered parameter in joined dataframe. Option to summarise across specific waterbodies or latitudal transect of the FerryBox."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatterplot", "Oslofjorden"],
