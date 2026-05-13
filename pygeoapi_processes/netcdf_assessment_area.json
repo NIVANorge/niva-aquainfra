@@ -9,7 +9,7 @@
     "en": "Plot FerryBox and Logger location on world map. Supports optional input with waterbodies of assessment area."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Logger", "Map",,"Assessment area", "Oslfjorden"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Logger", "Map","Assessment area", "Oslfjorden"],
   "inputs": {
     "url_input_csv": {
       "title": "Input FerryBox CSV",
@@ -29,8 +29,8 @@
       "title": "River name column",
       "description": "Column specifying the name of river(s) plotted",
       "schema": { "type": "string"},
-      "minOccurs"; 0,
-      "maxOccurs"; 1,
+      "minOccurs": 0,
+      "maxOccurs": 1
     },
     "url_input_waterbody": {
       "title": "Waterbodies",
@@ -46,8 +46,7 @@
       "minOccurs": 0,
       "maxOccurs": 1
     } 
-  }
-  ,
+  },
   "outputs": {
     "assessment_area": {
       "title": "Path to the assessment area PNG file created by the process.",
