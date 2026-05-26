@@ -27,14 +27,14 @@
     },
     "param_dataframe1": {
       "title": "Parameter from first dataframe",
-      "description": "Parameter from first dataframe",
+      "description": "Parameter from first dataframe to join",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
     "param_dataframe2": {
       "title": "Parameter from second dataframe",
-      "description": "Parameter from second dataframe",
+      "description": "Parameter from second dataframe to join",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
