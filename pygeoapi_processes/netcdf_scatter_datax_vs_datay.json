@@ -56,7 +56,7 @@
     "study_area_layer":{
       "title": "Study area layer",
       "description": "Input of specific layer geometries if multiple are available in input waterbodies file.",
-      "schema": {"type", "string"},
+      "schema": {"type": "string"},
       "minOccurs": 0,
       "maxOccurs": 1    
     }
