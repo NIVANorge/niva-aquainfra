@@ -11,21 +11,21 @@
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
   "inputs": {
-    "input_csv": {
+    "url_input_csv": {
       "title": "Source",
       "description": "Path to input URL containing at least datetime, parameter, value, and preferably latitude/longitude.",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
-    "parameter_x": {
+    "param1": {
       "title": "x-axis paramater",
       "description": "Parameter name for x-axis (e.g. salinity).",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
-    "parameter_y": {
+    "param2": {
       "title": "y-axis parameter",
       "description": "Parameter name for y-axis (e.g. chlorophyll).",
       "schema": { "type": "string" },
