@@ -20,8 +20,8 @@
     }
   ],
   "inputs": {
-    "source": {
-      "title": "source",
+    "url_thredds": {
+      "title": "Source",
       "description": "THREDDS url to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc).",
       "schema": {
         "type": "string"
@@ -49,8 +49,8 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "Parameters": {
-      "title": "parameters",
+    "parameters": {
+      "title": "Parameters",
       "description": "List of parameters. Use null (or omit) to extract all available parameters.",
       "schema": {
         "type": "string"
