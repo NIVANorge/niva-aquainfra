@@ -11,7 +11,7 @@
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Tile plot", "Hovmoller"],
   "inputs": {
-    "input_csv": {
+    "url_input_csv": {
       "title": "Input FerryBox data",
       "description": "Path or URL to FerryBox CSV containing datetime, latitude, longitude, parameter and value.",
       "schema": { "type": "string" },
