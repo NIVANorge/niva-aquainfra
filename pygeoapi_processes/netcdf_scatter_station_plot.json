@@ -43,11 +43,11 @@
       }
     }
   },
-  "example": {
-    "inputs": {
-      "input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
-      "parameter_x": "salinity",
-      "parameter_y": "chlorophyll"
-    }
+ "example": {
+  "inputs": {
+    "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+    "param1": "chlorophyll",
+    "param2": "salinity"
   }
+}
 }
