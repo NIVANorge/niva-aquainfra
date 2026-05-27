@@ -62,7 +62,7 @@
     "url_ferrybox_csv": "https://csv-output-from-ferrybox-extraction-process.csv",
     "url_logger_csv": "https://csv-output-from-logger-extraction-process.csv",
     "river_name_column": "station_name",
-    "waterbodies": "https://waterbodies.shp",
+    "waterbodies": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
     "study_area_layer": "VannforekomstKyst"
   }
 }
