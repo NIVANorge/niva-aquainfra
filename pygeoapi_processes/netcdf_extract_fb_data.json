@@ -78,7 +78,7 @@
     }
   },
   "outputs": {
-    "CSV results": {
+    "csv_results": {
       "title": "CSV output",
       "description": "Path to the CSV file written by the process.",
       "schema": {
@@ -87,15 +87,14 @@
       }
     }
   },
-  "example": {
-    "inputs": {
-      "Source": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
-      "Save path": "/out/data/myferryboxtest.csv",
-      "Parameters": "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom",
-      "Start date": "2023-01-01",
-      "End date": "2023-12-31",
-      "Boundary box": "[9.5, 12.0 , 54.0, 60.0]"
-    }
+ "example": {
+  "inputs": {
+    "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/nrt/color_fantasy.nc",
+    "parameters": "temperature,salinity,oxygen_sat,chlorophyll,turbidity,fdom",
+    "start_date": "2023-01-01",
+    "end_date": "2023-12-31",
+    "bbox": "[9.5, 12.0, 54.0, 60.0]"
   }
+}
 }
 
