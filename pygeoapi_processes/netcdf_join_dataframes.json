@@ -80,8 +80,8 @@
   },
   "example": {
     "inputs": {
-      "url_input_ferrybox_csv": "https://csv-output-from-ferrybox-extraction-process.csv",
-      "url_input_river_logger_csv": "https://csv-output-from-logger-extraction-process.csv",
+      "url_input_ferrybox_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+      "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
       "param_dataframe1": "turbidity",
       "param_dataframe2": "turbidity_avg",
       "colname_station2": "station_name",
