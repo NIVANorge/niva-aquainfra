@@ -49,22 +49,22 @@
   },
   "outputs": {
     "assessment_area": {
-      "title": "Path to the assessment area PNG file created by the process.",
-      "description": "Link to generated plot.",
+      "title": "Assessment area plot",
+      "description": "Path to the assessment area PNG file created by the process.",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"
       }
     }
   },
-  "example": {
-    "inputs": {
-      "URL input FerryBox CSV": "https://csv-output-from-ferrybox-extraction-process.csv",
-      "URL inpit logger CSV": "https://csv-output-from-logger-extraction-process.csv",
-      "River name column": "station_name",
-      "Waterbodies": "https://waterbodies.shp",
-      "Study area layer": "VannforekomstKyst"
-    }
+"example": {
+  "inputs": {
+    "url_ferrybox_csv": "https://csv-output-from-ferrybox-extraction-process.csv",
+    "url_logger_csv": "https://csv-output-from-logger-extraction-process.csv",
+    "river_name_column": "station_name",
+    "waterbodies": "https://waterbodies.shp",
+    "study_area_layer": "VannforekomstKyst"
   }
+}
 }
 
