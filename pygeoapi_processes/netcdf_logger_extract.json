@@ -60,21 +60,17 @@
     }
   },
   "outputs": {
-    "CSV result": {
+    "output_csv": {
       "title": "CSV output",
       "description": "Path to CSV file written by the process.",
-      "schema": {
-        "type": "object",
-        "contentMediaType": "application/json"
-      }
     }
   },
   "example": {
     "inputs": {
-      "source": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-      "Parameters": null,
-      "Start date": "2023-01-01",
-      "End date": "2023-12-31"
+      "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
+      "parameters": null,
+      "start_date": "2023-01-01",
+      "end_date": "2023-12-31"
     }
   }
 }
