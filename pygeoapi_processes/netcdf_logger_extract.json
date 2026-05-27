@@ -63,12 +63,16 @@
     "output_csv": {
       "title": "CSV output",
       "description": "Path to CSV file written by the process.",
+       "schema": {
+    "type": "object",
+    "contentMediaType": "application/json"
+  }
     }
   },
   "example": {
     "inputs": {
       "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-      "parameters": null,
+      "parameters": ["temp_water_avg", "phvalue_avg", "condvalue_avg", "turbidity_avg", "cdomdigitalfinal"],
       "start_date": "2023-01-01",
       "end_date": "2023-12-31"
     }
