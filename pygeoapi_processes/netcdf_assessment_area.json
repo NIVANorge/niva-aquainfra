@@ -59,10 +59,10 @@
   },
 "example": {
   "inputs": {
-    "url_ferrybox_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
-    "url_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
-    "river_name_column": "station_name",
-    "waterbodies": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
+    "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+    "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
+    "river_label_col": "station_name",
+    "url_input_waterbody": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
     "study_area_layer": "VannforekomstKyst"
   }
 }
