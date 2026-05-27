@@ -92,7 +92,7 @@ class NivaTilePlotProcessor(BaseProcessor):
         parameters = data.get('parameters')
         lat1 = data.get('lat1', None)
         lat2 = data.get('lat2', None)
-        storm_date = data.get('end_date', None)
+        storm_date = data.get('storm_date', None)
 
         # Check user inputs:
         if url_input_csv is None:
