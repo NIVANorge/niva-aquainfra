@@ -31,7 +31,7 @@
       "title": "Parameters",
       "description": "Comma-separated list of parameters to extract (e.g. temperature,salinity,chlorophyll,turbidity). Use NULL (or omit) to extract all available parameters.",
       "schema": {
-        "type": "array".
+        "type": "array",
         "items": {"type": "string"}
       },
       "minOccurs": 0,
