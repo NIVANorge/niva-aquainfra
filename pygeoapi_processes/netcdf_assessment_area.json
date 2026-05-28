@@ -25,7 +25,7 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "river_labeL_col": {
+    "river_label_col": {
       "title": "River name column",
       "description": "Column specifying the name of river(s) plotted",
       "schema": { "type": "string"},
