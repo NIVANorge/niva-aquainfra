@@ -61,7 +61,7 @@
       "title": "Boundary box",
       "description": "Optional bounding box filter. Order: [lat_min, lon_min, lat_max, lon_max]. Example: {\"bbox\": [58.5, 9.5, 59.9, 11.9]}. Omit to use the full dataset extent.",
       "schema": {
-        "type": "string"},
+        "type": "object"},
       "minOccurs": 0,
       "maxOccurs": 1
     }
