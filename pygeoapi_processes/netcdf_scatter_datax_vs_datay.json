@@ -28,7 +28,10 @@
     "waterbody_ids_to_summarize": {
       "title": "Waterbody IDs/names",
       "description": "Waterbody IDs/names to summarise across. Can be omitted.",
-      "schema": { "type": "string" },
+      "schema": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
       "minOccurs": 0,
       "maxOccurs": 1
     },
