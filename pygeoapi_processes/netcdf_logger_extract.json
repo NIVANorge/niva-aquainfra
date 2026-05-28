@@ -52,8 +52,9 @@
     "parameters": {
       "title": "Parameters",
       "description": "List of parameters. Use null (or omit) to extract all available parameters.",
-      "schema": {
-        "type": "string"
+       "schema": {
+        "type": "array",
+        "items": {"type": "string"}
       },
       "minOccurs": 0,
       "maxOccurs": 1
