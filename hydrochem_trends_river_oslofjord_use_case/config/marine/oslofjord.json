@@ -1,6 +1,6 @@
 {
   "input": {
-    "file": "hydrochem_trends_river_oslofjord_use_case/data/raw/marine/oslofjord_cleaned_standardized_data_2025v1.csv",
+    "file": "hydrochem_trends_river_oslofjord_use_case/data/processed/marine/oslofjord_cleaned_standardized_data_2025v1.csv",
     "time_col": "sample_date",
     "depth_col": "depth_m",
     "station_col": "station_name",
@@ -9,7 +9,7 @@
     "longitude_col": "longitude"
   },
   "output": {
-    "filename": "hydrochem_trends_river_oslofjord_use_case/data/raw/marine/oslofjord_cleaned_standardized_data.nc",
+    "filename": "hydrochem_trends_river_oslofjord_use_case/data/processed/marine/oslofjord_cleaned_standardized_data.nc",
     "engine": "netcdf4",
     "format": "NETCDF4",
     "time": {
@@ -47,7 +47,7 @@
     "keywords": "GCMDSK:EARTH SCIENCE > OCEANS > OCEAN CHEMISTRY > NUTRIENTS, GCMDSK:EARTH SCIENCE > OCEANS > OCEAN OPTICS > CHLOROPHYLL, GCMDSK:EARTH SCIENCE > OCEANS > SALINITY/DENSITY > SALINITY, GCMDSK:EARTH SCIENCE > OCEANS > OCEAN TEMPERATURE > WATER TEMPERATURE, GCMDLOC:OCEAN > ATLANTIC OCEAN > NORTH ATLANTIC OCEAN > NORWEGIAN SEA, GCMDLOC:CONTINENT > EUROPE > NORWAY",
     "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
     "date_created": "2025-07-08T00:00:00Z",
-    "history": "Harmonized and cleaned from raw NIVA monitoring data using percentile-based filtering. Standardised to common variable names and units."
+    "history": "Dataset compiled from marine monitoring datasets from NIVA, Miljødirektoratet, and the Oslofjord eutrophication assessment dataset (Ramon et al., 2025). Station names and station codes were harmonized across data sources. Norwegian characters (æ, ø, å) were transliterated to ASCII equivalents for compatibility. Variables were standardized to common naming conventions and units, and quality controlled using percentile-based filtering."
   },
   "variables": {
     "CDOM_abs_443_1perm": {
@@ -62,7 +62,6 @@
       "units": "ug L-1"
     },
     "DIN_µgperl": {
-      "standard_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water",
       "long_name": "Dissolved Inorganic Nitrogen",
       "units": "ug L-1",
       "comment": "Sum of nitrate-N, nitrite-N and ammonium-N"
@@ -75,7 +74,8 @@
     "DOC_mgperl": {
       "long_name": "Dissolved Organic Carbon",
       "units": "mg L-1",
-      "short_name": "mass_concentration_of_dissolved_organic_carbon_in_sea_water"
+      "standard_name": "mass_concentration_of_dissolved_organic_carbon_in_sea_water",
+      "processing_note": "Dissolved organic carbon concentrations originally reported in umol C L-1 were converted to mg C L-1 using the molar mass of carbon (12.0107 g mol-1)."
     },
     "DOC:DIN": {
       "long_name": "Dissolved Organic Carbon to Dissolved Inorganic Nitrogen Ratio",
@@ -86,28 +86,30 @@
       "units": "1"
     },
     "NH4-N_µgperl": {
-      "standard_name": "mole_concentration_of_ammonium_in_sea_water",
       "long_name": "Ammonium-N Concentration",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Ammonium-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "NO2-N_µgperl": {
       "standard_name": "mole_concentration_of_nitrite_in_sea_water",
       "long_name": "Nitrite-N Concentration",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Nitrite-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "NO3+NO2-N_µgperl": {
       "long_name": "Nitrate plus Nitrite Nitrogen Concentration",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Nitrate plus Nitrite Nitrogen concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "NO3-N_µgperl": {
-      "standard_name": "mole_concentration_of_nitrate_in_sea_water",
       "long_name": "Nitrate-N Concentration",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Nitrate-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "PO4-P_µgperl": {
-      "standard_name": "mole_concentration_of_phosphate_in_sea_water",
       "long_name": "Phosphate-P Concentration",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Phosphate-P concentrations originally reported in umol P L-1 were converted to ug P L-1 using the molar mass of phosphorus (30.9738 g mol-1)."
     },
     "SSS_PSU": {
       "standard_name": "sea_water_practical_salinity",
@@ -124,12 +126,13 @@
     "TOC_mgperl": {
       "long_name": "Total Organic Carbon",
       "units": "mg L-1",
-      "short_name": "mass_concentration_of_organic_carbon_in_sea_water"
+      "standard_name": "mass_concentration_of_organic_carbon_in_sea_water",
+      "processing_note": "Total organic carbon concentrations originally reported in umol C L-1 were converted to mg C L-1 using the molar mass of carbon (12.0107 g mol-1)."
     },
     "TOTN_µgperl": {
       "long_name": "Total Nitrogen",
       "units": "ug L-1",
-      "short_name": "mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water"
+      "processing_note": "Total nitrogen concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "TOTN:TOTP": {
       "long_name": "Total Nitrogen to Total Phosphorus Ratio",
@@ -137,7 +140,8 @@
     },
     "TOTP_µgperl": {
       "long_name": "Total Phosphorus",
-      "units": "ug L-1"
+      "units": "ug L-1",
+      "processing_note": "Total phosphorus concentrations originally reported in umol P L-1 were converted to ug P L-1 using the molar mass of phosphorus (30.9738 g mol-1)."
     },
     "TSM_mgperl": {
       "standard_name": "mass_concentration_of_suspended_matter_in_sea_water",
