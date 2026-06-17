@@ -91,7 +91,6 @@
       "processing_note": "Ammonium-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
     "NO2-N_µgperl": {
-      "standard_name": "mole_concentration_of_nitrite_in_sea_water",
       "long_name": "Nitrite-N Concentration",
       "units": "ug L-1",
       "processing_note": "Nitrite-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
