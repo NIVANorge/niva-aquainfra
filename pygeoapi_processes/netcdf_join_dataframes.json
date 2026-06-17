@@ -3,13 +3,13 @@
   "id": "netcdf-join-dataframes",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
-    "en": "netcdf_join_dataframes"
+    "en": "Join dataframes"
   },
   "description": {
-    "en": "netcdf_join_dataframes"
+    "en": "Join FerryBox and logger dataframe by date and specified parameters. Contains information for each latitudal sampling point."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "join","Oslofjorden"],
   "inputs": {
     "url_input_ferrybox_csv": {
       "title": "FerryBox dataframe CSV",
@@ -27,14 +27,14 @@
     },
     "param_dataframe1": {
       "title": "Parameter from first dataframe",
-      "description": "Parameter from first dataframe",
+      "description": "Parameter from first dataframe to join",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
     "param_dataframe2": {
       "title": "Parameter from second dataframe",
-      "description": "Parameter from second dataframe",
+      "description": "Parameter from second dataframe to join",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
@@ -71,7 +71,7 @@
   "outputs": {
     "joined_csv": {
       "title": "Output joined CSV ",
-      "description": "Link to output joined CSV.",
+      "description": "Link joined CSV dataframe from the process.",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"
@@ -80,8 +80,8 @@
   },
   "example": {
     "inputs": {
-      "url_input_ferrybox_csv": "https://csv-output-from-extraction-process.csv",
-      "url_input_river_logger_csv": "https://bla-csv",
+      "url_input_ferrybox_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+      "url_input_river_logger_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_logger_extract/logger.csv",
       "param_dataframe1": "turbidity",
       "param_dataframe2": "turbidity_avg",
       "colname_station2": "station_name",

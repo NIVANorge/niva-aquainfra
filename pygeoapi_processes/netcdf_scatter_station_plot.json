@@ -6,27 +6,27 @@
     "en": "Scatterplot between two parameters (faceted by month)"
   },
   "description": {
-    "en": "Reads a FerryBox-style CSV and generates a scatterplot between two selected parameters, faceted by month. Outputs a PNG."
+    "en": "Reads FerryBox-style CSV and generates a scatterplot between two selected parameters, faceted by month. Outputs a PNG."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
   "inputs": {
-    "input_csv": {
-      "title": "input_csv",
-      "description": "Path (inside container mount) or URL to input CSV containing at least datetime, parameter, value, and preferably latitude/longitude.",
+    "url_input_csv": {
+      "title": "Source",
+      "description": "Path to input URL containing at least datetime, parameter, value, and preferably latitude/longitude.",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
-    "parameter_x": {
-      "title": "parameter_x",
+    "param1": {
+      "title": "x-axis paramater",
       "description": "Parameter name for x-axis (e.g. salinity).",
       "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },
-    "parameter_y": {
-      "title": "parameter_y",
+    "param2": {
+      "title": "y-axis parameter",
       "description": "Parameter name for y-axis (e.g. chlorophyll).",
       "schema": { "type": "string" },
       "minOccurs": 1,
@@ -43,11 +43,11 @@
       }
     }
   },
-  "example": {
-    "inputs": {
-      "input_csv": "/out/data/myferryboxtest.csv",
-      "parameter_x": "salinity",
-      "parameter_y": "chlorophyll"
-    }
+ "example": {
+  "inputs": {
+    "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_extract_fb_data/ferrybox.csv",
+    "param1": "chlorophyll",
+    "param2": "salinity"
   }
+}
 }

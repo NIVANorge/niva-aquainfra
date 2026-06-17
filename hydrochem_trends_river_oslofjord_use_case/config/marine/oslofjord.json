@@ -20,8 +20,8 @@
     }
   },
   "global_metadata": {
-    "title": "Oslofjord Marine Water Chemistry - Cleaned and Standardised Dataset",
-    "title_no": "Oslofjord marin vannkjemi - renset og standardisert datasett",
+    "title": "Oslofjord Marine Water Chemistry 1990-2025 - Cleaned and Standardised Dataset",
+    "title_no": "Oslofjord marin vannkjemi 1990-2025 - renset og standardisert datasett",
     "summary": "Long-term marine water chemistry monitoring at multiple stations in the Oslofjord region (Norway), spanning 1990-2025. Measurements include nutrients, organic carbon, chlorophyll-a, salinity, temperature, turbidity and Secchi depth at discrete depths (0-10 m) from fixed stations. Data have been harmonised and cleaned using percentile-based filtering.",
     "summary_no": "Langsiktige marine vannkjemiske målinger ved flere stasjoner i Oslofjordregionen (Norge), for perioden 1990-2025. Målingene inkluderer næringssalter, organisk karbon, klorofyll-a, salinitet, temperatur, turbiditet og siktdyp på diskrete dyp (0-10 m) fra faste stasjoner. Dataene er harmonisert og renset ved hjelp av persentilbasert filtrering.",
     "naming_authority": "no.niva",
@@ -56,7 +56,7 @@
       "units": "m-1",
       "comment": "Coloured dissolved organic matter absorption coefficient at 443 nm"
     },
-    "Chl-a_µgperl": {
+    "Chl_a_ugperl": {
       "standard_name": "mass_concentration_of_chlorophyll_a_in_sea_water",
       "long_name": "Chlorophyll-a Concentration",
       "units": "ug L-1"
@@ -66,7 +66,7 @@
       "units": "ug L-1",
       "comment": "Sum of nitrate-N, nitrite-N and ammonium-N"
     },
-    "DIN:DIP": {
+    "DIN_to_DIP": {
       "long_name": "Dissolved Inorganic Nitrogen to Dissolved Inorganic Phosphorus Ratio",
       "units": "1",
       "comment": "Molar ratio DIN:DIP"
@@ -77,11 +77,11 @@
       "standard_name": "mass_concentration_of_dissolved_organic_carbon_in_sea_water",
       "processing_note": "Dissolved organic carbon concentrations originally reported in umol C L-1 were converted to mg C L-1 using the molar mass of carbon (12.0107 g mol-1)."
     },
-    "DOC:DIN": {
+    "DOC_to_DIN": {
       "long_name": "Dissolved Organic Carbon to Dissolved Inorganic Nitrogen Ratio",
       "units": "1"
     },
-    "DOC:TOTN": {
+    "DOC_to_TOTN": {
       "long_name": "Dissolved Organic Carbon to Total Nitrogen Ratio",
       "units": "1"
     },
@@ -95,7 +95,7 @@
       "units": "ug L-1",
       "processing_note": "Nitrite-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
-    "NO3+NO2-N_µgperl": {
+    "NO3_plus_NO2_N_ugperl": {
       "long_name": "Nitrate plus Nitrite Nitrogen Concentration",
       "units": "ug L-1",
       "processing_note": "Nitrate plus Nitrite Nitrogen concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
@@ -128,16 +128,16 @@
       "standard_name": "mass_concentration_of_organic_carbon_in_sea_water",
       "processing_note": "Total organic carbon concentrations originally reported in umol C L-1 were converted to mg C L-1 using the molar mass of carbon (12.0107 g mol-1)."
     },
-    "TOTN_µgperl": {
+    "TOTN_ugperl": {
       "long_name": "Total Nitrogen",
       "units": "ug L-1",
       "processing_note": "Total nitrogen concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
-    "TOTN:TOTP": {
+    "TOTN_to_TOTP": {
       "long_name": "Total Nitrogen to Total Phosphorus Ratio",
       "units": "1"
     },
-    "TOTP_µgperl": {
+    "TOTP_ugperl": {
       "long_name": "Total Phosphorus",
       "units": "ug L-1",
       "processing_note": "Total phosphorus concentrations originally reported in umol P L-1 were converted to ug P L-1 using the molar mass of phosphorus (30.9738 g mol-1)."

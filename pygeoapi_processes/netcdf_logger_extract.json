@@ -3,13 +3,13 @@
   "id": "netcdf-logger-extract",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
-    "en": "netcdf_logger_extract.R"
+    "en": "Extract river logger data from Baterod from NetCDF (THREDDS) to CSV"
   },
   "description": {
-    "en": "netcdf_logger_extract.R"
+    "en": "Extract river logger environmental monitoring data from a THREDDS-hosted NetCDF file. Supports optional filtering by date. Outputs a CSV containing datetime, value, unit, parameter, and derived time fields."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "NetCDF", "THREDDS"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Logger","River","Baterod", "NetCDF", "THREDDS", "Oslofjorden"],
   "links": [
     {
       "type": "text/html",
@@ -21,8 +21,8 @@
   ],
   "inputs": {
     "url_thredds": {
-      "title": "THREDDS URL",
-      "description": "THREDDS/OPeNDAP URL to the NetCDF dataset.",
+      "title": "Source",
+      "description": "THREDDS url to the NetCDF dataset (e.g. https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc).",
       "schema": {
         "type": "string"
       },
@@ -30,8 +30,8 @@
       "maxOccurs": 1
     },
     "start_date": {
-      "title": "start_date",
-      "description": "Start date (YYYY-MM-DD). If provided, end_date must also be provided. Use NULL to omit.",
+      "title": "Start date",
+      "description": "Start date (YYYY-MM-DD). If provided, end date must also be provided. Use NULL to omit.",
       "schema": {
         "type": "string",
         "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
@@ -40,8 +40,8 @@
       "maxOccurs": 1
     },
     "end_date": {
-      "title": "end_date",
-      "description": "End date (YYYY-MM-DD). If provided, start_date must also be provided. Use NULL to omit.",
+      "title": "End date",
+      "description": "End date (YYYY-MM-DD). If provided, start date must also be provided. Use NULL to omit.",
       "schema": {
         "type": "string",
         "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
@@ -50,29 +50,30 @@
       "maxOccurs": 1
     },
     "parameters": {
-      "title": "parameters",
+      "title": "Parameters",
       "description": "List of parameters. Use null (or omit) to extract all available parameters.",
-      "schema": {
-        "type": "string"
+       "schema": {
+        "type": "array",
+        "items": {"type": "string"}
       },
       "minOccurs": 0,
-      "maxOccurs": 10
+      "maxOccurs": 1
     }
   },
   "outputs": {
     "output_csv": {
-      "title": "Output CSV file",
-      "description": "CSV file written by the process.",
-      "schema": {
-        "type": "object",
-        "contentMediaType": "application/json"
-      }
+      "title": "CSV output",
+      "description": "Path to CSV file written by the process.",
+       "schema": {
+    "type": "object",
+    "contentMediaType": "application/json"
+  }
     }
   },
   "example": {
     "inputs": {
       "url_thredds": "https://thredds.niva.no/thredds/dodsC/datasets/loggers/glomma/baterod.nc",
-      "parameters": null,
+      "parameters": ["temp_water_avg", "phvalue_avg", "condvalue_avg", "turbidity_avg", "cdomdigitalfinal"],
       "start_date": "2023-01-01",
       "end_date": "2023-12-31"
     }

@@ -49,7 +49,7 @@ class NivaScatterPlotProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20260410-e5e7433"
+            self.image_name = "ferry-rscripts:20260422-b0a726b"
             self.script_name = 'netcdf_scatter_station_plot.R'
 
 

@@ -24,6 +24,8 @@ curl -X POST https://${PYSERVER}/processes/netcdf-tile-plot/execution \
         "start_date": "2023-01-01",
         "end_date": "2023-12-31",
         "parameters": ["salinity", "chlorophyll"],
+        "lat1": "58.90",
+        "lat2": "59.50",
         "storm_date": "2023-08-08"
     }
 }'; date
@@ -50,7 +52,7 @@ class NivaTilePlotProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-            self.image_name = "ferry-rscripts:20260410-e5e7433"
+            self.image_name = "ferry-rscripts:20260422-b0a726b"
             self.script_name = 'netcdf_tile_plot.R'
 
 
@@ -90,7 +92,7 @@ class NivaTilePlotProcessor(BaseProcessor):
         parameters = data.get('parameters')
         lat1 = data.get('lat1', None)
         lat2 = data.get('lat2', None)
-        storm_date = data.get('end_date', None)
+        storm_date = data.get('storm_date', None)
 
         # Check user inputs:
         if url_input_csv is None:

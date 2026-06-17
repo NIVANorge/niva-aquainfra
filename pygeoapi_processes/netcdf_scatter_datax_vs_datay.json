@@ -3,13 +3,13 @@
   "id": "netcdf-scatter-datax-vs-datay",
   "use_case": "NIVA Ferrybox Scripts",
   "title": {
-    "en": "netcdf_scatter_datax_vs_datay"
+    "en": "Scatterplot FerryBox against logger parameter"
   },
   "description": {
-    "en": "netcdf_scatter_datax_vs_datay"
+    "en": "Scatterplot FerryBox against logger based on the filtered parameter in joined dataframe. Option to summarise across specific waterbodies or latitudal transect of the FerryBox."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
-  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatter", "Month facet"],
+  "keywords": ["AquaINFRA", "NIVA use case", "Ferrybox", "Scatterplot", "Oslofjorden"],
   "inputs": {
     "url_input_csv": {
       "title": "Input joined CSV",
@@ -26,53 +26,61 @@
       "maxOccurs": 1
     },
     "waterbody_ids_to_summarize": {
-      "title": "Waterbody IDs/names to summarise across",
+      "title": "Waterbody IDs/names",
       "description": "Waterbody IDs/names to summarise across. Can be omitted.",
-      "schema": { "type": "string" },
+      "schema": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "waterbody_id_col": {
-      "title": "Waterbody ID column name in shapefile",
+      "title": "Waterbody ID column name",
       "description": "Waterbody ID column name in shapefile. Can be omitted.",
       "schema": { "type": "string" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "latitude_min": {
-      "title": "Latitude range to summarise across: Minimum latitude.",
+      "title": "Latitude minimum",
       "description": "Latitude range to summarise across: Minimum latitude. Can be omitted.",
       "schema": { "type": "number" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "latitude_max": {
-      "title": "Latitude range to summarise across: Maximum latitude.",
+      "title": "Latitude maximum",
       "description": "Latitude range to summarise across: Maximum latitude. Can be omitted.",
       "schema": { "type": "number" },
       "minOccurs": 0,
       "maxOccurs": 1
+    },
+    "study_area_layer":{
+      "title": "Study area layer",
+      "description": "Input of specific layer geometries if multiple are available in input waterbody file.",
+      "schema": {"type": "string"},
+      "minOccurs": 0,
+      "maxOccurs": 1    
     }
   },
   "outputs": {
     "scatter_plot": {
       "title": "Output plot ",
-      "description": "Link to output plot.",
+      "description": "Link to output plot from the process.",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"
       }
     }
   },
-  "example": {
-    "inputs": {
-      "url_input_csv": "https://something.csv",
-      "url_input_waterbody": "https://something.zip",
-      "waterbody_ids_to_summarize": ["id1", "id2", "id3"],
-      "waterbody_id_to_be_used": "id3",
-      "latitude_min": 59.1,
-      "latitude_max": 59.2
-    }
+ "example": {
+  "inputs": {
+    "url_input_csv": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/netcdf_join_dataframes/joined.csv",
+    "url_input_waterbody": "https://github.com/NIVANorge/niva-aquainfra/raw/refs/heads/main/Ferrybox%20scripts/test_data/Vannforekomster_202604091250.zip",
+    "study_area_layer": "VannforekomstKyst",
+    "waterbody_ids_to_summarize": ["Torbjørnskjær", "Nordre og Søndre Søster", "Tjøme", "Færder"],
+    "waterbody_id_col": "navn"
   }
 }
-
+}
