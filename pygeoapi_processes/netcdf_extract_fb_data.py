@@ -170,43 +170,42 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
         readonly_dir = None
 
 
+   
+        ###########
+        ### Run ###
+        ###########
+
+        # Convert parameters to string first used in filename and R args
+        if parameters is not None:
+            if isinstance(parameters, list):
+                params_string   = ','.join(parameters)   # til R args: "temperature,salinity"
+                params_filename = '-'.join(parameters)   # til filnavn: "temperature-salinity"
+            elif isinstance(parameters, str):
+                params_string   = parameters
+                params_filename = parameters.replace(',', '-')
+        else:
+            params_string   = None
+            params_filename = "all"
+
         ###############
         ### Outputs ###
         ###############
 
-        # Where to store output data
         output_dir = f'{self.download_dir}/out/{self.process_id}/job_{self.job_id}'
         output_url = f'{self.download_url}/out/{self.process_id}/job_{self.job_id}'
         os.makedirs(output_dir, exist_ok=True)
         LOGGER.debug(f'All results will be stored     in: {output_dir}')
         LOGGER.debug(f'All results will be accessible in: {output_url}')
 
-        # Output filename
-        # ferrybox_temperature_salinity_oxygen_sat_chlorophyll_turbidity_fdom_20251103_163347.csv
-        params_string = '-'.join(parameters)
-        out_result_path = f'{output_dir}/ferrybox_{self.job_id}_{params_string}.csv'
-        out_result_url  = f'{output_url}/ferrybox_{self.job_id}_{params_string}.csv'
+        # Output filnavn bruger params_filename (bindestreg-separeret)
+        out_result_path = f'{output_dir}/ferrybox_{self.job_id}_{params_filename}.csv'
+        out_result_url  = f'{output_url}/ferrybox_{self.job_id}_{params_filename}.csv'
 
-
-        ###########
-        ### Run ###
-        ###########
-
-
-        # Assemble R args:
-        #params_string = ','.join(parameters)
-        if parameters is not None:
-            if isinstance(parameters, list):
-                parameters = ','.join(parameters)   # Handles list
-            elif isinstance(parameters, str):
-                parameters = parameters             # Handles single input
-        
-        
-        
+        # Assemble R args (bruger params_string med komma)
         r_args = [url_thredds, out_result_path, params_string, start_date, end_date, lon_min, lon_max, lat_min, lat_max]
         LOGGER.debug(f"r_args: {r_args}")
 
-        # Actually call R script:
+        # Call R script:
         returncode, stdout, stderr, user_err_msg = docker_utils.run_docker_container3(
             self.docker_executable,
             self.image_name,
@@ -215,17 +214,13 @@ class NivaFerryboxExtractionProcessor(BaseProcessor):
             r_args
         )
 
-        # Return R error message if exit code not 0:
         if not returncode == 0:
-            raise ProcessorExecuteError(user_msg = user_err_msg)
-
-
+            raise ProcessorExecuteError(user_msg=user_err_msg)
 
         ######################
         ### Return results ###
         ######################
 
-        # Return link to output csv files and return it wrapped in JSON:
         outputs = {
             "outputs": {
                 "csv_results": {
