@@ -155,9 +155,17 @@ class NivaNetcdfLoggerExtractProcessor(BaseProcessor):
         ###########
 
         # Make a proper string from the parameters that we can pass over to the R script:
+        #if parameters is not None:
+        #    parameters = ','.join(parameters)
+# Make a proper string from the parameters that we can pass over to the R script:
         if parameters is not None:
-            parameters = ','.join(parameters)
+            if isinstance(parameters, list):
+                parameters = ','.join(parameters)   # Handles list
+            elif isinstance(parameters, str):
+                parameters = parameters             # Handles single input
 
+
+        
         # Assemble R args:
         r_args = [
             url_thredds,
