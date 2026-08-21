@@ -161,48 +161,48 @@ assessment_plot <- function(
 
 resolve_study_area_path <- function(input_study_area) {
   if (is.null(input_study_area)) return(NULL)
-  
-  if (!(startsWith(input_study_area, "http") || file.exists(input_study_area))) {
+
+  is_url <- startsWith(input_study_area, "http")
+  if (!(is_url || file.exists(input_study_area))) {
     stop("input_study_area must be NULL, a valid file path, or a valid URL.")
   }
-  
-  input_path <- input_study_area
-  
-  if (startsWith(input_study_area, "http") && endsWith(tolower(input_study_area), "zip")) {
-    message("DEBUG: Downloading ZIP: ", input_study_area)
-    
-    temp_zip <- tempfile(fileext = ".zip")
-    extract_dir <- tempfile()
-    dir.create(extract_dir)
-    
-    download.file(input_study_area, temp_zip, mode = "wb")
-    unzip(temp_zip, exdir = extract_dir)
-    
-    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
-    
-    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
-    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
-    spatial_files <- c(shp_files, geojson_files)
-    
-    if (length(spatial_files) == 0) {
-      stop("No .shp or .geojson/.json file found in ZIP.")
-    }
-    
-    if (length(spatial_files) > 1) {
-      stop(
-        "ZIP contains multiple spatial files. This script requires exactly one spatial file inside the ZIP.\n",
-        "Available files: ", paste(basename(spatial_files), collapse = ", ")
-      )
-    }
-    
-    input_path <- spatial_files[1]
-    message("DEBUG: Selected spatial file: ", input_path)
-    
-  } else if (startsWith(input_study_area, "http") && endsWith(tolower(input_study_area), "shp")) {
-    stop("Remote shapefile must be provided as ZIP.")
+
+  # Hent til lokal fil hvis det er en URL
+  local_file <- input_study_area
+  if (is_url) {
+    local_file <- tempfile()
+    download.file(input_study_area, local_file, mode = "wb")
   }
-  
-  input_path
+
+  # Afgør filtype ud fra INDHOLD, ikke endelse (Galaxy giver .dat-navne)
+  # Zip-filer starter med magic bytes "PK\x03\x04"
+  con <- file(local_file, "rb")
+  magic <- readBin(con, "raw", n = 4)
+  close(con)
+  is_zip <- length(magic) >= 2 && magic[1] == as.raw(0x50) && magic[2] == as.raw(0x4B)  # "PK"
+
+  if (is_zip) {
+    extract_dir <- tempfile(); dir.create(extract_dir)
+    unzip(local_file, exdir = extract_dir)
+    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
+    spatial_files <- files[grepl("\\.(shp|geojson|json)$", files, ignore.case = TRUE)]
+    if (length(spatial_files) == 0) stop("No .shp or .geojson/.json file found in ZIP.")
+    if (length(spatial_files) > 1) stop("ZIP contains multiple spatial files: ",
+                                        paste(basename(spatial_files), collapse = ", "))
+    return(spatial_files[1])
+  }
+
+  # Ellers: antag det er en geojson/json-tekstfil (også når den hedder .dat)
+  # Kopiér til en fil med .geojson-endelse så sf/GDAL genkender den
+  txt <- readLines(local_file, warn = FALSE)
+  if (any(grepl("FeatureCollection|\"type\"\\s*:", txt))) {
+    geojson_path <- tempfile(fileext = ".geojson")
+    writeLines(txt, geojson_path)
+    return(geojson_path)
+  }
+
+  # Fald tilbage til den oprindelige sti (fx en rigtig .shp/.geojson på disk)
+  local_file
 }
 
 read_study_area <- function(path_to_study_area, layer_input) {
