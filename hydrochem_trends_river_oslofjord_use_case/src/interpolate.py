@@ -1,35 +1,38 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Mapping
-from src.export_netcdf import export_dataset
+from typing import Any
 
-from src.utils import (
-    ensure_dirs,
-    resolve_path,
-    netcdf_to_dataframe,
-    standardize_time_and_station,
-    merge_daily_discharge_and_chemistry,
-)
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
 
 from pygam import LinearGAM, s, te
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-plt.style.use("ggplot")
-
+from .export_netcdf import export_dataset
+from .utils import (
+    ensure_dirs,
+    merge_daily_discharge_and_chemistry,
+    netcdf_to_dataframe,
+    resolve_path,
+    standardize_time_and_station,
+    save_or_show_plot,
+)
 
 # ----------------------------- utils -----------------------------
-def meta_cfg(cfg: Dict[str, Any]) -> Dict[str, Any]:
+def meta_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return (cfg.get("meta") or {}).copy()
 
 
-def read_meta_value(df_like, m: Dict[str, Any], key: str) -> Optional[Any]:
+def read_meta_value(
+    df_like,
+    m: dict[str, Any],
+    key: str,
+) -> Any | None:
     """
     Pull a meta value from DataFrame (first non-null) or constant.
     Works for both pandas DataFrame or xarray Dataset via .to_dataframe().
@@ -51,7 +54,10 @@ def read_meta_value(df_like, m: Dict[str, Any], key: str) -> Optional[Any]:
         return spec["value"]
     return None
 
-def render_template(s: Optional[str], ctx: Dict[str, Any]) -> Optional[str]:
+def render_template(
+    s: str | None,
+    ctx: dict[str, Any],
+) -> str | None:
     if not s:
         return None
     return s.format(**ctx)
@@ -68,15 +74,15 @@ def method_pretty_name(suffix: str) -> str:
 def build_method_comment(
     var: str,
     selected_col: str,
-    fallback_col: Optional[str],
-    scores_for_station: Mapping[str, Dict[str, float]]
+    fallback_col: str | None,
+    scores_for_station: Mapping[str, dict[str, float]],
 ) -> str:
     """ Builds a description of how the final daily series was produced. """
 
     base_suffix = selected_col.replace(f"{var}_", "")
     base_txt = method_pretty_name(base_suffix)
 
-    r2_base = scores_for_station.get(base_suffix, {}).get("R2")
+    r2_base = scores_for_station.get(base_suffix, {}).get("r2")
     if r2_base is not None:
         base_txt += f" (R^2 = {r2_base:.3f})"
 
@@ -85,17 +91,17 @@ def build_method_comment(
 
     fb_suffix = fallback_col.replace(f"{var}_", "")
     fb_txt = method_pretty_name(fb_suffix)
-    r2_fb = scores_for_station.get(fb_suffix, {}).get("R2")
+    r2_fb = scores_for_station.get(fb_suffix, {}).get("r2")
     if r2_fb is not None:
         fb_txt += f" (R^2 = {r2_fb:.3f})"
 
     return f"{base_txt}; gaps filled from {fb_txt}."
 
 def build_global_attrs(
-    cfg: Dict[str, Any],
+    cfg: dict[str, Any],
     station_id: str,
     time_name: str,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     md = cfg.get("metadata", {}) or {}
     md_tpl = md.get("templates", {}) or {}
     md_defaults = md.get("defaults", {}) or {}
@@ -123,7 +129,7 @@ def build_global_attrs(
 
     # timestamps
     if md_timestamps.get("date_created") == "auto":
-        base["date_created"] = pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        base["date_created"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
     else:
         base.setdefault("date_created", md_timestamps.get("date_created"))
 
@@ -131,7 +137,7 @@ def build_global_attrs(
     return {k: str(v) for k, v in base.items()}
 
 # ------------------------- interpolation -------------------------
-def interpolate_with_gap_limit(series: pd.Series, max_gap: int, method="linear", order=None) -> pd.Series:
+def interpolate_with_gap_limit(series: pd.Series, max_gap: int, method="linear", order: int | None = None) -> pd.Series:
     """Interpolate a series but only across gaps up to max_gap samples."""
     if method in ["spline", "polynomial"] and order is None:
         raise ValueError(f"Interpolation method '{method}' requires 'order'.")
@@ -139,12 +145,12 @@ def interpolate_with_gap_limit(series: pd.Series, max_gap: int, method="linear",
 
 def interpolate_station_df(
     df: pd.DataFrame,
-    variables: List[str],
+    variables: list[str],
     date_col="date",
-    meta_cols: Optional[List[str]] = None,
+    meta_cols: list[str] | None = None,
     max_gap=30,
     method="linear",
-    order=None,
+    order: int | None = None,
 ) -> pd.DataFrame:
     """Resample to daily frequency and interpolate  variables with a maximum gap limit."""
 
@@ -169,10 +175,10 @@ def compute_gam(
     var: str,
     discharge_col="discharge",
     date_col="date",
-    station_name: Optional[str] = None,
-    n_splines_xy: Tuple[int, int] = (10, 20),
-    lam_grid: Optional[np.ndarray] = None,
-) -> Optional[pd.DataFrame]:
+    station_name: str | None = None,
+    n_splines_xy: tuple[int, int] = (10, 20),
+    lam_grid: np.ndarray | None = None,
+) -> pd.DataFrame | None:
     """Fit a GAM on discharge and day - of - year and predict within the observed time range."""
 
     out = df.copy()
@@ -217,7 +223,7 @@ def compute_gam(
 
 def apply_gam_to_df(
     df: pd.DataFrame,
-    variables: List[str],
+    variables: list[str],
     discharge_col="discharge",
     date_col="date",
     station_name="",
@@ -265,7 +271,7 @@ def monthly_to_daily_for_year(monthly_df: pd.DataFrame, year: int) -> pd.DataFra
     tmp = tmp.map(lambda x: 0 if pd.notna(x) and x < 0 else x)
     return tmp
 
-def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: List[str], date_col="date") -> pd.DataFrame:
+def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: list[str], date_col="date") -> pd.DataFrame:
     """ Compute monthly medians per year and interpolate to daily values. """
 
     s = station_df.copy()
@@ -291,7 +297,7 @@ def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: List
 
 def monthwise_loglog_regressions(
     station_df: pd.DataFrame,
-    variables: List[str],
+    variables: list[str],
     discharge_col: str = "discharge",
     date_col: str = "date",
     min_points: int = 5,
@@ -341,13 +347,8 @@ def monthwise_loglog_regressions(
             yhat_log = mdl.predict(X_all)
 
             if bias_correct:
-                # smearing-style correction in log10 space: residuals are in log10 units; convert variance to multiplicative factor.
                 resid = y - mdl.predict(X)
-                sigma2 = float(np.var(resid, ddof=1)) if len(resid) > 1 else 0.0
-                # corr = 10 ** (0.5 * sigma2 * np.log(10) ** 2 / (np.log(10) ** 2))
-                # # The above simplifies to: corr = 10 ** (0.5 * sigma2)
-                # # Keeping it explicit isn't necessary—see simpler line below:
-                corr = 10 ** (0.5 * sigma2)
+                corr = float(np.mean(10 ** resid))
             else:
                 corr = 1.0
 
@@ -375,8 +376,8 @@ def plot_qc(
     unit_unit_col="unit",
     station_col="river_name",
     date_col="date",
-    r2_value: Optional[float] = None,
-    save_path: Optional[Path] = None,
+    r2_value: float | None = None,
+    save_path: Path | None = None,
 ) -> None:
     unit = ""
     if var in set(pars_meta_df[unit_par_col]):
@@ -397,15 +398,19 @@ def plot_qc(
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        plt.close()
-    else:
-        plt.show()
+    save_or_show_plot(
+        save_path=save_path,
+        dpi=300,
+    )
+    # if save_path:
+    #     plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    #     plt.close()
+    # else:
+    #     plt.show()
 
 
 # ------------------------------- main --------------------------------
-def interpolate(cfg: Dict[str, Any]) -> List[Path]:
+def interpolate(cfg: dict[str, Any]) -> list[Path]:
     """
     Run full daily interpolation for ONE river/station, driven by JSON.
     Returns list of NetCDF paths
@@ -434,9 +439,9 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     q_rename = rename_maps.get("q", {})
 
     # variables & metadata
-    chem_variables: List[str] = cfg.get("chem_variables", [])
+    chem_variables: list[str] = cfg.get("chem_variables", [])
     pars_meta_df = pd.DataFrame(cfg.get("pars_metadata", []))
-    standard_name_map: Dict[str, str] = cfg.get("standard_name_map", {})
+    standard_name_map: dict[str, str] = cfg.get("standard_name_map", {})
 
     # interpolation
     interp_cfg = cfg.get("interpolation", {})
@@ -592,8 +597,11 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     df_sel = df_daily_all.copy()
 
     # method selection per variable
-    methods_chosen: Dict[str, Any] = {}
-    method_scores: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = {}
+    methods_chosen: dict[str, Any] = {}
+    method_scores: dict[
+        str,
+        dict[str, dict[str, dict[str, float]]],
+    ] = {}
 
     for var in chem_variables:
         method_scores[var] = {}
@@ -625,14 +633,14 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
             if valid.sum() < 10:
                 continue
             r2 = r2_score(y_obs[valid], y_pred[valid])
-            method_scores[var].setdefault(station_id, {})[suffix] = {"R^2": r2}
+            method_scores[var].setdefault(station_id, {})[suffix] = {"r2": r2}
             if r2 >= r2_threshold:
                 good_methods.append({'suffix': suffix, 'r2': r2, 'colname': colname, 'y_pred': y_pred})
 
         good_methods.sort(key=lambda x: x['r2'], reverse=True)
 
-        selected_col: Optional[str] = None
-        selected_series: Optional[pd.Series] = None
+        selected_col: str | None = None
+        selected_series: pd.Series | None = None
 
         # outlier check
         for m in good_methods:
@@ -679,7 +687,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
                 if valid.sum() < 10:
                     continue
                 r2b = r2_score(y_obs[valid], y_pred[valid])
-                method_scores[var].setdefault(station_id, {})[suffix] = {"R^2": r2b}
+                method_scores[var].setdefault(station_id, {})[suffix] = {"r2": r2b}
 
                 if long_gap:
                     obs_min, obs_max = y_obs.min(), y_obs.max()
@@ -737,7 +745,7 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
 
         # optionally show only base R^2 in title
         base_suffix = entry["selected_suffix"]
-        r2_for_label = scores_for_station.get(base_suffix, {}).get("R2")
+        r2_for_label = scores_for_station.get(base_suffix, {}).get("r2")
 
         plot_qc(
             df_plot,
@@ -840,11 +848,8 @@ def interpolate(cfg: Dict[str, Any]) -> List[Path]:
     # global attrs
     ds.attrs = build_global_attrs(
         cfg=cfg,
-        # ds=ds,
         station_id=station_id,
         time_name=time_name_out,
-        # lat=float(lat) if lat is not None else None,
-        # lon=float(lon) if lon is not None else None,
     )
 
     export_cfg = cfg.get("export", {})

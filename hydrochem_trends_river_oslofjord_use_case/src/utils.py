@@ -1,31 +1,12 @@
-# from __future__ import annotations
-#
-# import json
-#
-# from pathlib import Path
-# from typing import Dict, Any, List
-#
-# def ensure_dirs(*paths: str | Path) -> None:
-#     for p in paths:
-#         Path(p).mkdir(parents=True, exist_ok=True)
-#
-# def load_json(path: str | Path) -> Dict[str, Any]:
-#     with open(path, "r", encoding="utf-8") as f:
-#         return json.load(f)
-#
-# def expand_globs(root: str | Path, pattern: str) -> List[Path]:
-#     root = Path(root)
-#     return sorted([Path(p) for p in root.glob(pattern)])
-
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 import pandas as pd
 import xarray as xr
-
 
 # ---------------------------- filesystem ----------------------------
 
@@ -43,7 +24,11 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def resolve_path(p: str | Path, *, root: Optional[str | Path] = None) -> Path:
+def resolve_path(
+    p: str | Path,
+    *,
+    root: str | Path | None = None,
+) -> Path:
     """
     Resolve p to an absolute path.
     - If p is already absolute -> return it
@@ -58,11 +43,11 @@ def resolve_path(p: str | Path, *, root: Optional[str | Path] = None) -> Path:
 
 # ---------------------------- config/json ----------------------------
 
-def load_json(path: str | Path) -> Dict[str, Any]:
+def load_json(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def expand_globs(root: str | Path, pattern: str) -> List[Path]:
+def expand_globs(root: str | Path, pattern: str,) -> list[Path]:
     root = Path(root)
     return sorted(root.glob(pattern))
 
@@ -97,7 +82,7 @@ def standardize_time_and_station(
     date_col_out: str = "date",
     station_col_in: str = "station_name",
     station_col_out: str = "river_name",
-    station_rename_map: Optional[Dict[str, str]] = None,
+    station_rename_map: dict[str, str] | None = None,
     normalize_date: bool = True,
 ) -> pd.DataFrame:
     """
@@ -135,7 +120,7 @@ def merge_daily_discharge_and_chemistry(
     station_col: str = "river_name",
     date_col: str = "date",
     discharge_col: str = "discharge",
-    drop_wc_cols: Sequence[str] | bool = False,
+    drop_wc_cols: Sequence[str] | None = None,
 ) -> pd.DataFrame:
     """
     Creates a complete daily date range based on Q coverage, merges discharge and chemistry,
@@ -153,18 +138,24 @@ def merge_daily_discharge_and_chemistry(
     if q.empty:
         raise ValueError(f"No discharge rows for station '{station_name}'")
 
-    q = q.drop_duplicates(subset=[date_col]).copy()
+    q = (
+        q.groupby(date_col, as_index=False)[discharge_col]
+        .mean()
+    )
 
     full_dates = pd.date_range(q[date_col].min(), q[date_col].max(), freq="D")
     out = pd.DataFrame({date_col: full_dates})
     out = out.merge(q[[date_col, discharge_col]], on=date_col, how="left")
 
-    if isinstance(drop_wc_cols, list) or isinstance(drop_wc_cols, tuple):
-        wc = wc.drop(columns=list(drop_wc_cols), errors="ignore")
+    if drop_wc_cols:
+        wc = wc.drop(
+            columns=list(drop_wc_cols),
+            errors="ignore",
+        )
 
     out = out.merge(wc, on=date_col, how="left")
 
-    # average duplicates by day (numeric only)
+    # average duplicates by day
     num_cols = out.select_dtypes(include="number").columns.tolist()
     out_num = out.groupby(date_col)[num_cols].mean(numeric_only=True).reset_index()
     out_num[station_col] = station_name
