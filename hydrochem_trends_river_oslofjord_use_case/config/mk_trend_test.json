@@ -46,7 +46,13 @@
         "name": "marine_daily",
         "data_type": "marine",
         "mode": "file",
-        "path": "data/processed/marine/oslofjord_cleaned_standardized_data.nc",
+        "path": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
+
+        "variable_name_rules": {
+          "replace": {
+            "-": "_"
+          }
+        },
 
         "station_dim": "station",
         "station_coord": "station_name",
@@ -122,4 +128,5 @@
     "ncols": 3,
     "non_sig_alpha": 0.25
   }
+}
 

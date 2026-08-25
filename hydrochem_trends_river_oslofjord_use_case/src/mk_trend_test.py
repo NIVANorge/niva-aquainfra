@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -11,27 +11,17 @@ import pandas as pd
 import xarray as xr
 import pymannkendall as mk
 from scipy.stats import theilslopes
-from src.utils import resolve_path, ensure_dirs
 
+from .utils import (
+    ensure_dirs,
+    resolve_input_source,
+    resolve_path,
+)
 
 plt.style.use("ggplot")
 
 
-# def _project_root() -> Path:
-#     # src/mk_trend_test.py -> parents[1] = project root if src/ is inside the project
-#     return Path(__file__).resolve().parents[1]
-
-#
-# def _abs_path(p: str | Path) -> Path:
-#     p = Path(p)
-#     return p if p.is_absolute() else (_project_root() / p)
-
-
-# def _ensure_dir(p: Path) -> None:
-#     p.mkdir(parents=True, exist_ok=True)
-
-
-def _infer_time_name(ds: xr.Dataset) -> Optional[str]:
+def _infer_time_name(ds: xr.Dataset) -> str | None:
     for c in ("date", "time", "datetime", "timestamp", "sample_date"):
         if c in ds.coords:
             return c
@@ -41,7 +31,28 @@ def _infer_time_name(ds: xr.Dataset) -> Optional[str]:
     return None
 
 
-def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Optional[str] = None) -> List[str]:
+def _resolve_variable_name(
+    var: str,
+    rules: dict[str, Any] | None = None,
+) -> str:
+    """
+    Convert an analysis variable name to the name used by a specific input source.
+    Rules are optional and configured per input source.
+    """
+    rules = rules or {}
+    name = var
+
+    # Optional explicit mappings for exceptional cases
+    name = rules.get("map", {}).get(name, name)
+
+    # Optional generic replacements
+    for old, new in rules.get("replace", {}).items():
+        name = name.replace(old, new)
+
+    return name
+
+
+def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: str | None = None) -> list[str]:
     if station_coord and station_coord in ds.coords:
         vals = ds[station_coord].values
     elif station_coord and station_coord in ds.data_vars:
@@ -52,7 +63,7 @@ def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Opti
         n = int(ds.dims.get(station_dim, 0))
         return [f"{station_dim}_{i}" for i in range(n)]
 
-    out: List[str] = []
+    out: list[str] = []
     for v in vals:
         try:
             if isinstance(v, bytes):
@@ -64,7 +75,7 @@ def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Opti
     return out
 
 
-def _slice_period(s: pd.Series, *, start: Optional[str], end: Optional[str]) -> pd.Series:
+def _slice_period(s: pd.Series, *, start: str | None, end: str | None) -> pd.Series:
     """Slice datetime-indexed Series to [start, end]."""
     if s is None or s.empty:
         return s
@@ -100,7 +111,7 @@ def _aggregate_series(
     *,
     frequency: str,
     how: str = "mean",
-    coverage: Optional[Dict[str, Any]] = None,
+    coverage: dict[str, Any] | None = None,
 ) -> pd.Series:
 
     coverage = coverage or {}
@@ -142,61 +153,14 @@ def _aggregate_series(
 
         return out.dropna()
 
-    # if frequency == "seasonal_by_season":
-    #     pieces = []
-    #
-    #     for season in ["winter", "spring", "summer", "autumn"]:
-    #         ss = s[s.index.month.map(_season_name) == season]
-    #
-    #         if ss.empty:
-    #             continue
-    #
-    #         seasonal_year = ss.index.year.copy()
-    #
-    #         # December belongs to the following winter year
-    #         if season == "winter":
-    #             seasonal_year = ss.index.year + (ss.index.month == 12).astype(int)
-    #
-    #         tmp = pd.DataFrame({
-    #             "value": ss.values,
-    #             "seasonal_year": seasonal_year,
-    #         })
-    #
-    #         grouped = tmp.groupby("seasonal_year")["value"]
-    #
-    #         if how == "sum":
-    #             out = grouped.sum(min_count=1)
-    #         elif how == "mean":
-    #             out = grouped.mean()
-    #         else:
-    #             raise ValueError(f"Unsupported aggregation: {how}")
-    #
-    #         counts = grouped.count()
-    #         out = out[counts >= min_obs_per_period].dropna()
-    #
-    #         if out.empty:
-    #             continue
-    #
-    #         # Use Jan 1 of the seasonal year as plotting/index date
-    #         out.index = pd.to_datetime(out.index.astype(str) + "-01-01")
-    #         out.name = season
-    #         pieces.append(out)
-    #
-    #     if not pieces:
-    #         return pd.Series(dtype=float)
-    #
-    #     # This returns all seasons stacked, with duplicate years allowed.
-    #     # The season label is stored later in analyze_trends().
-    #     return pd.concat(pieces).sort_index()
-
     raise ValueError(f"Unsupported frequency: {frequency}")
 
 def _aggregate_seasonal_by_season(
     s: pd.Series,
     *,
     how: str = "mean",
-    coverage: Optional[Dict[str, Any]] = None
-) -> Dict[str, pd.Series]:
+    coverage: dict[str, Any] | None = None
+) -> dict[str, pd.Series]:
 
     coverage = coverage or {}
     min_obs_per_period = int(coverage.get("min_obs_per_period", 1))
@@ -205,7 +169,7 @@ def _aggregate_seasonal_by_season(
     s.index = pd.to_datetime(s.index)
     s = s.dropna().sort_index()
 
-    out_by_season: Dict[str, pd.Series] = {}
+    out_by_season: dict[str, pd.Series] = {}
 
     for season in ["winter", "spring", "summer", "autumn"]:
         ss = s[s.index.month.map(_season_name) == season]
@@ -259,7 +223,7 @@ def _aggregate_seasonal_by_season(
 
     return out_by_season
 
-def _find_site_file(folder: Path, site: str) -> Optional[Path]:
+def _find_site_file(folder: Path, site: str) -> Path | None:
     if not folder.exists():
         return None
     site_l = site.lower().replace(" ", "_")
@@ -275,15 +239,15 @@ def _find_site_file(folder: Path, site: str) -> Optional[Path]:
 
 
 def _open_series_and_unit_from_nc(
-    nc_path: Path,
+    nc_path: str | Path,
     var: str,
     *,
-    station: Optional[str] = None,
-    station_dim: Optional[str] = None,
-    station_coord: Optional[str] = None,
-    depth_dim: Optional[str] = None,
-    depth_selection: Optional[Dict[str, Any]] = None,
-) -> Tuple[Optional[pd.Series], Optional[str]]:
+    station: str | None = None,
+    station_dim: str | None = None,
+    station_coord: str | None = None,
+    depth_dim: str | None = None,
+    depth_selection: dict[str, Any] | None = None,
+) -> tuple[pd.Series | None, str | None]:
 
     ds = xr.open_dataset(nc_path)
 
@@ -409,7 +373,10 @@ def _open_series_and_unit_from_nc(
 
     remaining_dims = [d for d in da.dims if d != time_coord]
     if remaining_dims:
-        print(f"[trends] Skipping {var} in {nc_path.name}: remaining dimensions {remaining_dims}")
+        print(
+            f"[trends] Skipping {var} in {nc_path}: "
+            f"remaining dimensions {remaining_dims}"
+        )
         return None, unit
 
     t = pd.to_datetime(ds[time_coord].values, errors="coerce")
@@ -423,35 +390,50 @@ def _open_series_and_unit_from_nc(
     return y, unit
 
 def _display_unit_for_plot(
-    base_unit: Optional[str],
+    base_unit: str | None,
     *,
     frequency: str,
+    aggregation: str,
     var: str,
     non_mass_vars: set[str],
     undefined_label: str = "undefined",
 ) -> str:
     """
-    For plotting labels:
-      - if base_unit == "tonnes" -> tonnes/<period>
-      - non-mass vars: keep base_unit (or undefined_label)
-      - if base_unit undefined -> undefined_label
+    Return the unit after temporal aggregation.
+
+    Examples:
+    - daily flux in tonnes/day summed monthly -> tonnes/month
+    - daily flux in tonnes/day summed annually -> tonnes/year
+    - daily flux in tonnes/day summed by season -> tonnes/season
+    - concentration averaged over time -> original concentration unit
     """
+
     bu = (base_unit or "").strip()
 
-    if var in non_mass_vars:
-        return bu if bu else undefined_label
-
-    if bu.lower() in {"", "undefined", "unknown"}:
+    if not bu or bu.lower() in {"undefined", "unknown"}:
         return undefined_label
 
-    if bu == "tonnes":
+    # Variables that are not mass fluxes keep their original units.
+    if var in non_mass_vars:
+        return bu
+
+    # Summing a daily mass flux changes the temporal unit.
+    if aggregation == "sum" and bu.lower() in {
+        "tonnes/day",
+        "tonnes d-1",
+        "tonnes d^-1",
+    }:
         if frequency == "monthly":
             return "tonnes/month"
+
         if frequency == "annual":
             return "tonnes/year"
-        if frequency == "daily":
-            return "tonnes/day"
 
+        if frequency == "seasonal_by_season":
+            return "tonnes/season"
+
+    # For means, or units that do not need conversion,
+    # preserve the source unit.
     return bu
 
 def _period_str(idx: pd.Index) -> str:
@@ -470,18 +452,6 @@ def _mk_trend_label(trend: Any) -> str:
         return "no trend"
     return str(trend)
 
-
-# def _x_for_fit(s: pd.Series, frequency: str) -> np.ndarray:
-#     """
-#     x scale used for fitting:
-#       - annual: YEAR integers
-#       - monthly: matplotlib date numbers
-#     """
-#     if frequency == "annual":
-#         years = pd.to_datetime(s.index).year.astype(float)
-#         return years.to_numpy()
-#     dt = pd.to_datetime(s.index).to_pydatetime()
-#     return mdates.date2num(dt).astype(float)
 
 def _x_for_fit(s: pd.Series, frequency: str) -> np.ndarray:
     """
@@ -523,7 +493,7 @@ def _mk_test(
     frequency: str,
     mk_mode: str,
     alpha: float,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
 
     y = y.dropna().sort_index()
 
@@ -557,8 +527,8 @@ def _mk_test(
 def _plot_station_grid(
     station: str,
     frequency: str,
-    series_by_var: Dict[str, pd.Series],
-    units_by_var: Dict[str, str],
+    series_by_var: dict[str, pd.Series],
+    units_by_var: dict[str, str],
     mk_df_station: pd.DataFrame,
     out_png: Path,
     *,
@@ -654,7 +624,7 @@ def _plot_trend_matrix_for_variable(
     *,
     variable: str,
     frequency: str,
-    stations_order: List[str],
+    stations_order: list[str],
     out_png: Path,
     alpha: float,
     non_sig_alpha: float = 0.25,
@@ -740,14 +710,14 @@ def _plot_trend_matrix_for_variable(
 
 
 def analyze_trends(
-    cfg: Dict[str, Any],
+    cfg: dict[str, Any],
     *,
     frequency: str = "config",
     mk_mode: str = "auto",
-    stations: Optional[List[str]] = None,
-) -> Dict[str, Path]:
+    stations: list[str] | None = None,
+) -> dict[str, Path]:
 
-    vars_to_test: List[str] = cfg.get("variables", [])
+    vars_to_test: list[str] = cfg.get("variables", [])
     if not vars_to_test:
         raise ValueError("No variables in cfg['variables'].")
 
@@ -758,7 +728,7 @@ def analyze_trends(
 
     trend_opt = cfg.get("trend_options", {})
     alpha = float(trend_opt.get("alpha", 0.05))
-    min_points = trend_opt.get("min_points", {"monthly": 36, "annual": 5, "seasonal": 12})
+    min_points = trend_opt.get("min_points", {"monthly": 36, "annual": 5, "seasonal_by_season": 12})
 
     period_cfg = trend_opt.get("period", {}) if isinstance(trend_opt.get("period", {}), dict) else {}
     start_date = period_cfg.get("start") or None
@@ -803,27 +773,35 @@ def analyze_trends(
     if not stations_cfg and stations is None:
         raise ValueError("No stations provided.")
 
-    results_by_station: Dict[str, Dict[str, pd.DataFrame]] = {}
-    all_rows: List[Dict[str, Any]] = []
+    results_by_station: dict[
+        str,
+        dict[str, pd.DataFrame],
+    ] = {}
+    all_rows: list[dict[str, Any]] = []
 
     for freq in freq_list:
         print(f"\n[trends] Frequency: {freq}")
 
-        mk_rows_all: List[Dict[str, Any]] = []
-        stations_order_all: List[str] = []
+        mk_rows_all: list[dict[str, Any]] = []
+        stations_order_all: list[str] = []
 
         for fcfg in daily_inputs:
             data_type = str(fcfg.get("data_type", "river"))
             mode = str(fcfg.get("mode", "folder")).lower()
-            src_path = resolve_path(fcfg.get("path", ""))
+            src_path = resolve_input_source(fcfg.get("path", ""))
             aggregation = str(fcfg.get("aggregation", "mean"))
+
+            variable_name_rules = fcfg.get(
+                "variable_name_rules",
+                {},
+            )
 
             print(
                 f"[trends] Source: {fcfg.get('name')} | "
                 f"type={data_type} | aggregation={aggregation}"
             )
 
-            if not src_path.exists():
+            if isinstance(src_path, Path) and not src_path.exists():
                 print(f"[trends] Missing daily input: {src_path}")
                 continue
 
@@ -847,7 +825,10 @@ def analyze_trends(
             if mode == "file" and stations_local == ["all"]:
                 with xr.open_dataset(src_path) as ds:
                     if not station_dim:
-                        raise ValueError("station_dim is required when mode='file'")
+                        raise ValueError(
+                            "station_dim is required when mode='file'"
+                        )
+
                     stations_local = _list_stations_from_ds(
                         ds,
                         station_dim=str(station_dim),
@@ -858,21 +839,29 @@ def analyze_trends(
 
             for st in stations_local:
 
-                series_by_var: Dict[str, pd.Series] = {}
-                units_by_var: Dict[str, str] = {}
+                series_by_var: dict[str, pd.Series] = {}
+                units_by_var: dict[str, str] = {}
 
                 for var in vars_to_test:
+                    source_var = _resolve_variable_name(
+                        var,
+                        variable_name_rules,
+                    )
+
                     if mode == "folder":
                         nc_path = _find_site_file(src_path, st)
                         if nc_path is None:
                             continue
 
-                        s, unit = _open_series_and_unit_from_nc(nc_path, var)
+                        s, unit = _open_series_and_unit_from_nc(
+                            nc_path,
+                            source_var,
+                        )
 
                     else:
                         s, unit = _open_series_and_unit_from_nc(
                             src_path,
-                            var,
+                            source_var,
                             station=st,
                             station_dim=str(station_dim) if station_dim else None,
                             station_coord=station_coord,
@@ -900,6 +889,7 @@ def analyze_trends(
                     unit_display = _display_unit_for_plot(
                         unit,
                         frequency=freq,
+                        aggregation=aggregation,
                         var=var,
                         non_mass_vars=non_mass_vars,
                         undefined_label=undefined_unit_label,
@@ -1150,8 +1140,6 @@ def analyze_trends(
                         (df_all["variable"] == var) &
                         (df_all["season"] == season_name)
                         ].copy()
-                    # plot_variable_name = var
-                    # out_name = f"{var}_{season_name}.png"
                     plot_variable_name = f"{var}_{season_name}"
                     out_name = f"{var}_{season_name}.png"
 
@@ -1187,6 +1175,8 @@ def analyze_trends(
         out_all = out_root / tables_dir / combined_name
         ensure_dirs(out_all.parent)
 
+        # Recreate the combined workbook for each run.
+        # One sheet is written for each requested trend frequency.
         with pd.ExcelWriter(out_all, engine="openpyxl") as xl:
             for freq in sorted(df_new["frequency"].unique()):
                 df_freq = df_new[df_new["frequency"] == freq].copy()
@@ -1197,7 +1187,7 @@ def analyze_trends(
 
     write_per_station = bool(cfg.get("results", {}).get("write_per_station_tables", True))
 
-    written_excels: Dict[str, Path] = {}
+    written_excels: dict[str, Path] = {}
 
     if write_per_station:
         for st, block in results_by_station.items():
