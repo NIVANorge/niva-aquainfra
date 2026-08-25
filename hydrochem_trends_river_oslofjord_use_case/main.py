@@ -1,10 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
-
 from pathlib import Path
-
 from src.utils import load_json as load_cfg
-from src.preprocess import preprocess
 from src.interpolate import interpolate
 from src.estimate_fluxes import flux
 from src.mk_trend_test import analyze_trends
@@ -14,10 +11,10 @@ plt.style.use("ggplot")
 TRENDS_CONFIG = "mk_trend_test.json"
 
 # Choose exactly which steps to run (any combination), or use ["all"].
-STEPS_OVERRIDE = ["fluxes"] # e.g. ["interpolate", "fluxes", "trends"]
+STEPS_OVERRIDE = ["all"] # e.g. ["interpolate", "fluxes", "trends"]
 
 # Choose which rivers to run (any list), or ["all"], or None
-RIVERS_OVERRIDE = ["glomma"]  # e.g. ["drammenselva"] or ["all"] or None
+RIVERS_OVERRIDE = ["all"]  # e.g. ["drammenselva"] or ["all"] or None
 
 
 def available_names(base_dir: Path) -> list[str]:
@@ -33,10 +30,6 @@ def run_river(
 ) -> None:
     river_dir = cfg_base / river
     print(f"\n=== River: {river} ===")
-
-    if "preprocess" in steps:
-        cfg = load_cfg(river_dir / "preprocess.json")
-        preprocess(cfg)
 
     if "interpolate" in steps:
         cfg = load_cfg(river_dir / "interpolate.json")
@@ -79,8 +72,8 @@ def main():
 
     ap.add_argument(
         "--step",
-        default="preprocess",
-        help="preprocess|interpolate|fluxes|trends|all OR comma-list like 'interpolate,fluxes,trends'",
+        default="interpolate",
+        help="interpolate|fluxes|trends|all OR comma-list like 'interpolate,fluxes,trends'",
     )
 
     ap.add_argument(
@@ -126,7 +119,7 @@ def main():
     rivers_all = available_names(cfg_river_base)
 
     if args.step == "all":
-        steps = ["preprocess", "interpolate", "fluxes", "trends"]
+        steps = ["interpolate", "fluxes", "trends"]
     else:
         steps = [s.strip() for s in str(args.step).split(",") if s.strip()]
 
