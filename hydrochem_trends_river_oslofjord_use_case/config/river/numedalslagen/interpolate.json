@@ -1,6 +1,6 @@
 {
   "input": {
-    "waterchem_file": "data/processed/river/cleaned_riverchem_40355.nc",
+    "waterchem_file": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40355.nc",
     "discharge_file": "data/processed/river/Q_daily_mean_Numedalslagen_Holmfoss_15_61_0_cleaned.nc",
     "wc_time_col": "sample_date",
     "q_time_col": "time",
@@ -15,7 +15,7 @@
   },
   "rename_maps": {
     "wc": {
-      "Numedalslagen v/E18": "Numedalslagen"
+      "Numedalslågen v/E18": "Numedalslagen"
     },
     "q": {
       "Holmfoss": "Numedalslagen"

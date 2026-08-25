@@ -18,9 +18,10 @@ from .utils import (
     ensure_dirs,
     merge_daily_discharge_and_chemistry,
     netcdf_to_dataframe,
+    resolve_input_source,
     resolve_path,
-    standardize_time_and_station,
     save_or_show_plot,
+    standardize_time_and_station,
 )
 
 # ----------------------------- utils -----------------------------
@@ -425,8 +426,8 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     discharge_var = inp.get("discharge_var", "discharge")
 
     paths = cfg["paths"]
-    wc_file = resolve_path(inp["waterchem_file"])
-    q_file = resolve_path(inp["discharge_file"])
+    wc_file = resolve_input_source(inp["waterchem_file"])
+    q_file = resolve_input_source(inp["discharge_file"])
 
     figs_all_dir = resolve_path(paths["fig_all_methods_dir"])
     figs_selected_dir = resolve_path(paths["fig_selected_dir"])
@@ -465,9 +466,9 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     meta_map = meta_cfg(cfg)
 
     # load & harmonize
-    if not wc_file.exists():
+    if isinstance(wc_file, Path) and not wc_file.exists():
         raise FileNotFoundError(f"Water chemistry file not found: {wc_file}")
-    if not q_file.exists():
+    if isinstance(q_file, Path) and not q_file.exists():
         raise FileNotFoundError(f"Discharge file not found: {q_file}")
 
     wc_df_raw = netcdf_to_dataframe(wc_file, time_vars=(wc_time_col, "time", "sample_date"))
@@ -501,7 +502,6 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     if discharge_var in q_df.columns and discharge_var != "discharge":
         q_df = q_df.rename(columns={discharge_var: "discharge"})
 
-
     merged = merge_daily_discharge_and_chemistry(
         wc_df, q_df,
         station_name=station_id,
@@ -512,7 +512,7 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     )
 
     # run interpolation
-    # 1) linear (gap-limited)
+    # 1) linear (gap-limited)`
     df_linear = interpolate_station_df(
         merged,
         variables=chem_variables,

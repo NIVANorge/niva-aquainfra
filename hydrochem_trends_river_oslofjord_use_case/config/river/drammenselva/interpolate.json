@@ -1,6 +1,6 @@
 {
   "input": {
-    "waterchem_file": "data/processed/river/cleaned_riverchem_40352.nc",
+    "waterchem_file": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40352.nc",
     "discharge_file": "data/processed/river/Q_daily_mean_Drammenselva_Mjondalen_bru_12_534_0_cleaned.nc",
     "wc_time_col": "sample_date",
     "q_time_col": "time",

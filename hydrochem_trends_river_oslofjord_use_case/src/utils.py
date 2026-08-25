@@ -8,6 +8,17 @@ from typing import Any
 import pandas as pd
 import xarray as xr
 
+
+def _decode_text(value):
+    """Decode byte strings from NetCDF/OPeNDAP into normal Python strings."""
+    if not isinstance(value, (bytes, bytearray)):
+        return value
+
+    try:
+        return value.decode("utf-8")
+    except UnicodeDecodeError:
+        return value.decode("latin-1")
+
 # ---------------------------- filesystem ----------------------------
 
 def ensure_dirs(*paths: str | Path) -> None:
@@ -41,6 +52,18 @@ def resolve_path(
     return (base / pp).resolve()
 
 
+def resolve_input_source(source: str | Path) -> str | Path:
+    """
+    Return remote URLs unchanged.
+    Resolve local file paths against the project root.
+    """
+    source_str = str(source)
+
+    if source_str.startswith(("http://", "https://")):
+        return source_str
+
+    return resolve_path(source)
+
 # ---------------------------- config/json ----------------------------
 
 def load_json(path: str | Path) -> dict[str, Any]:
@@ -57,19 +80,29 @@ def expand_globs(root: str | Path, pattern: str,) -> list[Path]:
 def netcdf_to_dataframe(
     nc_path: str | Path,
     *,
-    time_vars: Iterable[str] = ("time", "date", "sample_date", "datetime", "timestamp"),
+    time_vars: Iterable[str] = (
+        "time",
+        "date",
+        "sample_date",
+        "datetime",
+        "timestamp",
+    ),
 ) -> pd.DataFrame:
     """
-    Open NetCDF with xarray and return a flat DataFrame.
-    Also coerces any time-like columns listed in time_vars to datetime.
+    Open a local or remote NetCDF dataset and return a flat DataFrame.
+    Time-like columns are converted to pandas datetime.
     """
-    nc_path = Path(nc_path)
+
     with xr.open_dataset(nc_path) as ds:
         df = ds.to_dataframe().reset_index()
 
     for t in time_vars:
         if t in df.columns:
-            df[t] = pd.to_datetime(df[t], errors="coerce")
+            df[t] = pd.to_datetime(
+                df[t],
+                errors="coerce",
+            )
+
     return df
 
 
@@ -102,10 +135,18 @@ def standardize_time_and_station(
             out[date_col_out] = out[date_col_out].dt.normalize()
 
     if station_col_in in out.columns:
+
+        out[station_col_in] = out[station_col_in].map(_decode_text)
+
         if station_rename_map:
-            out[station_col_in] = out[station_col_in].replace(station_rename_map)
+            out[station_col_in] = out[station_col_in].replace(
+                station_rename_map
+            )
+
         if station_col_in != station_col_out:
-            out = out.rename(columns={station_col_in: station_col_out})
+            out = out.rename(
+                columns={station_col_in: station_col_out}
+            )
 
     return out
 
