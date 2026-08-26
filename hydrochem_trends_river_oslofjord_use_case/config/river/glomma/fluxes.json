@@ -1,5 +1,5 @@
 {
-  "wc_interp_data_path": "output/data/daily_estimates/daily_water_chemistry_modeled_Glomma.nc",
+  "wc_interp_data_path": "output/daily_estimates/data/daily_water_chemistry_modeled_Glomma.nc",
   "q_cleaned_data_path": "data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
 
   "unit_options": {
@@ -147,8 +147,8 @@
     "comment": "Parameters like 'UV_Abs_254nm', 'UV_Abs_410nm', and 'Color' are not mass concentrations. Fluxes for these variables do NOT represent actual mass transport (e.g., tonnes). They are proxies to show how such parameters may vary with discharge; interpret qualitatively."
   },
 
-  "plots_output_dir": "output/figures/river/fluxes",
-  "output_dir": "output/data/fluxes",
+  "plots_output_dir": "output/fluxes/figures",
+  "output_dir": "output/fluxes/data",
 
   "export": {
     "engine": "netcdf4",

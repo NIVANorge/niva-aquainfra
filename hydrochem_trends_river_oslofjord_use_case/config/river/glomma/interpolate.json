@@ -9,9 +9,9 @@
     "discharge_var": "discharge"
   },
   "paths": {
-    "fig_all_methods_dir": "output/figures/river/daily_estimates/glomma/all_methods",
-    "fig_selected_dir": "output/figures/river/daily_estimates/glomma/selected",
-    "output_dir": "output/data/daily_estimates"
+    "fig_all_methods_dir": "output/daily_estimates/figures/glomma/all_methods",
+    "fig_selected_dir": "output/daily_estimates/figures/glomma/selected",
+    "output_dir": "output/daily_estimates/data"
   },
   "rename_maps": {
     "wc": {

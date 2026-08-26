@@ -10,12 +10,9 @@ plt.style.use("ggplot")
 
 TRENDS_CONFIG = "mk_trend_test.json"
 
-# Choose exactly which steps to run (any combination), or use ["all"].
-STEPS_OVERRIDE = ["all"] # e.g. ["interpolate", "fluxes", "trends"]
-
-# Choose which rivers to run (any list), or ["all"], or None
-RIVERS_OVERRIDE = ["all"]  # e.g. ["drammenselva"] or ["all"] or None
-
+# Optional hard-coded overrides for local testing.
+STEPS_OVERRIDE = None
+RIVERS_OVERRIDE = None
 
 def available_names(base_dir: Path) -> list[str]:
     if not base_dir.exists():

@@ -164,3 +164,7 @@ code/aquainfra_presentation.slides.html
 DELETE
 testresults
 
+# Project-local / generated files
+.idea/
+hydrochem_trends_river_oslofjord_use_case/output/
+hydrochem_trends_river_oslofjord_preprocessing/figures_quality_control/

@@ -26,7 +26,7 @@
         "name": "river_daily",
         "data_type": "river",
         "mode": "folder",
-        "path": "output/data/fluxes/daily",
+        "path": "output/fluxes/data/daily",
         "aggregation": "sum",
 
         "aggregation_requirements": {
@@ -100,7 +100,7 @@
     ]
   },
 
-  "output_dir": "output/mk_trends",
+  "output_dir": "output/trends",
 
   "results": {
     "figures_dir": "figures",
