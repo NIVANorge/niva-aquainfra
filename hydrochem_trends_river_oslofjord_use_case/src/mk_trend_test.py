@@ -96,6 +96,52 @@ def _slice_period(s: pd.Series, *, start: str | None, end: str | None) -> pd.Ser
         return s.loc[start_ts:]
     return s.loc[:end_ts]
 
+def _slice_years(
+    s: pd.Series,
+    *,
+    start_year: int | None,
+    end_year: int | None,
+) -> pd.Series:
+    """Restrict an already aggregated series to requested calendar years."""
+    if s is None or s.empty:
+        return s
+
+    years = pd.to_datetime(s.index).year
+
+    mask = np.ones(len(s), dtype=bool)
+
+    if start_year is not None:
+        mask &= years >= start_year
+
+    if end_year is not None:
+        mask &= years <= end_year
+
+    return s.loc[mask]
+
+
+def _covers_full_period(
+    s: pd.Series,
+    *,
+    start_year: int | None,
+    end_year: int | None,
+) -> bool:
+    """
+    Check that an aggregated trend series reaches both requested
+    boundary years.
+    """
+    if s is None or s.empty:
+        return False
+
+    years = pd.to_datetime(s.index).year
+
+    if start_year is not None and years.min() > start_year:
+        return False
+
+    if end_year is not None and years.max() < end_year:
+        return False
+
+    return True
+
 def _season_name(month: int) -> str:
     if month in (12, 1, 2):
         return "winter"
@@ -730,9 +776,29 @@ def analyze_trends(
     alpha = float(trend_opt.get("alpha", 0.05))
     min_points = trend_opt.get("min_points", {"monthly": 36, "annual": 5, "seasonal_by_season": 12})
 
-    period_cfg = trend_opt.get("period", {}) if isinstance(trend_opt.get("period", {}), dict) else {}
-    start_date = period_cfg.get("start") or None
-    end_date = period_cfg.get("end") or None
+    period_cfg = (
+        trend_opt.get("period", {})
+        if isinstance(trend_opt.get("period", {}), dict)
+        else {}
+    )
+
+    start_year = period_cfg.get("start_year")
+    end_year = period_cfg.get("end_year")
+    require_full_period = bool(
+        period_cfg.get("require_full_period", False)
+    )
+
+    start_year = int(start_year) if start_year is not None else None
+    end_year = int(end_year) if end_year is not None else None
+
+    if (
+            start_year is not None
+            and end_year is not None
+            and start_year > end_year
+    ):
+        raise ValueError(
+            "trend_options.period.start_year must be <= end_year"
+        )
 
     unit_opt = cfg.get("unit_options", {})
     non_mass_vars = set(unit_opt.get("non_mass_vars", []))
@@ -873,7 +939,25 @@ def analyze_trends(
                         continue
 
                     s = s.dropna()
-                    s = _slice_period(s, start=start_date, end=end_date)
+
+                    raw_start = None
+                    raw_end = None
+
+                    if start_year is not None:
+                        if freq == "seasonal_by_season":
+                            # Winter of start_year may need December of the previous year.
+                            raw_start = f"{start_year - 1}-12-01"
+                        else:
+                            raw_start = f"{start_year}-01-01"
+
+                    if end_year is not None:
+                        raw_end = f"{end_year}-12-31"
+
+                    s = _slice_period(
+                        s,
+                        start=raw_start,
+                        end=raw_end,
+                    )
 
                     if s.empty:
                         continue
@@ -906,6 +990,12 @@ def analyze_trends(
                             continue
 
                         for season_name, s_season in seasonal_series.items():
+                            s_season = _slice_years(
+                                s_season,
+                                start_year=start_year,
+                                end_year=end_year,
+                            )
+
                             if s_season.empty:
                                 continue
 
@@ -940,6 +1030,26 @@ def analyze_trends(
                                 "iqr": iqr,
                                 "frequency": freq,
                             }
+
+                            full_period = _covers_full_period(
+                                s_season,
+                                start_year=start_year,
+                                end_year=end_year,
+                            )
+
+                            base_row["full_period"] = full_period
+
+                            if require_full_period and not full_period:
+                                mk_rows_all.append({
+                                    **base_row,
+                                    "mk_p_val": np.nan,
+                                    "mk_trend": "insufficient_data",
+                                    "sen_slp": np.nan,
+                                    "sen_incpt": np.nan,
+                                    "sen_trend": "insufficient_data",
+                                    "mk_mode_used": "n/a",
+                                })
+                                continue
 
                             if n_valid < min_n:
                                 mk_rows_all.append({
@@ -1001,6 +1111,12 @@ def analyze_trends(
                         coverage=coverage,
                     )
 
+                    s = _slice_years(
+                        s,
+                        start_year=start_year,
+                        end_year=end_year,
+                    )
+
                     if s.empty:
                         continue
 
@@ -1033,6 +1149,26 @@ def analyze_trends(
                         "iqr": iqr,
                         "frequency": freq,
                     }
+
+                    full_period = _covers_full_period(
+                        s,
+                        start_year=start_year,
+                        end_year=end_year,
+                    )
+
+                    base_row["full_period"] = full_period
+
+                    if require_full_period and not full_period:
+                        mk_rows_all.append({
+                            **base_row,
+                            "mk_p_val": np.nan,
+                            "mk_trend": "insufficient_data",
+                            "sen_slp": np.nan,
+                            "sen_incpt": np.nan,
+                            "sen_trend": "insufficient_data",
+                            "mk_mode_used": "n/a",
+                        })
+                        continue
 
                     if n_valid < min_n:
                         mk_rows_all.append({
@@ -1110,7 +1246,7 @@ def analyze_trends(
             all_rows.extend(mk_rows_all)
 
             preferred = [
-                "period", "station_id", "variable", "n_vals",
+                "period", "full_period", "station_id", "variable", "n_vals",
                 "first", "last", "mean", "median", "std_dev", "iqr",
                 "mk_p_val", "mk_trend", "sen_slp", "sen_incpt", "sen_trend",
             ]

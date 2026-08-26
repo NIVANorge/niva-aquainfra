@@ -64,7 +64,7 @@
           "max": 10
         },
 
-        "aggregation": "mean",
+        "aggregation": "median",
 
         "aggregation_requirements": {
           "monthly": {
@@ -119,8 +119,9 @@
     },
 
     "period": {
-      "start": null,
-      "end": null
+      "start_year": 2010,
+      "end_year": 2023,
+      "require_full_period": true
     }
   },
 
