@@ -11,6 +11,7 @@
   "paths": {
     "fig_all_methods_dir": "output/daily_estimates/figures/drammenselva/all_methods",
     "fig_selected_dir": "output/daily_estimates/figures/drammenselva/selected",
+    "fig_validation_dir": "output/daily_estimates/figures/drammenselva/validation",
     "output_dir": "output/daily_estimates/data"
   },
   "rename_maps": {
@@ -22,70 +23,167 @@
     }
   },
   "meta": {
-    "station_name": { "value": "Drammenselva" },
-    "latitude":     { "value": 59.75257593 },
-    "longitude":    { "value": 10.00789751 }
+    "station_name": {
+      "value": "Drammenselva"
+    },
+    "latitude": {
+      "value": 59.75257593
+    },
+    "longitude": {
+      "value": 10.00789751
+    }
   },
-  "drop_columns": ["latitude", "longitude", "station_id", "station_code", "station_type"],
+  "drop_columns": [
+    "latitude",
+    "longitude",
+    "station_id",
+    "station_code",
+    "station_type"
+  ],
   "chem_variables": [
-    "DOC","Color","NH4-N","NO3-N","TRP","POC","SPM","SiO2",
-    "TOC","TOTN","TDP","PP","TOTP","TSM","UV_Abs_254nm",
-    "UV_Abs_410nm","TOC_calc","DIN","DON"
+    "DOC",
+    "Color",
+    "NH4-N",
+    "NO3-N",
+    "TRP",
+    "POC",
+    "SPM",
+    "SiO2",
+    "TOC",
+    "TOTN",
+    "TDP",
+    "PP",
+    "TOTP",
+    "TSM",
+    "UV_Abs_254nm",
+    "UV_Abs_410nm",
+    "TOC_calc",
+    "DIN",
+    "DON"
   ],
   "pars_metadata": [
-    {"parameter_name":"DOC","unit":"mg/l C"},
-    {"parameter_name":"Color","unit":"mg Pt/l"},
-    {"parameter_name":"NH4-N","unit":"µg/l"},
-    {"parameter_name":"NO3-N","unit":"µg/l"},
-    {"parameter_name":"TRP","unit":"µg/l"},
-    {"parameter_name":"POC","unit":"mg/l"},
-    {"parameter_name":"SPM","unit":"mg/l"},
-    {"parameter_name":"SiO2","unit":"mg/l"},
-    {"parameter_name":"TOC","unit":"mg/l"},
-    {"parameter_name":"TOTN","unit":"µg/l"},
-    {"parameter_name":"TDP","unit":"µg/l P"},
-    {"parameter_name":"PP","unit":"µg/l P"},
-    {"parameter_name":"TOTP","unit":"µg/l"},
-    {"parameter_name":"TSM","unit":"mg/l"},
-    {"parameter_name":"UV_Abs_254nm","unit":"Abs/cm"},
-    {"parameter_name":"UV_Abs_410nm","unit":"Abs/cm"},
-    {"parameter_name":"TOC_calc","unit":"mg/l"},
-    {"parameter_name":"DIN","unit":"µg/l"},
-    {"parameter_name":"DON","unit":"µg/l"}
+    {
+      "parameter_name": "DOC",
+      "unit": "mg/l C"
+    },
+    {
+      "parameter_name": "Color",
+      "unit": "mg Pt/l"
+    },
+    {
+      "parameter_name": "NH4-N",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "NO3-N",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "TRP",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "POC",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "SPM",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "SiO2",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "TOC",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "TOTN",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "TDP",
+      "unit": "µg/l P"
+    },
+    {
+      "parameter_name": "PP",
+      "unit": "µg/l P"
+    },
+    {
+      "parameter_name": "TOTP",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "TSM",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "UV_Abs_254nm",
+      "unit": "Abs/cm"
+    },
+    {
+      "parameter_name": "UV_Abs_410nm",
+      "unit": "Abs/cm"
+    },
+    {
+      "parameter_name": "TOC_calc",
+      "unit": "mg/l"
+    },
+    {
+      "parameter_name": "DIN",
+      "unit": "µg/l"
+    },
+    {
+      "parameter_name": "DON",
+      "unit": "µg/l"
+    }
   ],
   "standard_name_map": {
-    "DOC":"Dissolved Organic Carbon",
-    "Color":"Water Color",
-    "NH4-N":"Ammonium-N",
-    "NO3-N":"Nitrate-N",
-    "TRP":"Total Reactive Phosphorus",
-    "POC":"Particulate Organic Carbon",
-    "SPM":"Suspended Particulate Matter",
-    "SiO2":"Silicate",
-    "TOC":"Total Organic Carbon",
-    "TOTN":"Total Nitrogen",
-    "TDP":"Total Dissolved Phosphorus",
-    "PP":"Particulate Phosphorus",
-    "TOTP":"Total Phosphorus",
-    "TSM":"Total Suspended Matter",
-    "UV_Abs_254nm":"Ultraviolet Absorbance 254nm",
-    "UV_Abs_410nm":"Ultraviolet Absorbance 410nm",
-    "TOC_calc":"Total Organic Carbon Calculated",
-    "DIN":"Dissolved Inorganic Nitrogen",
-    "DON":"Dissolved Organic Nitrogen"
+    "DOC": "Dissolved Organic Carbon",
+    "Color": "Water Color",
+    "NH4-N": "Ammonium-N",
+    "NO3-N": "Nitrate-N",
+    "TRP": "Total Reactive Phosphorus",
+    "POC": "Particulate Organic Carbon",
+    "SPM": "Suspended Particulate Matter",
+    "SiO2": "Silicate",
+    "TOC": "Total Organic Carbon",
+    "TOTN": "Total Nitrogen",
+    "TDP": "Total Dissolved Phosphorus",
+    "PP": "Particulate Phosphorus",
+    "TOTP": "Total Phosphorus",
+    "TSM": "Total Suspended Matter",
+    "UV_Abs_254nm": "Ultraviolet Absorbance 254nm",
+    "UV_Abs_410nm": "Ultraviolet Absorbance 410nm",
+    "TOC_calc": "Total Organic Carbon Calculated",
+    "DIN": "Dissolved Inorganic Nitrogen",
+    "DON": "Dissolved Organic Nitrogen"
   },
   "interpolation": {
-    "linear": { "max_gap": 90, "method": "linear", "order": null },
-    "gam":    { "n_splines_xy": [10, 20], "lam_grid": null }
+    "linear": {
+      "max_gap": 90
+    },
+    "gam": {
+      "n_splines_xy": [
+        10,
+        20
+      ],
+      "lam_grid": null
+    }
+  },
+  "validation": {
+    "n_repeats": 10,
+    "block_size": 2,
+    "min_observations": 20,
+    "min_validation_points": 10,
+    "min_coverage": 0.5
   },
   "selection": {
-    "candidate_suffixes": ["annual_gam","monthly_regres","monthly_interp"],
-    "fallback_method": "linear_interp",
-    "r2_threshold": 0.8,
-    "z_score_limit": 3,
-    "tolerance": 50,
+    "min_r2": 0.45,
+    "max_abs_bias_fraction": 0.20,
     "extreme_ratio_limit": 2.0
-  },
+},
   "output": {
     "time_name": "date",
     "file_prefix": "daily_water_chemistry_modeled_"
@@ -99,13 +197,13 @@
     "templates": {
       "title": "Daily water chemistry concentrations estimated for river {station_id}",
       "title_no": "Estimerte daglige konsentrasjoner av vannkjemi for elv {station_id}",
-      "summary": "Daily time series of water chemistry for river {station_id}, estimated by harmonizing observed data and interpolating missing values (linear, GAM, monthly regressions, monthly medians).",
-      "summary_no": "Daglige tidsserier for vannkjemi ved elv {station_id}, beregnet ved å harmonisere observerte målinger og interpolere manglende verdier (lineær, GAM, månedlige regresjoner, månedlige medianer)."
+      "summary": "Daily time series of water chemistry for river {station_id}, with observed values preserved and missing values estimated using candidate interpolation methods selected by blocked holdout validation.",
+      "summary_no": "Daglige tidsserier for vannkjemi ved elv {station_id}, der observerte verdier er bevart og manglende verdier er estimert med kandidatmetoder valgt ved blokkbasert holdout-validering."
     },
     "defaults": {
       "Conventions": "CF-1.7, ACDD-1.3",
       "featureType": "timeSeries",
-      "processing_level": "Harmonized, gap-filled, and interpolated daily time series"
+      "processing_level": "Observed and gap-filled daily time series with validation-based interpolation selection"
     },
     "timestamps": {
       "date_created": "2025-07-08T10:00:45Z"
@@ -125,7 +223,7 @@
     "creator_email": "areti.balkoni@niva.no",
     "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
     "data_owner": "Norwegian Institute for Water Research",
-    "processing_level": "Harmonized, gap-filled, and interpolated daily time series",
+    "processing_level": "Observed and gap-filled daily time series with validation-based interpolation selection",
     "Conventions": "CF-1.7, ACDD-1.3",
     "publisher_name": "Norwegian Institute for Water Research",
     "publisher_email": "miljoinformatikk@niva.no",
@@ -134,7 +232,7 @@
     "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
     "keywords": "GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
     "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
-    "history": "Water chemistry and discharge data harmonized. Daily time series estimated using multiple interpolation methods: linear, GAM (Generalized Additive Models), monthly medians, and regression models. Fallback methods applied for missing values."
+    "history": "Water chemistry and discharge data harmonized. Observed concentrations are preserved. Missing daily concentrations are estimated using linear interpolation, GAM, monthly discharge regressions, and monthly-median interpolation. Model-based candidate methods are evaluated using blocked holdout validation and accepted based on validation sample size, coverage, R2, and relative bias. Accepted methods are ranked by validation RMSE. Gap-limited linear interpolation is used as the first fallback. Remaining missing values may be filled using GAM or monthly discharge regression, subject to an extreme-value safeguard. Values that cannot be estimated by any available method remain missing."
   },
   "export": {
     "engine": "netcdf4",

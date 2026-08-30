@@ -24,15 +24,16 @@ from .utils import (
     standardize_time_and_station,
 )
 
-# ----------------------------- utils -----------------------------
+
+# ----------------------------- Helper functions -----------------------------
 def meta_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return (cfg.get("meta") or {}).copy()
 
 
 def read_meta_value(
-    df_like,
-    m: dict[str, Any],
-    key: str,
+        df_like,
+        m: dict[str, Any],
+        key: str,
 ) -> Any | None:
     """
     Pull a meta value from DataFrame (first non-null) or constant.
@@ -55,13 +56,15 @@ def read_meta_value(
         return spec["value"]
     return None
 
+
 def render_template(
-    s: str | None,
-    ctx: dict[str, Any],
+        s: str | None,
+        ctx: dict[str, Any],
 ) -> str | None:
     if not s:
         return None
     return s.format(**ctx)
+
 
 def method_pretty_name(suffix: str) -> str:
     mapping = {
@@ -72,36 +75,34 @@ def method_pretty_name(suffix: str) -> str:
     }
     return mapping.get(suffix, suffix.replace("_", " ").title())
 
+
 def build_method_comment(
     var: str,
     selected_col: str,
-    fallback_col: str | None,
-    scores_for_station: Mapping[str, dict[str, float]],
+    fallback_cols: list[str] | None,
 ) -> str:
-    """ Builds a description of how the final daily series was produced. """
+    """Build a concise description of how the final daily series was produced."""
 
-    base_suffix = selected_col.replace(f"{var}_", "")
-    base_txt = method_pretty_name(base_suffix)
+    selected_suffix = selected_col.replace(f"{var}_", "")
+    selected_txt = method_pretty_name(selected_suffix)
 
-    r2_base = scores_for_station.get(base_suffix, {}).get("r2")
-    if r2_base is not None:
-        base_txt += f" (R^2 = {r2_base:.3f})"
+    if not fallback_cols:
+        return f"primary: {selected_txt}"
 
-    if not fallback_col:
-        return base_txt + "."
+    fallback_txt = ", ".join(
+        method_pretty_name(col.replace(f"{var}_", ""))
+        for col in fallback_cols
+    )
 
-    fb_suffix = fallback_col.replace(f"{var}_", "")
-    fb_txt = method_pretty_name(fb_suffix)
-    r2_fb = scores_for_station.get(fb_suffix, {}).get("r2")
-    if r2_fb is not None:
-        fb_txt += f" (R^2 = {r2_fb:.3f})"
-
-    return f"{base_txt}; gaps filled from {fb_txt}."
+    return (
+        f"primary: {selected_txt}; "
+        f"fallbacks: {fallback_txt}"
+    )
 
 def build_global_attrs(
-    cfg: dict[str, Any],
-    station_id: str,
-    time_name: str,
+        cfg: dict[str, Any],
+        station_id: str,
+        time_name: str,
 ) -> dict[str, str]:
     md = cfg.get("metadata", {}) or {}
     md_tpl = md.get("templates", {}) or {}
@@ -137,21 +138,44 @@ def build_global_attrs(
     # ensure strings
     return {k: str(v) for k, v in base.items()}
 
+
 # ------------------------- interpolation -------------------------
-def interpolate_with_gap_limit(series: pd.Series, max_gap: int, method="linear", order: int | None = None) -> pd.Series:
-    """Interpolate a series but only across gaps up to max_gap samples."""
+def interpolate_with_gap_limit(
+        series: pd.Series,
+        max_gap: int,
+        method: str = "linear",
+        order: int | None = None,
+) -> pd.Series:
+    """Interpolate only across gaps up to max_gap samples."""
     if method in ["spline", "polynomial"] and order is None:
         raise ValueError(f"Interpolation method '{method}' requires 'order'.")
-    return series.interpolate(method=method, limit=max_gap, order=order)
+
+    series = series.sort_index()
+
+    interpolated = series.interpolate(
+        method=method,
+        order=order,
+        limit_area="inside",
+    )
+
+    missing = series.isna()
+    groups = missing.ne(missing.shift()).cumsum()
+
+    for _, group in series[missing].groupby(groups[missing]):
+        if len(group) > max_gap:
+            interpolated.loc[group.index] = np.nan
+
+    return interpolated
+
 
 def interpolate_station_df(
-    df: pd.DataFrame,
-    variables: list[str],
-    date_col="date",
-    meta_cols: list[str] | None = None,
-    max_gap=30,
-    method="linear",
-    order: int | None = None,
+        df: pd.DataFrame,
+        variables: list[str],
+        date_col="date",
+        meta_cols: list[str] | None = None,
+        max_gap=30,
+        method="linear",
+        order: int | None = None,
 ) -> pd.DataFrame:
     """Resample to daily frequency and interpolate  variables with a maximum gap limit."""
 
@@ -167,20 +191,22 @@ def interpolate_station_df(
 
     for var in variables:
         if var in out.columns:
-            out[f"{var}_linear_interp"] = interpolate_with_gap_limit(out[var], max_gap=max_gap, method=method, order=order)
+            out[f"{var}_linear_interp"] = interpolate_with_gap_limit(out[var], max_gap=max_gap, method=method,
+                                                                     order=order)
     return out.reset_index()
 
 
 def compute_gam(
-    df: pd.DataFrame,
-    var: str,
-    discharge_col="discharge",
-    date_col="date",
-    station_name: str | None = None,
-    n_splines_xy: tuple[int, int] = (10, 20),
-    lam_grid: np.ndarray | None = None,
+        df: pd.DataFrame,
+        var: str,
+        discharge_col="discharge",
+        date_col="date",
+        station_name: str | None = None,
+        n_splines_xy: tuple[int, int] = (10, 20),
+        lam_grid: np.ndarray | None = None,
+        verbose: bool = True,
 ) -> pd.DataFrame | None:
-    """Fit a GAM on discharge and day - of - year and predict within the observed time range."""
+    """Fit a GAM using discharge and day-of-year and predict within the observed time range."""
 
     out = df.copy()
     out[date_col] = pd.to_datetime(out[date_col])
@@ -188,7 +214,8 @@ def compute_gam(
 
     train = out.dropna(subset=[var, discharge_col, "doy"]).copy()
     if train.empty:
-        print(f"No training data for {station_name} -> {var}")
+        if verbose:
+            print(f"No training data for {station_name} -> {var}")
         return None
 
     X = train[[discharge_col, "doy"]].values
@@ -201,7 +228,8 @@ def compute_gam(
     try:
         gam = model.gridsearch(X, y, lam=lam_grid)
     except Exception as e:
-        print(f"GAM failed for {station_name} → {var}: {e}")
+        if verbose:
+            print(f"GAM failed for {station_name} → {var}: {e}")
         return None
 
     first, last = train[date_col].min(), train[date_col].max()
@@ -218,20 +246,21 @@ def compute_gam(
     mae = mean_absolute_error(y, yhat)
     mse = mean_squared_error(y, yhat)
     r2 = r2_score(y, yhat)
-    print(f"GAM {station_name} -> {var}: MAE={mae:.2f}, MSE={mse:.2f}, R^2={r2:.3f}")
+    if verbose:
+        print(f"GAM {station_name} -> {var}: MAE={mae:.2f}, MSE={mse:.2f}, fit R^2={r2:.3f}")
     return out
 
 
 def apply_gam_to_df(
-    df: pd.DataFrame,
-    variables: list[str],
-    discharge_col="discharge",
-    date_col="date",
-    station_name="",
-    n_splines_xy=(10, 20),
-    lam_grid=None,
+        df: pd.DataFrame,
+        variables: list[str],
+        discharge_col="discharge",
+        date_col="date",
+        station_name="",
+        n_splines_xy=(10, 20),
+        lam_grid=None,
+        verbose: bool = True,
 ) -> pd.DataFrame:
-
     out = df.copy()
     for var in variables:
         if var in out.columns:
@@ -242,6 +271,7 @@ def apply_gam_to_df(
                 station_name=station_name,
                 n_splines_xy=n_splines_xy,
                 lam_grid=lam_grid,
+                verbose=verbose,
             )
             if gdf is not None:
                 out = gdf
@@ -249,7 +279,7 @@ def apply_gam_to_df(
 
 
 def monthly_to_daily_for_year(monthly_df: pd.DataFrame, year: int) -> pd.DataFrame:
-    """ Convert monthly values to daily series for a given year using time interpolation. """
+    """Convert monthly values to a daily series for a given year using time interpolation."""
 
     tmp = monthly_df.copy()
     tmp.index = pd.to_datetime(tmp.index.astype(str) + f"-{year}", format="%m-%Y")
@@ -272,8 +302,9 @@ def monthly_to_daily_for_year(monthly_df: pd.DataFrame, year: int) -> pd.DataFra
     tmp = tmp.map(lambda x: 0 if pd.notna(x) and x < 0 else x)
     return tmp
 
+
 def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: list[str], date_col="date") -> pd.DataFrame:
-    """ Compute monthly medians per year and interpolate to daily values. """
+    """Compute monthly medians per year and interpolate to daily values."""
 
     s = station_df.copy()
     s[date_col] = pd.to_datetime(s[date_col])
@@ -297,12 +328,12 @@ def monthly_medians_to_daily_all_years(station_df: pd.DataFrame, variables: list
 
 
 def monthwise_loglog_regressions(
-    station_df: pd.DataFrame,
-    variables: list[str],
-    discharge_col: str = "discharge",
-    date_col: str = "date",
-    min_points: int = 5,
-    bias_correct: bool = True,
+        station_df: pd.DataFrame,
+        variables: list[str],
+        discharge_col: str = "discharge",
+        date_col: str = "date",
+        min_points: int = 5,
+        bias_correct: bool = True,
 ) -> pd.DataFrame:
     """Fit per-month log–log regressions of var vs discharge and predict daily values."""
 
@@ -365,20 +396,301 @@ def monthwise_loglog_regressions(
     return pd.concat(out_all, ignore_index=True)
 
 
+def _series_from_candidate(
+        df: pd.DataFrame | None,
+        col: str,
+        date_col: str = "date",
+) -> pd.Series:
+    if df is None or df.empty or col not in df.columns:
+        return pd.Series(dtype=float)
+    tmp = df[[date_col, col]].copy()
+    tmp[date_col] = pd.to_datetime(tmp[date_col])
+    tmp = tmp.dropna(subset=[date_col])
+    if tmp.empty:
+        return pd.Series(dtype=float)
+    return tmp.groupby(date_col)[col].mean().sort_index()
+
+
+def _candidate_predictions_for_var(
+        station_df: pd.DataFrame,
+        var: str,
+        *,
+        station_name: str,
+        linear_cfg: dict[str, Any],
+        gam_cfg: dict[str, Any],
+) -> dict[str, pd.Series]:
+    preds: dict[str, pd.Series] = {}
+
+    linear_df = interpolate_station_df(
+        station_df,
+        variables=[var],
+        date_col="date",
+        meta_cols=["river_name"],
+        max_gap=int(linear_cfg.get("max_gap", 90)),
+        method=str(linear_cfg.get("method", "linear")),
+        order=linear_cfg.get("order", None),
+    )
+    preds["linear_interp"] = _series_from_candidate(
+        linear_df,
+        f"{var}_linear_interp",
+    )
+
+    gam_df = compute_gam(
+        station_df,
+        var,
+        discharge_col="discharge",
+        date_col="date",
+        station_name=station_name,
+        n_splines_xy=tuple(gam_cfg.get("n_splines_xy", [10, 20])),
+        lam_grid=np.array(gam_cfg["lam_grid"]) if gam_cfg.get("lam_grid") else None,
+        verbose=False,
+    )
+    preds["annual_gam"] = _series_from_candidate(
+        gam_df,
+        f"{var}_annual_gam",
+    )
+
+    reg_df = monthwise_loglog_regressions(
+        station_df,
+        [var],
+        discharge_col="discharge",
+        date_col="date",
+    )
+    preds["monthly_regres"] = _series_from_candidate(
+        reg_df,
+        f"{var}_monthly_regres",
+    )
+
+    month_df = monthly_medians_to_daily_all_years(
+        station_df,
+        [var],
+        date_col="date",
+    )
+    preds["monthly_interp"] = _series_from_candidate(
+        month_df,
+        f"{var}_monthly_interp",
+    )
+
+    return preds
+
+
+def _validation_blocks(
+        obs_dates: pd.DatetimeIndex,
+        *,
+        n_repeats: int,
+        block_size: int,
+) -> list[pd.DatetimeIndex]:
+    obs_dates = pd.DatetimeIndex(obs_dates).sort_values()
+    if len(obs_dates) <= 2:
+        return []
+
+    interior = obs_dates[1:-1]
+    block_size = max(1, min(int(block_size), len(interior)))
+    max_start = len(interior) - block_size
+
+    if max_start <= 0:
+        return [pd.DatetimeIndex(interior)]
+
+    n_blocks = max(1, min(int(n_repeats), max_start + 1))
+    starts = np.unique(
+        np.linspace(0, max_start, num=n_blocks, dtype=int)
+    )
+    return [
+        pd.DatetimeIndex(interior[start:start + block_size])
+        for start in starts
+    ]
+
+
+def validate_interpolation_methods(
+        station_df: pd.DataFrame,
+        var: str,
+        *,
+        station_name: str,
+        linear_cfg: dict[str, Any],
+        gam_cfg: dict[str, Any],
+        n_repeats: int,
+        block_size: int,
+        min_observations: int,
+) -> tuple[dict[str, dict[str, float]], pd.DataFrame]:
+    tmp = station_df.copy()
+    tmp["date"] = pd.to_datetime(tmp["date"])
+
+    obs = (
+        tmp[["date", var]]
+        .dropna()
+        .groupby("date")[var]
+        .mean()
+        .sort_index()
+    )
+
+    if len(obs) < min_observations:
+        return {}, pd.DataFrame(
+            columns=["method", "date", "observed", "predicted"]
+        )
+
+    blocks = _validation_blocks(
+        pd.DatetimeIndex(obs.index),
+        n_repeats=n_repeats,
+        block_size=block_size,
+    )
+    if not blocks:
+        return {}, pd.DataFrame(
+            columns=["method", "date", "observed", "predicted"]
+        )
+
+    records: list[dict[str, Any]] = []
+    withheld_dates: set[pd.Timestamp] = set()
+
+    for block in blocks:
+        train_df = tmp.copy()
+        mask = train_df["date"].isin(block)
+        train_df.loc[mask, var] = np.nan
+        withheld_dates.update(pd.Timestamp(d) for d in block)
+
+        predictions = _candidate_predictions_for_var(
+            train_df,
+            var,
+            station_name=station_name,
+            linear_cfg=linear_cfg,
+            gam_cfg=gam_cfg,
+        )
+
+        truth = obs.reindex(block)
+
+        for suffix, pred in predictions.items():
+            pred_block = pred.reindex(block)
+            for date in block:
+                observed_value = truth.get(date, np.nan)
+                predicted_value = pred_block.get(date, np.nan)
+                records.append(
+                    {
+                        "method": suffix,
+                        "date": pd.Timestamp(date),
+                        "observed": observed_value,
+                        "predicted": predicted_value,
+                    }
+                )
+
+    validation_df = pd.DataFrame(records)
+    if validation_df.empty:
+        return {}, validation_df
+
+    validation_df = (
+        validation_df
+        .groupby(["method", "date"], as_index=False)
+        .agg(
+            observed=("observed", "first"),
+            predicted=("predicted", "mean"),
+        )
+    )
+
+    total_withheld = len(withheld_dates)
+    metrics: dict[str, dict[str, float]] = {}
+
+    for suffix, grp in validation_df.groupby("method"):
+        valid = grp.dropna(subset=["observed", "predicted"]).copy()
+        n = len(valid)
+        coverage = n / total_withheld if total_withheld else 0.0
+
+        if n:
+            errors = valid["predicted"] - valid["observed"]
+            mae = float(mean_absolute_error(valid["observed"], valid["predicted"]))
+            rmse = float(np.sqrt(mean_squared_error(valid["observed"], valid["predicted"])))
+            bias = float(errors.mean())
+            r2 = float(r2_score(valid["observed"], valid["predicted"])) if n >= 2 else np.nan
+        else:
+            mae = np.nan
+            rmse = np.nan
+            bias = np.nan
+            r2 = np.nan
+
+        metrics[suffix] = {
+            "r2": r2,
+            "mae": mae,
+            "rmse": rmse,
+            "bias": bias,
+            "n": float(n),
+            "coverage": float(coverage),
+        }
+
+    return metrics, validation_df
+
+
+def plot_validation_qc(
+        validation_df: pd.DataFrame,
+        metrics: Mapping[str, dict[str, float]],
+        *,
+        var: str,
+        station: str,
+        pars_meta_df: pd.DataFrame,
+        save_path: Path,
+) -> None:
+    valid_df = validation_df.dropna(subset=["observed", "predicted"]).copy()
+    if valid_df.empty:
+        return
+
+    unit = ""
+    if var in set(pars_meta_df["parameter_name"]):
+        unit_val = pars_meta_df.loc[
+            pars_meta_df["parameter_name"] == var,
+            "unit",
+        ].values[0]
+        unit = f" ({unit_val})"
+
+    plt.figure(figsize=(7, 7))
+
+    all_vals = pd.concat(
+        [valid_df["observed"], valid_df["predicted"]],
+        ignore_index=True,
+    ).dropna()
+    vmin = float(all_vals.min())
+    vmax = float(all_vals.max())
+    plt.plot([vmin, vmax], [vmin, vmax], linestyle="--", label="1:1")
+
+    for suffix, grp in valid_df.groupby("method"):
+        score = metrics.get(suffix, {})
+        r2 = score.get("r2", np.nan)
+        rmse = score.get("rmse", np.nan)
+        coverage = score.get("coverage", np.nan)
+
+        label = method_pretty_name(suffix)
+        if np.isfinite(r2):
+            label += f" | R2={r2:.2f}"
+        if np.isfinite(rmse):
+            label += f" | RMSE={rmse:.3g}"
+        if np.isfinite(coverage):
+            label += f" | cov={coverage:.0%}"
+
+        plt.scatter(
+            grp["observed"],
+            grp["predicted"],
+            s=35,
+            alpha=0.7,
+            label=label,
+        )
+
+    plt.xlabel(f"Observed {var}{unit}")
+    plt.ylabel(f"Withheld prediction {var}{unit}")
+    plt.title(f"{var} validation at {station}")
+    plt.grid(True)
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+    save_or_show_plot(save_path=save_path, dpi=300)
+
+
 # ------------------------------ plotting ------------------------------
 def plot_qc(
-    df: pd.DataFrame,
-    var: str,
-    station: str,
-    method_col: str,
-    method_label: str,
-    pars_meta_df: pd.DataFrame,
-    unit_par_col="parameter_name",
-    unit_unit_col="unit",
-    station_col="river_name",
-    date_col="date",
-    r2_value: float | None = None,
-    save_path: Path | None = None,
+        df: pd.DataFrame,
+        var: str,
+        station: str,
+        method_col: str,
+        method_label: str,
+        pars_meta_df: pd.DataFrame,
+        unit_par_col="parameter_name",
+        unit_unit_col="unit",
+        station_col="river_name",
+        date_col="date",
+        save_path: Path | None = None,
 ) -> None:
     unit = ""
     if var in set(pars_meta_df[unit_par_col]):
@@ -387,12 +699,24 @@ def plot_qc(
 
     df_s = df[df[station_col] == station].copy()
     plt.figure(figsize=(12, 5))
-    plt.scatter(df_s[date_col], df_s[var], label="Raw", color="black", alpha=0.7, s=30)
+    plt.scatter(
+        df_s[date_col],
+        df_s[var],
+        label="Observations",
+        color="black",
+        alpha=0.7,
+        s=30
+    )
+
     if method_col in df_s.columns:
-        plt.plot(df_s[date_col], df_s[method_col], label=f"{method_label}", lw=2)
-    title = f"{var} at {station} – {method_label}"
-    if r2_value is not None:
-        title += f" (R2={r2_value:.2f})"
+        plt.plot(
+            df_s[date_col],
+            df_s[method_col],
+            label="Final estimate",
+            lw=2
+        )
+
+    title = f"{var} at {station} — {method_label}"
     plt.title(title)
     plt.xlabel(" ")
     plt.ylabel(f"{var}{unit}")
@@ -403,11 +727,6 @@ def plot_qc(
         save_path=save_path,
         dpi=300,
     )
-    # if save_path:
-    #     plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    #     plt.close()
-    # else:
-    #     plt.show()
 
 
 # ------------------------------- main --------------------------------
@@ -431,9 +750,15 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
 
     figs_all_dir = resolve_path(paths["fig_all_methods_dir"])
     figs_selected_dir = resolve_path(paths["fig_selected_dir"])
+    figs_validation_dir = resolve_path(
+        paths.get(
+            "fig_validation_dir",
+            str(Path(paths["fig_selected_dir"]).parent / "validation"),
+        )
+    )
     out_dir = resolve_path(paths["output_dir"])
 
-    ensure_dirs(figs_all_dir, figs_selected_dir, out_dir)
+    ensure_dirs(figs_all_dir, figs_selected_dir, figs_validation_dir, out_dir)
 
     rename_maps = cfg.get("rename_maps", {})
     wc_rename = rename_maps.get("wc", {})
@@ -453,10 +778,21 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     sel_cfg = cfg.get("selection", {})
     candidate_suffixes = sel_cfg.get("candidate_suffixes", ["annual_gam", "monthly_regres", "monthly_interp"])
     fallback_method = sel_cfg.get("fallback_method", "linear_interp")
-    r2_threshold = float(sel_cfg.get("r2_threshold", 0.80))
-    z_score_limit = float(sel_cfg.get("z_score_limit", 3))
-    tolerance = float(sel_cfg.get("tolerance", 50))
-    extreme_ratio_limit = float(sel_cfg.get("extreme_ratio_limit", 2.0))
+    use_linear_fallback = bool(sel_cfg.get("use_linear_fallback", True))
+    min_r2 = float(sel_cfg.get("min_r2", 0.0))
+    max_abs_bias_fraction = float(
+        sel_cfg.get("max_abs_bias_fraction", 0.25)
+    )
+
+    extreme_ratio_limit = float(sel_cfg.get("extreme_ratio_limit", 3.0))
+
+    val_cfg = cfg.get("validation", {})
+    validation_enabled = bool(val_cfg.get("enabled", True))
+    validation_n_repeats = int(val_cfg.get("n_repeats", 10))
+    validation_block_size = int(val_cfg.get("block_size", 2))
+    validation_min_observations = int(val_cfg.get("min_observations", 20))
+    validation_min_points = int(val_cfg.get("min_validation_points", 10))
+    validation_min_coverage = float(val_cfg.get("min_coverage", 0.5))
 
     # output/global
     out_cfg = cfg.get("output", {})
@@ -512,7 +848,7 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     )
 
     # run interpolation
-    # 1) linear (gap-limited)`
+    # 1) linear (gap-limited)
     df_linear = interpolate_station_df(
         merged,
         variables=chem_variables,
@@ -602,6 +938,8 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
         str,
         dict[str, dict[str, dict[str, float]]],
     ] = {}
+    validation_rows: list[dict[str, Any]] = []
+    completeness_rows: list[dict[str, Any]] = []
 
     for var in chem_variables:
         method_scores[var] = {}
@@ -621,141 +959,426 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
 
         df_obs_range = df_station.loc[obs_start:obs_end]
         y_obs = df_obs_range[var]
+
+        if validation_enabled:
+            metrics, validation_df = validate_interpolation_methods(
+                merged,
+                var,
+                station_name=station_id,
+                linear_cfg=linear_cfg,
+                gam_cfg=gam_cfg,
+                n_repeats=validation_n_repeats,
+                block_size=validation_block_size,
+                min_observations=validation_min_observations,
+            )
+        else:
+            metrics = {}
+            validation_df = pd.DataFrame(
+                columns=["method", "date", "observed", "predicted"]
+            )
+            for suffix in candidate_suffixes + [fallback_method]:
+                colname = f"{var}_{suffix}"
+                if colname not in df_obs_range.columns:
+                    continue
+                y_pred = df_obs_range[colname]
+                valid = y_obs.notna() & y_pred.notna()
+                if valid.sum() < validation_min_points:
+                    continue
+                errors = y_pred[valid] - y_obs[valid]
+                metrics[suffix] = {
+                    "r2": float(r2_score(y_obs[valid], y_pred[valid])),
+                    "mae": float(mean_absolute_error(y_obs[valid], y_pred[valid])),
+                    "rmse": float(np.sqrt(mean_squared_error(y_obs[valid], y_pred[valid]))),
+                    "bias": float(errors.mean()),
+                    "n": float(valid.sum()),
+                    "coverage": 1.0,
+                }
+
+        method_scores[var][station_id] = metrics
+
+        for suffix, score in metrics.items():
+            validation_rows.append(
+                {
+                    "station": station_id,
+                    "variable": var,
+                    "method": suffix,
+                    **score,
+                }
+            )
+
+        if not validation_df.empty:
+            plot_validation_qc(
+                validation_df,
+                metrics,
+                var=var,
+                station=station_id,
+                pars_meta_df=pars_meta_df,
+                save_path=figs_validation_dir / f"{station_id}_{var}_validation.png",
+            )
+
         good_methods = []
+        methods_to_compare = list(candidate_suffixes)
 
-        # evaluate candidates
-        for suffix in candidate_suffixes:
+        for suffix in methods_to_compare:
             colname = f"{var}_{suffix}"
-            if colname not in df_station.columns:
-                continue
-            y_pred = df_obs_range[colname]
-            valid = y_obs.notna() & y_pred.notna()
-            if valid.sum() < 10:
-                continue
-            r2 = r2_score(y_obs[valid], y_pred[valid])
-            method_scores[var].setdefault(station_id, {})[suffix] = {"r2": r2}
-            if r2 >= r2_threshold:
-                good_methods.append({'suffix': suffix, 'r2': r2, 'colname': colname, 'y_pred': y_pred})
 
-        good_methods.sort(key=lambda x: x['r2'], reverse=True)
+            if colname not in df_obs_range.columns:
+                continue
+
+            score = metrics.get(suffix)
+
+            if not score:
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    "— no validation result"
+                )
+                continue
+
+            n_val = int(score.get("n", 0))
+            coverage = float(score.get("coverage", 0.0))
+            r2 = float(score.get("r2", np.nan))
+            rmse = float(score.get("rmse", np.nan))
+            mae = float(score.get("mae", np.nan))
+            bias = float(score.get("bias", np.nan))
+
+            obs_typical = float(y_obs.dropna().median())
+
+            if np.isfinite(obs_typical) and obs_typical != 0:
+                abs_bias_fraction = abs(bias) / abs(obs_typical)
+            else:
+                abs_bias_fraction = np.nan
+
+            if n_val < validation_min_points:
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    f"— only {n_val} validation points"
+                )
+                continue
+
+            if coverage < validation_min_coverage:
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    f"— validation coverage {coverage:.0%} below "
+                    f"{validation_min_coverage:.0%}"
+                )
+                continue
+
+            if not np.isfinite(rmse):
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    "— validation RMSE is not finite"
+                )
+                continue
+
+            if not np.isfinite(r2) or r2 < min_r2:
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    f"— validation R^2 = {r2:.3f} below "
+                    f"{min_r2:.3f}"
+                )
+                continue
+
+            if (
+                    np.isfinite(abs_bias_fraction)
+                    and abs_bias_fraction > max_abs_bias_fraction
+            ):
+                print(
+                    f"{station_id} -> {var}: {colname} rejected "
+                    f"— relative validation bias = "
+                    f"{abs_bias_fraction:.1%} above "
+                    f"{max_abs_bias_fraction:.1%}"
+                )
+                continue
+
+            good_methods.append(
+                {
+                    "suffix": suffix,
+                    "r2": r2,
+                    "rmse": rmse,
+                    "mae": mae,
+                    "bias": bias,
+                    "abs_bias_fraction": abs_bias_fraction,
+                    "coverage": coverage,
+                    "n": n_val,
+                    "colname": colname,
+                    "y_pred": df_obs_range[colname],
+                }
+            )
+
+        # Lowest blocked-validation RMSE wins.
+        # If RMSEs are identical, prefer higher R2.
+        good_methods.sort(
+            key=lambda x: (
+                x["rmse"],
+                -x["r2"] if np.isfinite(x["r2"]) else np.inf,
+            )
+        )
 
         selected_col: str | None = None
         selected_series: pd.Series | None = None
 
-        # outlier check
-        for m in good_methods:
-            pred = m['y_pred']
-            obs = y_obs.dropna()
-            base_threshold = obs.mean() + z_score_limit * obs.std()
-            final_threshold = base_threshold + tolerance
-            if (pred > final_threshold).any():
-                print(f"{station_id} -> {var}: {m['colname']} rejected — {int((pred > final_threshold).sum())} extreme value(s)")
-                continue
-            selected_col = m['colname']
-            selected_series = pred.copy()
-            print(f"{station_id} -> {var}: Selected {selected_col} (R^2 = {m['r2']:.3f})")
-            break
+        if good_methods:
+            selected = good_methods[0]
+            selected_col = selected["colname"]
+            selected_series = selected["y_pred"].copy()
+            print(
+                f"{station_id} -> {var}: Selected {selected_col} "
+                f"(validation R^2 = {selected['r2']:.3f}, "
+                f"RMSE = {selected['rmse']:.3g})"
+            )
 
-        # fallback to linear
+        linear_col = f"{var}_{fallback_method}"
+
         if selected_col is None:
-            fallback_col = f"{var}_{fallback_method}"
-            if fallback_col in df_obs_range.columns:
-                selected_col = fallback_col
-                selected_series = df_obs_range[fallback_col].copy()
-                print(f"{station_id} -> {var}: Fallback to {fallback_col}")
+            if use_linear_fallback and linear_col in df_obs_range.columns:
+                selected_col = linear_col
+                selected_series = df_obs_range[linear_col].copy()
+                print(f"{station_id} -> {var}: Fallback to {linear_col}")
             else:
                 print(f"{station_id} -> {var}: No valid method available")
                 continue
 
-        # fill gaps from best of {annual_gam, monthly_regres}
         filled_series = selected_series.copy()
-        missing_mask = filled_series.loc[obs_start:obs_end].isna()
-        fallback_used = None
+        fallback_cols_used: list[str] = []
+
+        # 1. Fill remaining short gaps using gap-limited linear interpolation.
+        # The max_gap restriction has already been applied when the linear series was created.
+
+        if (
+                use_linear_fallback
+                and linear_col in df_obs_range.columns
+                and linear_col != selected_col
+        ):
+            linear_series = df_obs_range[linear_col]
+
+            missing_mask = filled_series.isna()
+            fill_dates = missing_mask & linear_series.notna()
+
+            if fill_dates.any():
+                filled_series.loc[fill_dates] = linear_series.loc[fill_dates]
+
+                if linear_col not in fallback_cols_used:
+                    fallback_cols_used.append(linear_col)
+
+                print(
+                    f"{station_id} -> {var}: Remaining short gaps filled from "
+                    f"{linear_col}"
+                )
+
+        # 2. Fill remaining gaps using GAM or monthly discharge regression.
+
+        missing_mask = filled_series.isna()
 
         if missing_mask.any():
-            # check for long gap >= 4y
-            gap_lengths = (missing_mask.astype(int).groupby((~missing_mask).cumsum()).sum())
-            long_gap = (not gap_lengths.empty) and (gap_lengths.max() >= 1460)
 
-            fb_cands = []
-            for suffix in ['annual_gam', 'monthly_regres']:
-                col = f"{var}_{suffix}"
-                if col not in df_obs_range.columns:
+            observed_values = y_obs.dropna()
+
+            # Extreme-value safeguard for fallback predictions
+            if not observed_values.empty:
+                observed_max = float(observed_values.max())
+                max_allowed = observed_max * extreme_ratio_limit
+            else:
+                max_allowed = np.inf
+
+            # Candidate model fallbacks.
+            # Do not retry the method that is already the selected method.
+            model_fallback_candidates = [
+                suffix
+                for suffix in ["annual_gam", "monthly_regres"]
+                if f"{var}_{suffix}" != selected_col
+            ]
+
+            # Prefer the candidate with lower validation RMSE.
+            # Fallback models are not required to pass the primary R² threshold.
+            def fallback_rmse(suffix: str) -> float:
+                score = metrics.get(suffix, {})
+                rmse = float(score.get("rmse", np.nan))
+
+                if np.isfinite(rmse):
+                    return rmse
+
+                return np.inf
+
+            model_fallback_candidates.sort(key=fallback_rmse)
+
+            for suffix in model_fallback_candidates:
+
+                # Stop once no missing values remain.
+                if not filled_series.isna().any():
+                    break
+
+                candidate_col = f"{var}_{suffix}"
+
+                if candidate_col not in df_obs_range.columns:
                     continue
-                y_pred = df_obs_range[col]
-                valid = y_obs.notna() & y_pred.notna()
-                if valid.sum() < 10:
+
+                candidate_series = df_obs_range[candidate_col]
+
+                # Evaluate predictions only for dates that are still missing.
+                remaining_dates = filled_series.index[filled_series.isna()]
+
+                candidate_values = (
+                    candidate_series
+                    .reindex(remaining_dates)
+                    .dropna()
+                )
+
+                if candidate_values.empty:
                     continue
-                r2b = r2_score(y_obs[valid], y_pred[valid])
-                method_scores[var].setdefault(station_id, {})[suffix] = {"r2": r2b}
 
-                if long_gap:
-                    obs_min, obs_max = y_obs.min(), y_obs.max()
-                    pred_min, pred_max = y_pred.min(), y_pred.max()
-                    too_extreme = (pred_max > obs_max * extreme_ratio_limit) or (pred_min < obs_min / extreme_ratio_limit)
-                    if too_extreme:
-                        print(f"{station_id} -> {var}: {col} rejected for gap fill — predicted min/max too extreme")
-                        continue
+                # Reject candidate if it contains negative concentrations
+                if (candidate_values < 0).any():
+                    print(
+                        f"{station_id} -> {var}: "
+                        f"{candidate_col} rejected as fallback "
+                        "— negative predictions"
+                    )
+                    continue
 
-                fb_cands.append({'suffix': suffix, 'r2': r2b, 'colname': col, 'series': y_pred})
+                # Reject candidate if predictions are excessively high
+                if (
+                        np.isfinite(max_allowed)
+                        and (candidate_values > max_allowed).any()
+                ):
+                    print(
+                        f"{station_id} -> {var}: "
+                        f"{candidate_col} rejected as fallback "
+                        f"— prediction exceeds "
+                        f"{extreme_ratio_limit:.1f} × observed maximum"
+                    )
+                    continue
 
-            if fb_cands:
-                fb_cands.sort(key=lambda x: x['r2'], reverse=True)
-                best_fb = fb_cands[0]
-                avail = missing_mask & best_fb['series'].notna()
-                if avail.any():
-                    filled_series.loc[avail] = best_fb['series'].loc[avail]
-                    fallback_used = best_fb['colname']
-                    print(f"{station_id} -> {var}: Gaps filled from fallback {fallback_used} (R^2 = {best_fb['r2']:.3f})")
+                # Fill dates where this model has an estimate
+                fill_dates = candidate_values.index[
+                    filled_series.loc[candidate_values.index].isna()
+                ]
 
-        # save decision
+                if len(fill_dates) == 0:
+                    continue
+
+                filled_series.loc[fill_dates] = candidate_values.loc[fill_dates]
+
+                if candidate_col not in fallback_cols_used:
+                    fallback_cols_used.append(candidate_col)
+
+                print(
+                    f"{station_id} -> {var}: "
+                    f"{len(fill_dates)} remaining days filled from "
+                    f"{candidate_col}"
+                )
+
+        # ---------------------------------------------------------
+        # Report anything that is STILL missing
+        # ---------------------------------------------------------
+
+        remaining_missing = int(filled_series.isna().sum())
+
+        if remaining_missing > 0:
+            print(
+                f"{station_id} -> {var}: "
+                f"{remaining_missing} days still missing after all fallbacks"
+            )
+        else:
+            print(
+                f"{station_id} -> {var}: "
+                "Final estimated series has no internal missing values"
+            )
+
         methods_chosen[var][station_id] = {
             "selected_col": selected_col,
-            "selected_suffix": selected_col.replace(f"{var}_", ""),
-            "fallback_col": fallback_used,
-            "fallback_suffix": fallback_used.replace(f"{var}_", "") if fallback_used else None,
+            "fallback_cols": fallback_cols_used,
         }
 
-        # write back
         mask = df_daily_all["river_name"] == station_id
         dates = pd.DatetimeIndex(df_daily_all.loc[mask, "date"].values)
-        aligned = filled_series.reindex(dates)
-        df_daily_all.loc[mask, f"{var}_final"] = aligned.values
 
-        # QC plot
-        pred_df = filled_series.rename("pred").reset_index()  # date, pred
-        df_plot = df_sel[df_sel["river_name"] == station_id][["date", "river_name", var]].merge(
-            pred_df, on="date", how="left"
+        aligned_model = filled_series.reindex(dates)
+        observed = df_daily_all.loc[mask, var].copy()
+        observed.index = dates
+
+        final_series = observed.combine_first(aligned_model)
+
+        df_daily_all.loc[mask, f"{var}_final"] = final_series.values
+
+        # QC: check completeness of the final daily series
+        # Only assess the period between the first and last observation.
+        final_in_range = final_series.loc[obs_start:obs_end]
+
+        n_total = len(final_in_range)
+        n_missing = int(final_in_range.isna().sum())
+
+        completeness_rows.append(
+            {
+                "station": station_id,
+                "variable": var,
+                "start_date": obs_start.date(),
+                "end_date": obs_end.date(),
+                "total_days": n_total,
+                "missing_days": n_missing,
+                "missing_percent": (
+                    100.0 * n_missing / n_total
+                    if n_total > 0
+                    else np.nan
+                ),
+            }
         )
 
-        # label + R^2 for the legend/title
+        final_df = (
+            final_series
+            .rename("final")
+            .rename_axis("date")
+            .reset_index()
+        )
+
+        df_plot = df_sel[
+            df_sel["river_name"] == station_id
+            ][["date", "river_name", var]].merge(
+            final_df,
+            on="date",
+            how="left",
+        )
+
         entry = methods_chosen[var][station_id]
         selected_col = entry["selected_col"]
-        fallback_col = entry["fallback_col"]
+        fallback_cols = entry["fallback_cols"]
 
-        scores_for_station = method_scores.get(var, {}).get(station_id, {})
-
-        # method label
         method_label = build_method_comment(
             var=var,
             selected_col=selected_col,
-            fallback_col=fallback_col,
-            scores_for_station=scores_for_station,
+            fallback_cols=fallback_cols,
         )
-
-        # optionally show only base R^2 in title
-        base_suffix = entry["selected_suffix"]
-        r2_for_label = scores_for_station.get(base_suffix, {}).get("r2")
 
         plot_qc(
             df_plot,
             var=var,
             station=station_id,
-            method_col="pred",
+            method_col="final",
             method_label=method_label,
             pars_meta_df=pars_meta_df,
-            r2_value=r2_for_label,
             save_path=figs_selected_dir / f"{station_id}_{var}_selected_method.png",
+        )
+
+    if validation_rows:
+        validation_table = pd.DataFrame(validation_rows)
+        validation_table.to_csv(
+            figs_validation_dir / f"{station_id}_validation_metrics.csv",
+            index=False,
+        )
+
+    # Save QC summary of missing values in the final time series
+    if completeness_rows:
+        completeness_table = pd.DataFrame(completeness_rows)
+
+        completeness_table.to_csv(
+            figs_validation_dir / f"{station_id}_final_series_completeness.csv",
+            index=False,
+        )
+
+        print("\nFinal-series completeness:")
+        print(
+            completeness_table[
+                ["variable", "missing_days", "missing_percent"]
+            ].to_string(index=False)
         )
 
     # overview plots
@@ -770,7 +1393,8 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
             unit = f" ({u})"
         for ax, st in zip(axes, stations):
             d = df_sel[df_sel["river_name"] == st]
-            ax.scatter(d["date"], d[var], label="Raw", s=20, facecolors="white", edgecolors="black", alpha=0.8, zorder=4)
+            ax.scatter(d["date"], d[var], label="Raw", s=20, facecolors="white", edgecolors="black", alpha=0.8,
+                       zorder=4)
             for label, style, color in [
                 (f"{var}_monthly_interp", "-", None),
                 (f"{var}_linear_interp", "-", "orange"),
@@ -780,7 +1404,11 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                 if label in d.columns:
                     ax.plot(d["date"], d[label], label=label.replace(f"{var}_", "").replace("_", " ").title(),
                             linestyle=style, color=color, alpha=0.7)
-            ax.set_title(st); ax.set_xlabel("date"); ax.set_ylabel(f"{var}{unit}"); ax.legend(); ax.grid(True)
+            ax.set_title(st);
+            ax.set_xlabel("date");
+            ax.set_ylabel(f"{var}{unit}");
+            ax.legend();
+            ax.grid(True)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.suptitle(f"{var} Raw vs Interpolations", fontsize=16)
         plt.savefig(figs_all_dir / f"{var}_all_interp_methods.png", dpi=300, bbox_inches="tight")
@@ -817,7 +1445,6 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
             longitude=xr.DataArray(float(lon), dims=()),
         ).set_coords(["latitude", "longitude"])
 
-
     # station_name as scalar
     ds["station_name"] = xr.DataArray(
         station_id, dims=(),
@@ -836,12 +1463,10 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
         # method comment
         chosen = (methods_chosen.get(var) or {}).get(station_id)
         if chosen:
-            scores_for_station = method_scores.get(var, {}).get(station_id, {})
             auto_comment = build_method_comment(
                 var=var,
                 selected_col=chosen["selected_col"],
-                fallback_col=chosen["fallback_col"],
-                scores_for_station=scores_for_station,
+                fallback_cols=chosen["fallback_cols"],
             )
             ds[var].attrs["comment"] = auto_comment
 
@@ -889,5 +1514,3 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     )
 
     return [out_path]
-
-
