@@ -246,6 +246,8 @@ def _aggregate_seasonal_by_season(
                 agg_value = float(g["value"].sum())
             elif how == "mean":
                 agg_value = float(g["value"].mean())
+            elif how == "median":
+                agg_value = float(g["value"].median())
             else:
                 raise ValueError(f"Unsupported aggregation: {how}")
 

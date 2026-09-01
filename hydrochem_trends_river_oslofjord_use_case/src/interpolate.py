@@ -594,20 +594,59 @@ def validate_interpolation_methods(
 
         if n:
             errors = valid["predicted"] - valid["observed"]
-            mae = float(mean_absolute_error(valid["observed"], valid["predicted"]))
-            rmse = float(np.sqrt(mean_squared_error(valid["observed"], valid["predicted"])))
+
+            mae = float(
+                mean_absolute_error(
+                    valid["observed"],
+                    valid["predicted"],
+                )
+            )
+
+            rmse = float(
+                np.sqrt(
+                    mean_squared_error(
+                        valid["observed"],
+                        valid["predicted"],
+                    )
+                )
+            )
+
             bias = float(errors.mean())
-            r2 = float(r2_score(valid["observed"], valid["predicted"])) if n >= 2 else np.nan
+
+            r2 = (
+                float(
+                    r2_score(
+                        valid["observed"],
+                        valid["predicted"],
+                    )
+                )
+                if n >= 2
+                else np.nan
+            )
+
+            obs_iqr = float(
+                valid["observed"].quantile(0.75)
+                - valid["observed"].quantile(0.25)
+            )
+
+            nrmse = (
+                rmse / obs_iqr
+                if np.isfinite(obs_iqr) and obs_iqr > 0
+                else np.nan
+            )
+
         else:
             mae = np.nan
             rmse = np.nan
             bias = np.nan
             r2 = np.nan
+            nrmse = np.nan
 
         metrics[suffix] = {
             "r2": r2,
             "mae": mae,
             "rmse": rmse,
+            "nrmse": nrmse,
             "bias": bias,
             "n": float(n),
             "coverage": float(coverage),
@@ -651,6 +690,7 @@ def plot_validation_qc(
         score = metrics.get(suffix, {})
         r2 = score.get("r2", np.nan)
         rmse = score.get("rmse", np.nan)
+        nrmse = score.get("nrmse", np.nan)
         coverage = score.get("coverage", np.nan)
 
         label = method_pretty_name(suffix)
@@ -658,6 +698,8 @@ def plot_validation_qc(
             label += f" | R2={r2:.2f}"
         if np.isfinite(rmse):
             label += f" | RMSE={rmse:.3g}"
+        if np.isfinite(nrmse):
+            label += f" | nRMSE={nrmse:.2f}"
         if np.isfinite(coverage):
             label += f" | cov={coverage:.0%}"
 
@@ -780,6 +822,9 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     fallback_method = sel_cfg.get("fallback_method", "linear_interp")
     use_linear_fallback = bool(sel_cfg.get("use_linear_fallback", True))
     min_r2 = float(sel_cfg.get("min_r2", 0.0))
+    r2_tolerance = float(
+        sel_cfg.get("r2_tolerance", 0.05)
+    )
     max_abs_bias_fraction = float(
         sel_cfg.get("max_abs_bias_fraction", 0.25)
     )
@@ -1038,6 +1083,7 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
             coverage = float(score.get("coverage", 0.0))
             r2 = float(score.get("r2", np.nan))
             rmse = float(score.get("rmse", np.nan))
+            nrmse = float(score.get("nrmse", np.nan))
             mae = float(score.get("mae", np.nan))
             bias = float(score.get("bias", np.nan))
 
@@ -1095,6 +1141,7 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                     "suffix": suffix,
                     "r2": r2,
                     "rmse": rmse,
+                    "nrmse": nrmse,
                     "mae": mae,
                     "bias": bias,
                     "abs_bias_fraction": abs_bias_fraction,
@@ -1105,14 +1152,43 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                 }
             )
 
-        # Lowest blocked-validation RMSE wins.
-        # If RMSEs are identical, prefer higher R2.
-        good_methods.sort(
-            key=lambda x: (
-                x["rmse"],
-                -x["r2"] if np.isfinite(x["r2"]) else np.inf,
+        # First identify the best validation R2.
+        # Methods within r2_tolerance are treated as similarly skilled.
+        if good_methods:
+            best_r2 = max(
+                method["r2"]
+                for method in good_methods
+                if np.isfinite(method["r2"])
             )
-        )
+
+            comparable_methods = [
+                method
+                for method in good_methods
+                if (
+                        np.isfinite(method["r2"])
+                        and method["r2"] >= best_r2 - r2_tolerance
+                )
+            ]
+
+            # Among similarly skilled methods, prefer lower normalized
+            # prediction error, then lower relative bias, then higher R2.
+            comparable_methods.sort(
+                key=lambda x: (
+                    (
+                        x["nrmse"]
+                        if np.isfinite(x["nrmse"])
+                        else np.inf
+                    ),
+                    (
+                        x["abs_bias_fraction"]
+                        if np.isfinite(x["abs_bias_fraction"])
+                        else np.inf
+                    ),
+                    -x["r2"],
+                )
+            )
+
+            good_methods = comparable_methods
 
         selected_col: str | None = None
         selected_series: pd.Series | None = None
@@ -1173,11 +1249,28 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
 
             observed_values = y_obs.dropna()
 
-            # Extreme-value safeguard for fallback predictions
+            # Robust reference range for evaluating predictions
+            # during periods without observations.
             if not observed_values.empty:
-                observed_max = float(observed_values.max())
-                max_allowed = observed_max * extreme_ratio_limit
+                observed_low = float(
+                    observed_values.quantile(0.05)
+                )
+                observed_high = float(
+                    observed_values.quantile(0.95)
+                )
+
+                min_allowed = (
+                    observed_low / extreme_ratio_limit
+                    if observed_low > 0
+                    else 0.0
+                )
+
+                max_allowed = (
+                        observed_high * extreme_ratio_limit
+                )
+
             else:
+                min_allowed = 0.0
                 max_allowed = np.inf
 
             # Candidate model fallbacks.
@@ -1188,18 +1281,78 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                 if f"{var}_{suffix}" != selected_col
             ]
 
-            # Prefer the candidate with lower validation RMSE.
-            # Fallback models are not required to pass the primary R² threshold.
-            def fallback_rmse(suffix: str) -> float:
+            # Rank long-gap fallback models using both validation
+            # performance and prediction plausibility.
+            def fallback_rank(
+                    suffix: str,
+            ) -> tuple[float, float, float, float]:
+
+                candidate_col = f"{var}_{suffix}"
+
+                if candidate_col not in df_obs_range.columns:
+                    return np.inf, np.inf, np.inf, np.inf
+
+                remaining_dates = filled_series.index[
+                    filled_series.isna()
+                ]
+
+                candidate_values = (
+                    df_obs_range[candidate_col]
+                    .reindex(remaining_dates)
+                    .dropna()
+                )
+
+                if candidate_values.empty:
+                    return np.inf, np.inf, np.inf, np.inf
+
+                # Fraction of long-gap predictions outside the
+                # robust observed concentration range.
+                outside = (
+                        (candidate_values < min_allowed)
+                        | (candidate_values > max_allowed)
+                )
+
+                outside_fraction = float(outside.mean())
+
                 score = metrics.get(suffix, {})
-                rmse = float(score.get("rmse", np.nan))
 
-                if np.isfinite(rmse):
-                    return rmse
+                r2 = float(score.get("r2", np.nan))
+                nrmse = float(score.get("nrmse", np.nan))
+                bias = float(score.get("bias", np.nan))
 
-                return np.inf
+                obs_typical = float(observed_values.median())
 
-            model_fallback_candidates.sort(key=fallback_rmse)
+                if (
+                        np.isfinite(obs_typical)
+                        and obs_typical != 0
+                        and np.isfinite(bias)
+                ):
+                    bias_fraction = abs(bias) / abs(obs_typical)
+                else:
+                    bias_fraction = np.inf
+
+                r2_rank = (
+                    -r2
+                    if np.isfinite(r2)
+                    else np.inf
+                )
+
+                nrmse_rank = (
+                    nrmse
+                    if np.isfinite(nrmse)
+                    else np.inf
+                )
+
+                return (
+                    outside_fraction,
+                    r2_rank,
+                    nrmse_rank,
+                    bias_fraction,
+                )
+
+            model_fallback_candidates.sort(
+                key=fallback_rank
+            )
 
             for suffix in model_fallback_candidates:
 
@@ -1235,18 +1388,6 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                     )
                     continue
 
-                # Reject candidate if predictions are excessively high
-                if (
-                        np.isfinite(max_allowed)
-                        and (candidate_values > max_allowed).any()
-                ):
-                    print(
-                        f"{station_id} -> {var}: "
-                        f"{candidate_col} rejected as fallback "
-                        f"— prediction exceeds "
-                        f"{extreme_ratio_limit:.1f} × observed maximum"
-                    )
-                    continue
 
                 # Fill dates where this model has an estimate
                 fill_dates = candidate_values.index[

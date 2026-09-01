@@ -181,6 +181,7 @@
   },
   "selection": {
     "min_r2": 0.45,
+    "r2_tolerance": 0.05,
     "max_abs_bias_fraction": 0.20,
     "extreme_ratio_limit": 2.0
 },
