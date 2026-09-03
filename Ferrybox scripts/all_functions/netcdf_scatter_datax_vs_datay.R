@@ -132,50 +132,45 @@ scatter_from_joined <- function(
 
 resolve_spatial_input_path <- function(input_path) {
   if (is.null(input_path)) return(NULL)
-  
-  if (!(startsWith(input_path, "http") || file.exists(input_path))) {
+
+  is_url <- startsWith(input_path, "http")
+  if (!(is_url || file.exists(input_path))) {
     stop("Spatial input must be NULL, a valid file path, or a valid URL.")
   }
-  
-  resolved_path <- input_path
-  
-  if (startsWith(input_path, "http") && endsWith(tolower(input_path), "zip")) {
-    message("DEBUG: Downloading ZIP: ", input_path)
-    
-    temp_zip <- tempfile(fileext = ".zip")
-    extract_dir <- tempfile()
-    dir.create(extract_dir)
-    
-    download.file(input_path, temp_zip, mode = "wb")
-    unzip(temp_zip, exdir = extract_dir)
-    
-    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
-    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
-    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
-    spatial_files <- c(shp_files, geojson_files)
-    
-    message("DEBUG: Extracted files:")
-    print(list.files(extract_dir, recursive = TRUE))
-    
-    if (length(spatial_files) == 0) {
-      stop("No .shp or .geojson/.json file found in ZIP.")
-    }
-    
-    if (length(spatial_files) > 1) {
-      stop(
-        "ZIP contains multiple spatial files. This script requires exactly one spatial file inside the ZIP.\n",
-        "Available files: ", paste(basename(spatial_files), collapse = ", ")
-      )
-    }
-    
-    resolved_path <- spatial_files[1]
-    message("DEBUG: Selected spatial file: ", resolved_path)
-    
-  } else if (startsWith(input_path, "http") && endsWith(tolower(input_path), "shp")) {
-    stop("Remote shapefile must be provided as ZIP.")
+
+  local_file <- input_path
+  if (is_url) {
+    local_file <- tempfile()
+    download.file(input_path, local_file, mode = "wb")
   }
-  
-  resolved_path
+
+  # Afgør type ud fra indhold, ikke endelse (Galaxy giver .dat-navne)
+  con <- file(local_file, "rb")
+  magic <- readBin(con, "raw", n = 4)
+  close(con)
+  is_zip <- length(magic) >= 2 &&
+            magic[1] == as.raw(0x50) && magic[2] == as.raw(0x4B)  # "PK"
+
+  if (is_zip) {
+    extract_dir <- tempfile(); dir.create(extract_dir)
+    unzip(local_file, exdir = extract_dir)
+    files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
+    spatial_files <- files[grepl("\\.(shp|geojson|json)$", files, ignore.case = TRUE)]
+    if (length(spatial_files) == 0) stop("No .shp or .geojson/.json file found in ZIP.")
+    if (length(spatial_files) > 1) stop("ZIP contains multiple spatial files: ",
+                                        paste(basename(spatial_files), collapse = ", "))
+    return(spatial_files[1])
+  }
+
+  # Ellers: geojson/json-indhold (også når filen hedder .dat)
+  first <- readLines(local_file, n = 50, warn = FALSE)
+  if (any(grepl("FeatureCollection|\"type\"\\s*:", first))) {
+    geojson_path <- tempfile(fileext = ".geojson")
+    file.copy(local_file, geojson_path, overwrite = TRUE)
+    return(geojson_path)
+  }
+
+  local_file
 }
 
 

@@ -161,71 +161,99 @@ assessment_plot <- function(
 
 resolve_study_area_path <- function(input_study_area) {
   if (is.null(input_study_area)) return(NULL)
-  
-  if (!(startsWith(input_study_area, "http") || file.exists(input_study_area))) {
+
+  is_url <- startsWith(input_study_area, "http")
+  if (!(is_url || file.exists(input_study_area))) {
     stop("input_study_area must be NULL, a valid file path, or a valid URL.")
   }
-  
-  input_path <- input_study_area
-  
-  if (startsWith(input_study_area, "http") && endsWith(tolower(input_study_area), "zip")) {
-    message("DEBUG: Downloading ZIP: ", input_study_area)
-    
-    temp_zip <- tempfile(fileext = ".zip")
+
+  # Download to a local file if given as a URL
+  local_file <- input_study_area
+  if (is_url) {
+    local_file <- tempfile()
+    download.file(input_study_area, local_file, mode = "wb")
+  }
+
+  # Determine file type from CONTENT, not extension.
+  # Galaxy delivers datasets with .dat names, so we cannot trust the extension.
+  # ZIP files start with the magic bytes "PK" (0x50 0x4B).
+  con <- file(local_file, "rb")
+  magic <- readBin(con, "raw", n = 4)
+  close(con)
+  is_zip <- length(magic) >= 2 &&
+            magic[1] == as.raw(0x50) && magic[2] == as.raw(0x4B)  # "PK"
+
+  if (is_zip) {
+    message("DEBUG: Input detected as ZIP, extracting.")
     extract_dir <- tempfile()
     dir.create(extract_dir)
-    
-    download.file(input_study_area, temp_zip, mode = "wb")
-    unzip(temp_zip, exdir = extract_dir)
-    
+    unzip(local_file, exdir = extract_dir)
+
     files <- list.files(extract_dir, recursive = TRUE, full.names = TRUE)
-    
-    shp_files <- files[grepl("\\.shp$", files, ignore.case = TRUE)]
-    geojson_files <- files[grepl("\\.(geojson|json)$", files, ignore.case = TRUE)]
-    spatial_files <- c(shp_files, geojson_files)
-    
+    message("DEBUG: Extracted files: ", paste(basename(files), collapse = ", "))
+
+    spatial_files <- files[grepl("\\.(shp|geojson|json)$", files, ignore.case = TRUE)]
+
     if (length(spatial_files) == 0) {
       stop("No .shp or .geojson/.json file found in ZIP.")
     }
-    
     if (length(spatial_files) > 1) {
       stop(
         "ZIP contains multiple spatial files. This script requires exactly one spatial file inside the ZIP.\n",
         "Available files: ", paste(basename(spatial_files), collapse = ", ")
       )
     }
-    
-    input_path <- spatial_files[1]
-    message("DEBUG: Selected spatial file: ", input_path)
-    
-  } else if (startsWith(input_study_area, "http") && endsWith(tolower(input_study_area), "shp")) {
-    stop("Remote shapefile must be provided as ZIP.")
+
+    message("DEBUG: Selected spatial file: ", spatial_files[1])
+    return(spatial_files[1])
   }
-  
-  input_path
+
+  # Otherwise: assume it is a geojson/json text file (also when named .dat).
+  # Copy it to a file with a .geojson extension so sf/GDAL recognises it.
+  # file.copy preserves bytes 1:1 (safe for UTF-8 names); read only the first
+  # lines to detect GeoJSON without loading the whole file.
+  first_lines <- readLines(local_file, n = 50, warn = FALSE)
+  if (any(grepl("FeatureCollection|\"type\"\\s*:", first_lines))) {
+    message("DEBUG: Input detected as GeoJSON/JSON text, copying with .geojson extension.")
+    geojson_path <- tempfile(fileext = ".geojson")
+    file.copy(local_file, geojson_path, overwrite = TRUE)
+    return(geojson_path)
+  }
+
+  # Fall back to the original path (e.g. a real .shp/.geojson already on disk)
+  message("DEBUG: Input not detected as ZIP or GeoJSON, using path as-is: ", local_file)
+  local_file
 }
 
 read_study_area <- function(path_to_study_area, layer_input) {
   lyr_info <- sf::st_layers(path_to_study_area)
   available_layers <- paste(lyr_info$name, collapse = ", ")
-  
+
   # Force explicit layer selection whenever study area is provided
-if (is.null(layer_input)) {
-  stop(paste0(
-    "input_study_area was provided, so study_area_layer is required.",
-    " Available layers: ", available_layers
-  ))
-}
-  
-if (!(layer_input %in% lyr_info$name)) {
-  stop(paste0(
-    "Input layer name does not exist.",
-    " Requested layer: ", layer_input, ".",
-    " Available layers: ", available_layers
-  ))
-}
-  
-  sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
+  if (is.null(layer_input)) {
+    stop(paste0(
+      "input_study_area was provided, so study_area_layer is required.",
+      " Available layers: ", available_layers
+    ))
+  }
+
+  if (!(layer_input %in% lyr_info$name)) {
+    stop(paste0(
+      "Input layer name does not exist.",
+      " Requested layer: ", layer_input, ".",
+      " Available layers: ", available_layers
+    ))
+  }
+
+  shp <- sf::st_read(path_to_study_area, layer = layer_input, quiet = TRUE)
+
+  # Repair invalid geometries from source data (e.g. duplicate vertices).
+  # Turn s2 off during repair to avoid s2 rejecting the invalid input outright.
+  sf::sf_use_s2(FALSE)
+  shp <- sf::st_make_valid(shp)
+  sf::sf_use_s2(TRUE)
+
+  shp
 }
 
 # -------------------------------------------------------------------

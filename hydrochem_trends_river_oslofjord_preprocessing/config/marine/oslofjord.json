@@ -61,7 +61,7 @@
       "long_name": "Chlorophyll-a Concentration",
       "units": "ug L-1"
     },
-    "DIN_µgperl": {
+    "DIN_ugperl": {
       "long_name": "Dissolved Inorganic Nitrogen",
       "units": "ug L-1",
       "comment": "Sum of nitrate-N, nitrite-N and ammonium-N"
@@ -85,12 +85,12 @@
       "long_name": "Dissolved Organic Carbon to Total Nitrogen Ratio",
       "units": "1"
     },
-    "NH4-N_µgperl": {
+    "NH4_N_ugperl": {
       "long_name": "Ammonium-N Concentration",
       "units": "ug L-1",
       "processing_note": "Ammonium-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
-    "NO2-N_µgperl": {
+    "NO2_N_ugperl": {
       "long_name": "Nitrite-N Concentration",
       "units": "ug L-1",
       "processing_note": "Nitrite-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
@@ -100,12 +100,12 @@
       "units": "ug L-1",
       "processing_note": "Nitrate plus Nitrite Nitrogen concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
-    "NO3-N_µgperl": {
+    "NO3_N_ugperl": {
       "long_name": "Nitrate-N Concentration",
       "units": "ug L-1",
       "processing_note": "Nitrate-N concentrations originally reported in umol N L-1 were converted to ug N L-1 using the molar mass of nitrogen (14.0067 g mol-1)."
     },
-    "PO4-P_µgperl": {
+    "PO4_P_ugperl": {
       "long_name": "Phosphate-P Concentration",
       "units": "ug L-1",
       "processing_note": "Phosphate-P concentrations originally reported in umol P L-1 were converted to ug P L-1 using the molar mass of phosphorus (30.9738 g mol-1)."
