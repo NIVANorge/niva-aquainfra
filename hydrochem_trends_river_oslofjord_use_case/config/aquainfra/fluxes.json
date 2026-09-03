@@ -1,15 +1,13 @@
 {
-  "wc_interp_data_path": "output/daily_estimates/data/daily_water_chemistry_modeled_Numedalslagen.nc",
-  "q_cleaned_data_path": "data/processed/river/Q_daily_mean_Numedalslagen_Holmfoss_15_61_0_cleaned.nc",
+  "wc_interp_data_path": "",
+  "q_cleaned_data_path": "",
 
   "unit_options": {
-  "non_mass_vars": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
-  "undefined_unit_label": "undefined"
+    "non_mass_vars": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
+    "undefined_unit_label": "undefined"
   },
 
-  "q_station_rename_map": {
-    "Holmfoss": "Numedalslagen"
-  },
+  "q_station_rename_map": {},
 
   "date_col": "date",
   "station_col": "river_name",
@@ -17,8 +15,8 @@
 
   "columns_to_drop": ["latitude", "longitude", "station_id", "station_code", "station_type"],
 
-  "river": "Numedalslagen",
-  "river_coords": { "lat": 59.10128295, "lon": 11.13411158 },
+  "river": "",
+  "river_coords": { "lat": 0.0, "lon": 0.0 },
 
   "flux_metadata": {
     "parameter_name": [
@@ -91,19 +89,19 @@
 
   "var_comments": {
     "Color": {
-      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      "default": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
     },
     "UV_Abs_254nm": {
-      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
+      "default": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
     },
     "UV_Abs_410nm": {
-      "Numedalslagen": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret these qualitatively, not quantitatively."
+      "default": "This variable does NOT represent actual mass transport (e.g., in tonnes). It is included only as proxy to show how such parameters may vary with river discharge. Interpret this qualitatively, not quantitatively."
     }
   },
 
   "metadata": {
     "id": {
-      "prefix": "no.niva",
+      "prefix": "",
       "namespace_uuid": "a23b7946-1a42-4d4a-bb0d-cf5a6cfb5670",
       "seed_template": "{station_id}:{frequency}"
     },
@@ -123,26 +121,26 @@
     }
   },
 
-   "global_metadata_config": {
-    "naming_authority": "no.niva",
+  "global_metadata_config": {
+    "naming_authority": "",
     "project": "AquaINFRA",
     "iso_topic_category": "inlandWaters",
     "featureType": "timeSeries",
     "spatial_representation": "point",
     "creator_type": "institution",
-    "creator_institution": "Norwegian Institute for Water Research (NIVA)",
-    "institution": "Norwegian Institute for Water Research (NIVA)",
-    "institution_short_name": "NIVA",
-    "creator_name": "Areti Balkoni",
-    "creator_email": "areti.balkoni@niva.no",
-    "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
-    "data_owner": "Norwegian Institute for Water Research",
-    "publisher_name": "Norwegian Institute for Water Research",
-    "publisher_email": "miljoinformatikk@niva.no",
-    "publisher_institution": "Norwegian Institute for Water Research",
-    "publisher_url": "https://niva.no",
-    "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
-    "keywords": "GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+    "creator_institution": "",
+    "institution": "",
+    "institution_short_name": "",
+    "creator_name": "",
+    "creator_email": "",
+    "creator_url": "",
+    "data_owner": "",
+    "publisher_name": "",
+    "publisher_email": "",
+    "publisher_institution": "",
+    "publisher_url": "",
+    "license": "",
+    "keywords": "",
     "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
     "comment": "Parameters like 'UV_Abs_254nm', 'UV_Abs_410nm', and 'Color' are not mass concentrations. Fluxes for these variables do NOT represent actual mass transport (e.g., tonnes). They are proxies to show how such parameters may vary with discharge; interpret qualitatively."
   },

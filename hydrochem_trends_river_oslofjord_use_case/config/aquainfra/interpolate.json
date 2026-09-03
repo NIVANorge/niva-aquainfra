@@ -1,7 +1,7 @@
 {
   "input": {
-    "waterchem_file": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40352.nc",
-    "discharge_file": "data/processed/river/Q_daily_mean_Drammenselva_Mjondalen_bru_12_534_0_cleaned.nc",
+    "waterchem_file": "",
+    "discharge_file": "",
     "wc_time_col": "sample_date",
     "q_time_col": "time",
     "wc_station_col": "station_name",
@@ -9,28 +9,24 @@
     "discharge_var": "discharge"
   },
   "paths": {
-    "fig_all_methods_dir": "output/daily_estimates/figures/drammenselva/all_methods",
-    "fig_selected_dir": "output/daily_estimates/figures/drammenselva/selected",
-    "fig_validation_dir": "output/daily_estimates/figures/drammenselva/validation",
+    "fig_all_methods_dir": "",
+    "fig_selected_dir": "",
+    "fig_validation_dir": "",
     "output_dir": "output/daily_estimates/data"
   },
   "rename_maps": {
-    "wc": {
-      "Drammenselva": "Drammenselva"
-    },
-    "q": {
-      "Mjondalen bru": "Drammenselva"
-    }
+    "wc": {},
+    "q": {}
   },
   "meta": {
     "station_name": {
-      "value": "Drammenselva"
+      "value": ""
     },
     "latitude": {
-      "value": 59.75257593
+      "value": 0.0
     },
     "longitude": {
-      "value": 10.00789751
+      "value": 0.0
     }
   },
   "drop_columns": [
@@ -191,7 +187,7 @@
   },
   "metadata": {
     "id": {
-      "prefix": "no.niva",
+      "prefix": "",
       "namespace_uuid": "a23b7946-1a42-4d4a-bb0d-cf5a6cfb5670",
       "seed_template": "{station_id}"
     },
@@ -211,27 +207,27 @@
     }
   },
   "global_metadata_config": {
-    "naming_authority": "no.niva",
+    "naming_authority": "",
     "project": "AquaINFRA",
     "iso_topic_category": "inlandWaters",
     "featureType": "timeSeries",
     "spatial_representation": "point",
     "creator_type": "institution",
-    "creator_institution": "Norwegian Institute for Water Research (NIVA)",
-    "institution": "Norwegian Institute for Water Research (NIVA)",
-    "institution_short_name": "NIVA",
-    "creator_name": "Areti Balkoni",
-    "creator_email": "areti.balkoni@niva.no",
-    "creator_url": "https://www.niva.no/en/employees/areti-balkoni",
-    "data_owner": "Norwegian Institute for Water Research",
+    "creator_institution": "",
+    "institution": "",
+    "institution_short_name": "",
+    "creator_name": "",
+    "creator_email": "",
+    "creator_url": "",
+    "data_owner": "",
     "processing_level": "Observed and gap-filled daily time series with validation-based interpolation selection",
     "Conventions": "CF-1.7, ACDD-1.3",
-    "publisher_name": "Norwegian Institute for Water Research",
-    "publisher_email": "miljoinformatikk@niva.no",
-    "publisher_institution": "Norwegian Institute for Water Research",
-    "publisher_url": "https://niva.no",
-    "license": "http://spdx.org/licenses/CC-BY-4.0(CC-BY-4.0)",
-    "keywords": "GCMDSK:EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > WATER QUALITY/ WATER CHEMISTRY, GCMDLOC:CONTINENT > EUROPE > NORWAY",
+    "publisher_name": "",
+    "publisher_email": "",
+    "publisher_institution": "",
+    "publisher_url": "",
+    "license": "",
+    "keywords": "",
     "keywords_vocabulary": "GCMDSK:GCMD Science Keywords, GCMDLOC:GCMD Locations",
     "history": "Water chemistry and discharge data harmonized. Observed concentrations are preserved. Missing daily concentrations are estimated using linear interpolation, GAM, monthly discharge regressions, and monthly-median interpolation. Model-based candidate methods are evaluated using blocked holdout validation and accepted based on validation sample size, coverage, R2, and relative bias. Accepted methods are ranked by validation RMSE. Gap-limited linear interpolation is used as the first fallback. Remaining missing values may be filled using GAM or monthly discharge regression, subject to an extreme-value safeguard. Values that cannot be estimated by any available method remain missing."
   },

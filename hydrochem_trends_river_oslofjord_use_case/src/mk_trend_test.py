@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -11,27 +11,17 @@ import pandas as pd
 import xarray as xr
 import pymannkendall as mk
 from scipy.stats import theilslopes
-from src.utils import resolve_path, ensure_dirs
 
+from .utils import (
+    ensure_dirs,
+    resolve_input_source,
+    resolve_path,
+)
 
 plt.style.use("ggplot")
 
 
-# def _project_root() -> Path:
-#     # src/mk_trend_test.py -> parents[1] = project root if src/ is inside the project
-#     return Path(__file__).resolve().parents[1]
-
-#
-# def _abs_path(p: str | Path) -> Path:
-#     p = Path(p)
-#     return p if p.is_absolute() else (_project_root() / p)
-
-
-# def _ensure_dir(p: Path) -> None:
-#     p.mkdir(parents=True, exist_ok=True)
-
-
-def _infer_time_name(ds: xr.Dataset) -> Optional[str]:
+def _infer_time_name(ds: xr.Dataset) -> str | None:
     for c in ("date", "time", "datetime", "timestamp", "sample_date"):
         if c in ds.coords:
             return c
@@ -41,7 +31,28 @@ def _infer_time_name(ds: xr.Dataset) -> Optional[str]:
     return None
 
 
-def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Optional[str] = None) -> List[str]:
+def _resolve_variable_name(
+    var: str,
+    rules: dict[str, Any] | None = None,
+) -> str:
+    """
+    Convert an analysis variable name to the name used by a specific input source.
+    Rules are optional and configured per input source.
+    """
+    rules = rules or {}
+    name = var
+
+    # Optional explicit mappings for exceptional cases
+    name = rules.get("map", {}).get(name, name)
+
+    # Optional generic replacements
+    for old, new in rules.get("replace", {}).items():
+        name = name.replace(old, new)
+
+    return name
+
+
+def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: str | None = None) -> list[str]:
     if station_coord and station_coord in ds.coords:
         vals = ds[station_coord].values
     elif station_coord and station_coord in ds.data_vars:
@@ -52,7 +63,7 @@ def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Opti
         n = int(ds.dims.get(station_dim, 0))
         return [f"{station_dim}_{i}" for i in range(n)]
 
-    out: List[str] = []
+    out: list[str] = []
     for v in vals:
         try:
             if isinstance(v, bytes):
@@ -64,7 +75,7 @@ def _list_stations_from_ds(ds: xr.Dataset, station_dim: str, station_coord: Opti
     return out
 
 
-def _slice_period(s: pd.Series, *, start: Optional[str], end: Optional[str]) -> pd.Series:
+def _slice_period(s: pd.Series, *, start: str | None, end: str | None) -> pd.Series:
     """Slice datetime-indexed Series to [start, end]."""
     if s is None or s.empty:
         return s
@@ -85,7 +96,182 @@ def _slice_period(s: pd.Series, *, start: Optional[str], end: Optional[str]) -> 
         return s.loc[start_ts:]
     return s.loc[:end_ts]
 
-def _find_site_file(folder: Path, site: str) -> Optional[Path]:
+def _slice_years(
+    s: pd.Series,
+    *,
+    start_year: int | None,
+    end_year: int | None,
+) -> pd.Series:
+    """Restrict an already aggregated series to requested calendar years."""
+    if s is None or s.empty:
+        return s
+
+    years = pd.to_datetime(s.index).year
+
+    mask = np.ones(len(s), dtype=bool)
+
+    if start_year is not None:
+        mask &= years >= start_year
+
+    if end_year is not None:
+        mask &= years <= end_year
+
+    return s.loc[mask]
+
+
+def _covers_full_period(
+    s: pd.Series,
+    *,
+    start_year: int | None,
+    end_year: int | None,
+) -> bool:
+    """
+    Check that an aggregated trend series reaches both requested
+    boundary years.
+    """
+    if s is None or s.empty:
+        return False
+
+    years = pd.to_datetime(s.index).year
+
+    if start_year is not None and years.min() > start_year:
+        return False
+
+    if end_year is not None and years.max() < end_year:
+        return False
+
+    return True
+
+def _season_name(month: int) -> str:
+    if month in (12, 1, 2):
+        return "winter"
+    if month in (3, 4, 5):
+        return "spring"
+    if month in (6, 7, 8):
+        return "summer"
+    return "autumn"
+
+
+def _aggregate_series(
+    s: pd.Series,
+    *,
+    frequency: str,
+    how: str = "mean",
+    coverage: dict[str, Any] | None = None,
+) -> pd.Series:
+
+    coverage = coverage or {}
+
+    s = s.copy()
+    s.index = pd.to_datetime(s.index)
+    s = s.dropna().sort_index()
+
+    if s.empty:
+        return s
+
+    min_obs_per_period = int(coverage.get("min_obs_per_period", 1))
+
+    if frequency == "monthly":
+        rule = "MS"
+
+        out = s.resample(rule).sum(min_count=1) if how == "sum" else s.resample(rule).mean()
+        counts = s.resample(rule).count()
+        return out[counts >= min_obs_per_period].dropna()
+
+    if frequency == "annual":
+        rule = "YS"
+
+        out = s.resample(rule).sum(min_count=1) if how == "sum" else s.resample(rule).mean()
+        counts = s.resample(rule).count()
+        out = out[counts >= min_obs_per_period]
+
+        if coverage.get("require_all_seasons", False):
+            min_seasons = int(coverage.get("min_seasons_per_year", 4))
+
+            tmp = pd.DataFrame({"value": s})
+            tmp["year"] = tmp.index.year
+            tmp["season"] = tmp.index.month.map(_season_name)
+
+            seasons_per_year = tmp.groupby("year")["season"].nunique()
+            valid_years = seasons_per_year[seasons_per_year >= min_seasons].index
+
+            out = out[out.index.year.isin(valid_years)]
+
+        return out.dropna()
+
+    raise ValueError(f"Unsupported frequency: {frequency}")
+
+def _aggregate_seasonal_by_season(
+    s: pd.Series,
+    *,
+    how: str = "mean",
+    coverage: dict[str, Any] | None = None
+) -> dict[str, pd.Series]:
+
+    coverage = coverage or {}
+    min_obs_per_period = int(coverage.get("min_obs_per_period", 1))
+
+    s = s.copy()
+    s.index = pd.to_datetime(s.index)
+    s = s.dropna().sort_index()
+
+    out_by_season: dict[str, pd.Series] = {}
+
+    for season in ["winter", "spring", "summer", "autumn"]:
+        ss = s[s.index.month.map(_season_name) == season]
+
+        if ss.empty:
+            continue
+
+        seasonal_year = ss.index.year.copy()
+
+        if season == "winter":
+            seasonal_year = ss.index.year + (ss.index.month == 12).astype(int)
+
+        tmp = pd.DataFrame({
+            "date": ss.index,
+            "value": ss.values,
+            "seasonal_year": seasonal_year,
+        })
+
+        rows = []
+
+        for yr, g in tmp.groupby("seasonal_year"):
+            n_raw = int(g["value"].count())
+
+            if n_raw < min_obs_per_period:
+                continue
+
+            if how == "sum":
+                agg_value = float(g["value"].sum())
+            elif how == "mean":
+                agg_value = float(g["value"].mean())
+            elif how == "median":
+                agg_value = float(g["value"].median())
+            else:
+                raise ValueError(f"Unsupported aggregation: {how}")
+
+            rows.append({
+                "year": int(yr),
+                "value": agg_value,
+                "n_raw": n_raw,
+                "dates": sorted(pd.to_datetime(g["date"]).dt.strftime("%Y-%m-%d").tolist()),
+            })
+
+        if not rows:
+            continue
+
+        out = pd.Series(
+            [r["value"] for r in rows],
+            index=pd.to_datetime([f"{r['year']}-01-01" for r in rows]),
+            name=season,
+        ).sort_index()
+
+        out_by_season[season] = out
+
+    return out_by_season
+
+def _find_site_file(folder: Path, site: str) -> Path | None:
     if not folder.exists():
         return None
     site_l = site.lower().replace(" ", "_")
@@ -100,93 +286,227 @@ def _find_site_file(folder: Path, site: str) -> Optional[Path]:
     return None
 
 
+def _river_name_from_nc(nc_path: Path) -> str | None:
+    """Read the actual river name stored in a river flux NetCDF file."""
+    try:
+        with xr.open_dataset(nc_path) as ds:
+            if "river_name" not in ds:
+                return None
+
+            values = np.asarray(ds["river_name"].values).reshape(-1)
+
+            if values.size == 0:
+                return None
+
+            value = values[0]
+
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+
+            name = str(value).strip()
+
+            return name if name else None
+
+    except Exception:
+        return None
+
+
 def _open_series_and_unit_from_nc(
-    nc_path: Path,
+    nc_path: str | Path,
     var: str,
     *,
-    station: Optional[str] = None,
-    station_dim: Optional[str] = None,
-    station_coord: Optional[str] = None,
-) -> Tuple[Optional[pd.Series], Optional[str]]:
-    """
-    Load variable `var` from NetCDF into a pandas Series indexed by datetime.
-    Also returns ds[var].attrs.get("units") if present.
-    """
+    station: str | None = None,
+    station_dim: str | None = None,
+    station_coord: str | None = None,
+    depth_dim: str | None = None,
+    depth_selection: dict[str, Any] | None = None,
+) -> tuple[pd.Series | None, str | None]:
+
     ds = xr.open_dataset(nc_path)
 
     if var not in ds.data_vars:
         return None, None
 
+    unit = ds[var].attrs.get("units", None)
+    unit = str(unit) if unit is not None else None
+
+    # Marine ragged/profile format:
+    # time(profile), stationIndex(profile), rowSize(profile), variable(obs), depth(obs)
+    if (
+        "profile" in ds.dims
+        and "obs" in ds.dims
+        and "stationIndex" in ds.data_vars
+        and "rowSize" in ds.data_vars
+        and var in ds.data_vars
+        and ds[var].dims == ("obs",)
+    ):
+        if station is None:
+            return None, unit
+
+        labels = []
+        for x in ds[station_coord].values:
+            labels.append(x.decode("utf-8") if isinstance(x, bytes) else str(x))
+
+        if station not in labels:
+            return None, unit
+
+        station_i = labels.index(station)
+
+        station_index = ds["stationIndex"].values
+        row_size = ds["rowSize"].values
+        times = pd.to_datetime(ds["time"].values, errors="coerce")
+
+        values = ds[var].values
+        depths = ds[depth_dim].values if depth_dim and depth_dim in ds.coords else None
+
+        rows = []
+        obs_start = 0
+
+        for profile_i, n_obs in enumerate(row_size):
+            obs_end = obs_start + int(n_obs)
+
+            if station_index[profile_i] == station_i:
+                v = values[obs_start:obs_end]
+
+                if depths is not None:
+                    d = depths[obs_start:obs_end]
+
+                    if depth_selection:
+                        mode = depth_selection.get("mode", "all")
+
+                        if mode == "range":
+                            dmin = depth_selection.get("min", None)
+                            dmax = depth_selection.get("max", None)
+
+                            if dmin is not None and dmax is not None:
+                                mask = (d >= dmin) & (d <= dmax)
+                                v = v[mask]
+
+                        elif mode == "values":
+                            wanted = depth_selection.get("values", [])
+                            if wanted:
+                                mask = np.isin(d, wanted)
+                                v = v[mask]
+
+                if len(v) > 0:
+                    v = np.asarray(v, dtype=float)
+                    if np.isfinite(v).any():
+                        rows.append((times[profile_i], float(np.nanmean(v))))
+
+            obs_start = obs_end
+
+        if not rows:
+            return None, unit
+
+        s = pd.Series(
+            [r[1] for r in rows],
+            index=pd.DatetimeIndex([r[0] for r in rows], name="time"),
+            name=var,
+        ).sort_index()
+
+        # If more than one profile exists for same day/time, average them
+        s = s.groupby(s.index).mean()
+
+        return s, unit
+
+    # Existing simple time-series format
     time_coord = _infer_time_name(ds)
     if time_coord is None:
-        return None, None
+        return None, unit
 
     da = ds[var]
 
-    # Multi-station selection (TO DO - Marine)
     if station is not None and station_dim is not None and station_dim in da.dims:
         if station_coord and station_coord in ds.coords:
-            # labels = [str(x) for x in ds[station_coord].values]
             labels = []
             for x in ds[station_coord].values:
-                if isinstance(x, bytes):
-                    labels.append(x.decode("utf-8"))
-                else:
-                    labels.append(str(x))
+                labels.append(x.decode("utf-8") if isinstance(x, bytes) else str(x))
 
             if station in labels:
                 da = da.isel({station_dim: labels.index(station)})
             else:
-                try:
-                    da = da.sel({station_dim: station})
-                except Exception:
-                    return None, None
-        else:
-            try:
-                da = da.sel({station_dim: station})
-            except Exception:
-                return None, None
+                return None, unit
 
-    try:
-        t = pd.to_datetime(ds[time_coord].values, errors="coerce")
-    except Exception:
-        return None, None
+    if depth_dim and depth_dim in da.dims:
+        if depth_selection:
+            mode = depth_selection.get("mode", "all")
 
-    y = pd.Series(da.values, index=pd.DatetimeIndex(t, name=time_coord), name=var).sort_index()
-    unit = da.attrs.get("units", None)
-    return y, (str(unit) if unit is not None else None)
+            if mode == "range":
+                dmin = depth_selection.get("min", None)
+                dmax = depth_selection.get("max", None)
+                if dmin is not None and dmax is not None:
+                    da = da.sel({depth_dim: slice(dmin, dmax)})
 
+            elif mode == "values":
+                values = depth_selection.get("values", [])
+                if values:
+                    da = da.sel({depth_dim: values}, method="nearest")
+
+        da = da.mean(dim=depth_dim, skipna=True)
+
+    remaining_dims = [d for d in da.dims if d != time_coord]
+    if remaining_dims:
+        print(
+            f"[trends] Skipping {var} in {nc_path}: "
+            f"remaining dimensions {remaining_dims}"
+        )
+        return None, unit
+
+    t = pd.to_datetime(ds[time_coord].values, errors="coerce")
+
+    y = pd.Series(
+        da.values,
+        index=pd.DatetimeIndex(t, name=time_coord),
+        name=var,
+    ).sort_index()
+
+    return y, unit
 
 def _display_unit_for_plot(
-    base_unit: Optional[str],
+    base_unit: str | None,
     *,
     frequency: str,
+    aggregation: str,
     var: str,
     non_mass_vars: set[str],
     undefined_label: str = "undefined",
 ) -> str:
     """
-    For plotting labels:
-      - if base_unit == "tonnes" -> tonnes/<period>
-      - non-mass vars: keep base_unit (or undefined_label)
-      - if base_unit undefined -> undefined_label
+    Return the unit after temporal aggregation.
+
+    Examples:
+    - daily flux in tonnes/day summed monthly -> tonnes/month
+    - daily flux in tonnes/day summed annually -> tonnes/year
+    - daily flux in tonnes/day summed by season -> tonnes/season
+    - concentration averaged over time -> original concentration unit
     """
+
     bu = (base_unit or "").strip()
 
-    if var in non_mass_vars:
-        return bu if bu else undefined_label
-
-    if bu.lower() in {"", "undefined", "unknown"}:
+    if not bu or bu.lower() in {"undefined", "unknown"}:
         return undefined_label
 
-    if bu == "tonnes":
+    # Variables that are not mass fluxes keep their original units.
+    if var in non_mass_vars:
+        return bu
+
+    # Summing a daily mass flux changes the temporal unit.
+    if aggregation == "sum" and bu.lower() in {
+        "tonnes/day",
+        "tonnes d-1",
+        "tonnes d^-1",
+    }:
         if frequency == "monthly":
             return "tonnes/month"
+
         if frequency == "annual":
             return "tonnes/year"
-        if frequency == "daily":
-            return "tonnes/day"
 
+        if frequency == "seasonal_by_season":
+            return "tonnes/season"
+
+    # For means, or units that do not need conversion,
+    # preserve the source unit.
     return bu
 
 def _period_str(idx: pd.Index) -> str:
@@ -209,12 +529,13 @@ def _mk_trend_label(trend: Any) -> str:
 def _x_for_fit(s: pd.Series, frequency: str) -> np.ndarray:
     """
     x scale used for fitting:
-      - annual: YEAR integers
+      - annual and seasonal_by_season: YEAR integers
       - monthly: matplotlib date numbers
     """
-    if frequency == "annual":
+    if frequency in ("annual", "seasonal_by_season"):
         years = pd.to_datetime(s.index).year.astype(float)
         return years.to_numpy()
+
     dt = pd.to_datetime(s.index).to_pydatetime()
     return mdates.date2num(dt).astype(float)
 
@@ -245,31 +566,42 @@ def _mk_test(
     frequency: str,
     mk_mode: str,
     alpha: float,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
+
     y = y.dropna().sort_index()
+
     if y.empty:
         return None
 
     mode = mk_mode
+
     if mode == "auto":
-        mode = "seasonal" if frequency == "monthly" else "original"
+        if frequency == "monthly":
+            mode = "seasonal"
+        else:
+            mode = "original"
 
     try:
         if mode == "seasonal":
-            res = mk.seasonal_test(y.values, period=12, alpha=alpha)
+            period = 12 if frequency == "monthly" else 1
+            res = mk.seasonal_test(y.values, period=period, alpha=alpha)
         else:
             res = mk.original_test(y.values, alpha=alpha)
+
     except Exception as e:
         return {"error": str(e), "mk_mode_used": mode}
 
-    return {"mk_mode_used": mode, "trend": getattr(res, "trend", None), "p": getattr(res, "p", None)}
-
+    return {
+        "mk_mode_used": mode,
+        "trend": getattr(res, "trend", None),
+        "p": getattr(res, "p", None),
+    }
 
 def _plot_station_grid(
     station: str,
     frequency: str,
-    series_by_var: Dict[str, pd.Series],
-    units_by_var: Dict[str, str],
+    series_by_var: dict[str, pd.Series],
+    units_by_var: dict[str, str],
     mk_df_station: pd.DataFrame,
     out_png: Path,
     *,
@@ -303,7 +635,21 @@ def _plot_station_grid(
         unit_lbl = units_by_var.get(var, "undefined")
         ax.set_ylabel(f"{var} [{unit_lbl}]")
 
-        row = mk_df_station[mk_df_station["variable"] == var]
+        plot_var = var
+        plot_season = None
+
+        if frequency == "seasonal_by_season":
+            for season_name in ["winter", "spring", "summer", "autumn"]:
+                suffix = f"_{season_name}"
+                if var.endswith(suffix):
+                    plot_var = var[: -len(suffix)]
+                    plot_season = season_name
+                    break
+
+        row = mk_df_station[mk_df_station["variable"] == plot_var]
+
+        if plot_season is not None and "season" in row.columns:
+            row = row[row["season"] == plot_season]
 
         if not row.empty:
             r = row.iloc[0]
@@ -351,7 +697,7 @@ def _plot_trend_matrix_for_variable(
     *,
     variable: str,
     frequency: str,
-    stations_order: List[str],
+    stations_order: list[str],
     out_png: Path,
     alpha: float,
     non_sig_alpha: float = 0.25,
@@ -436,186 +782,402 @@ def _plot_trend_matrix_for_variable(
     plt.close()
 
 
-def _write_station_excel(
-    out_xlsx: Path,
-    *,
-    monthly_df: Optional[pd.DataFrame],
-    annual_df: Optional[pd.DataFrame],
-) -> None:
-    ensure_dirs(out_xlsx.parent)
-    with pd.ExcelWriter(out_xlsx, engine="openpyxl") as xl:
-        if monthly_df is not None and not monthly_df.empty:
-            monthly_df.to_excel(xl, sheet_name="monthly", index=False)
-        if annual_df is not None and not annual_df.empty:
-            annual_df.to_excel(xl, sheet_name="annual", index=False)
-
-
 def analyze_trends(
-    cfg: Dict[str, Any],
+    cfg: dict[str, Any],
     *,
-    frequency: str = "both",  # "annual" | "monthly" | "both"
-    mk_mode: str = "auto",    # "auto" | "original" | "seasonal"
-    stations: Optional[List[str]] = None,
-) -> Dict[str, Path]:
-    """
-    Reads annual + monthly flux NetCDF and runs MK tests.
+    frequency: str = "config",
+    mk_mode: str = "auto",
+    stations: list[str] | None = None,
+) -> dict[str, Path]:
 
-    Inputs:
-      cfg["variables"] : list[str]
-      cfg["inputs"][freq] : {"mode":"folder"|"file", "path": "...", ...}
-      cfg["stations"] : list[str]  (or override via stations=...)
-
-    Outputs:
-      - Station grid figures:
-          <output_dir>/<figures_dir>/<frequency>/<station>.png
-      - Trend matrix figures:
-          <output_dir>/<figures_dir>/<frequency>/trend_matrix/<variable>.png
-      - One Excel per station:
-          <output_dir>/<tables_dir>/<station>_mk_results.xlsx
-      - One combined Excel for ALL stations (append mode):
-          <output_dir>/<tables_dir>/<combined_table_name>
-          with two sheets: monthly, annual
-
-    Notes on append mode:
-      - If the combined file exists, we read its monthly/annual sheets, append new rows,
-        and drop duplicates using a key (default: frequency+station_id+variable+period).
-    """
-    vars_to_test: List[str] = cfg.get("variables", [])
+    vars_to_test: list[str] = cfg.get("variables", [])
     if not vars_to_test:
         raise ValueError("No variables in cfg['variables'].")
 
     out_root = resolve_path(cfg["output_dir"])
     figures_dir = cfg.get("results", {}).get("figures_dir", "figures")
     tables_dir = cfg.get("results", {}).get("tables_dir", "tables")
-
     combined_name = cfg.get("results", {}).get("combined_table_name", "mk_results.xlsx")
 
     trend_opt = cfg.get("trend_options", {})
     alpha = float(trend_opt.get("alpha", 0.05))
+    min_points = trend_opt.get("min_points", {"monthly": 36, "annual": 5, "seasonal_by_season": 12})
+
+    period_cfg = (
+        trend_opt.get("period", {})
+        if isinstance(trend_opt.get("period", {}), dict)
+        else {}
+    )
+
+    start_year = period_cfg.get("start_year")
+    end_year = period_cfg.get("end_year")
+    require_full_period = bool(
+        period_cfg.get("require_full_period", False)
+    )
+
+    start_year = int(start_year) if start_year is not None else None
+    end_year = int(end_year) if end_year is not None else None
+
+    if (
+            start_year is not None
+            and end_year is not None
+            and start_year > end_year
+    ):
+        raise ValueError(
+            "trend_options.period.start_year must be <= end_year"
+        )
 
     unit_opt = cfg.get("unit_options", {})
     non_mass_vars = set(unit_opt.get("non_mass_vars", []))
     undefined_unit_label = str(unit_opt.get("undefined_unit_label", "undefined"))
 
-    period_cfg = trend_opt.get("period", {}) if isinstance(trend_opt.get("period", {}), dict) else {}
-    start_date = period_cfg.get("start") or None
-    end_date = period_cfg.get("end") or None
-
-    min_points = trend_opt.get("min_points", {"monthly": 36, "annual": 5})
-    min_monthly = int(min_points.get("monthly", 36))
-    min_annual = int(min_points.get("annual", 5))
-
     plot_opt = cfg.get("plot_options", {})
     ncols = int(plot_opt.get("ncols", 3))
     non_sig_alpha = float(plot_opt.get("non_sig_alpha", 0.25))
 
-    freq_list: List[str] = []
-    if frequency in ("both", "monthly"):
-        freq_list.append("monthly")
-    if frequency in ("both", "annual"):
-        freq_list.append("annual")
+    if frequency == "config":
+        freq_list = cfg.get(
+            "trend_frequencies",
+            ["monthly", "annual"]
+        )
+
+    elif frequency == "both":
+        freq_list = ["monthly", "annual"]
+
+    elif frequency in (
+            "monthly",
+            "annual",
+            "seasonal_by_season",
+    ):
+        freq_list = [frequency]
+
+    else:
+        raise ValueError(
+            f"Unsupported trend frequency: {frequency}"
+        )
 
     inputs = cfg.get("inputs", {})
-    if not inputs:
-        raise ValueError("Missing cfg['inputs'].")
+    daily_inputs = inputs.get("daily", [])
+
+    if not isinstance(daily_inputs, list):
+        raise ValueError("cfg['inputs']['daily'] must be a list.")
 
     stations_cfg = cfg.get("stations", cfg.get("site_li", []))
-    stations_to_use = stations if stations is not None else stations_cfg
-    if not stations_to_use:
-        raise ValueError("No stations provided (cfg['stations'] empty and no override).")
+    if not stations_cfg and stations is None:
+        raise ValueError("No stations provided.")
 
-    results_by_station: Dict[str, Dict[str, pd.DataFrame]] = {}
-
-    all_rows: List[Dict[str, Any]] = []
+    results_by_station: dict[
+        str,
+        dict[str, pd.DataFrame],
+    ] = {}
+    all_rows: list[dict[str, Any]] = []
 
     for freq in freq_list:
-        fcfg = inputs.get(freq, {})
-        mode = str(fcfg.get("mode", "folder")).lower()
-        src_path = resolve_path(fcfg.get("path", ""))
+        print(f"\n[trends] Frequency: {freq}")
 
-        if not src_path.exists():
-            print(f"[trends] Missing {freq} input: {src_path}")
-            continue
+        mk_rows_all: list[dict[str, Any]] = []
+        stations_order_all: list[str] = []
 
-        station_dim = fcfg.get("station_dim")
-        station_coord = fcfg.get("station_coord")
+        for fcfg in daily_inputs:
+            data_type = str(fcfg.get("data_type", "river"))
+            mode = str(fcfg.get("mode", "folder")).lower()
+            src_path = resolve_input_source(fcfg.get("path", ""))
+            aggregation = str(fcfg.get("aggregation", "mean"))
 
-        stations_local = stations_to_use
+            variable_name_rules = fcfg.get(
+                "variable_name_rules",
+                {},
+            )
 
-        if isinstance(stations_local, str):
-            stations_local = [stations_local]
+            print(
+                f"[trends] Source: {fcfg.get('name')} | "
+                f"type={data_type} | aggregation={aggregation}"
+            )
 
-        if isinstance(stations_local, (list, tuple)) and len(stations_local) == 1:
-            if str(stations_local[0]).strip().lower() == "all":
-                stations_local = ["all"]
+            if isinstance(src_path, Path) and not src_path.exists():
+                print(f"[trends] Missing daily input: {src_path}")
+                continue
 
-        # Multi-station file mode (for marine - TO DO)
-        if mode == "file" and stations_local == ["all"]:
-            with xr.open_dataset(src_path) as ds:
-                if not station_dim:
-                    raise ValueError(f"inputs.{freq}.station_dim is required when mode='file'")
-                stations_local = _list_stations_from_ds(ds, station_dim=str(station_dim), station_coord=station_coord)
+            station_dim = fcfg.get("station_dim")
+            station_coord = fcfg.get("station_coord")
 
-        mk_rows_all: List[Dict[str, Any]] = []
+            if stations is not None:
+                stations_local = stations
+            elif isinstance(stations_cfg, dict):
+                stations_local = stations_cfg.get(data_type, [])
+            else:
+                stations_local = stations_cfg
 
-        for st in stations_local:
-            series_by_var: Dict[str, pd.Series] = {}
-            units_by_var: Dict[str, str] = {}
+            if isinstance(stations_local, str):
+                stations_local = [stations_local]
 
-            for var in vars_to_test:
-                if mode == "folder":
-                    nc_path = _find_site_file(src_path, st)
-                    if nc_path is None:
-                        continue
-                    s, unit = _open_series_and_unit_from_nc(nc_path, var)
-                    file_used = str(nc_path)
-                else:
-                    s, unit = _open_series_and_unit_from_nc(
-                        src_path,
-                        var,
-                        station=st,
-                        station_dim=str(station_dim) if station_dim else None,
+            if isinstance(stations_local, (list, tuple)) and len(stations_local) == 1:
+                if str(stations_local[0]).strip().lower() == "all":
+                    stations_local = ["all"]
+
+            # River folder: "all" means discover all rivers from the NetCDF files.
+            if mode == "folder" and stations_local == ["all"]:
+                stations_local = []
+
+                for nc_path in sorted(src_path.glob("*.nc")):
+                    river_name = _river_name_from_nc(nc_path)
+
+                    if river_name is not None:
+                        stations_local.append(river_name)
+
+            # Single multi-station file, e.g. marine data.
+            if mode == "file" and stations_local == ["all"]:
+                with xr.open_dataset(src_path) as ds:
+                    if not station_dim:
+                        raise ValueError(
+                            "station_dim is required when mode='file'"
+                        )
+
+                    stations_local = _list_stations_from_ds(
+                        ds,
+                        station_dim=str(station_dim),
                         station_coord=station_coord,
                     )
-                    file_used = str(src_path)
 
-                if s is None:
-                    continue
+            stations_order_all.extend([str(x) for x in stations_local])
 
-                s = s.dropna()
+            for st in stations_local:
 
-                s = _slice_period(s, start=start_date, end=end_date)
+                series_by_var: dict[str, pd.Series] = {}
+                units_by_var: dict[str, str] = {}
 
-                if s.empty:
-                    continue
+                for var in vars_to_test:
+                    source_var = _resolve_variable_name(
+                        var,
+                        variable_name_rules,
+                    )
 
-                series_by_var[var] = s
-                units_by_var[var] = _display_unit_for_plot(
-                    unit,
-                    frequency=freq,
-                    var=var,
-                    non_mass_vars=non_mass_vars,
-                    undefined_label=undefined_unit_label,
-                )
+                    if mode == "folder":
+                        nc_path = _find_site_file(src_path, st)
+                        if nc_path is None:
+                            continue
 
-                n_valid = int(s.shape[0])
-                min_n = min_monthly if freq == "monthly" else min_annual
+                        s, unit = _open_series_and_unit_from_nc(
+                            nc_path,
+                            source_var,
+                        )
 
-                # Stats
-                first = float(s.iloc[0]) if n_valid else np.nan
-                last = float(s.iloc[-1]) if n_valid else np.nan
-                mean = float(s.mean()) if n_valid else np.nan
-                median = float(s.median()) if n_valid else np.nan
-                std_dev = float(s.std()) if n_valid else np.nan
-                iqr = float(s.quantile(0.75) - s.quantile(0.25)) if n_valid else np.nan
-                period = _period_str(s.index)
+                    else:
+                        s, unit = _open_series_and_unit_from_nc(
+                            src_path,
+                            source_var,
+                            station=st,
+                            station_dim=str(station_dim) if station_dim else None,
+                            station_coord=station_coord,
+                            depth_dim=fcfg.get("depth_dim"),
+                            depth_selection=fcfg.get("depth_selection"),
+                        )
 
-                if n_valid < min_n:
-                    mk_rows_all.append({
+                    if s is None:
+                        continue
+
+                    s = s.dropna()
+
+                    raw_start = None
+                    raw_end = None
+
+                    if start_year is not None:
+                        if freq == "seasonal_by_season":
+                            # Winter of start_year may need December of the previous year.
+                            raw_start = f"{start_year - 1}-12-01"
+                        else:
+                            raw_start = f"{start_year}-01-01"
+
+                    if end_year is not None:
+                        raw_end = f"{end_year}-12-31"
+
+                    s = _slice_period(
+                        s,
+                        start=raw_start,
+                        end=raw_end,
+                    )
+
+                    if s.empty:
+                        continue
+
+                    aggregation_requirements = fcfg.get(
+                        "aggregation_requirements", {}
+                    )
+
+                    coverage = aggregation_requirements.get(
+                        freq, {}
+                    )
+
+                    unit_display = _display_unit_for_plot(
+                        unit,
+                        frequency=freq,
+                        aggregation=aggregation,
+                        var=var,
+                        non_mass_vars=non_mass_vars,
+                        undefined_label=undefined_unit_label,
+                    )
+
+                    if freq == "seasonal_by_season":
+                        seasonal_series = _aggregate_seasonal_by_season(
+                            s,
+                            how=aggregation,
+                            coverage=coverage
+                        )
+
+                        if not seasonal_series:
+                            continue
+
+                        for season_name, s_season in seasonal_series.items():
+                            s_season = _slice_years(
+                                s_season,
+                                start_year=start_year,
+                                end_year=end_year,
+                            )
+
+                            if s_season.empty:
+                                continue
+
+
+                            plot_var_name = f"{var}_{season_name}"
+                            series_by_var[plot_var_name] = s_season
+                            units_by_var[plot_var_name] = unit_display
+
+                            n_valid = int(s_season.shape[0])
+                            min_n = int(min_points.get(freq, 10))
+
+                            first = float(s_season.iloc[0]) if n_valid else np.nan
+                            last = float(s_season.iloc[-1]) if n_valid else np.nan
+                            mean = float(s_season.mean()) if n_valid else np.nan
+                            median = float(s_season.median()) if n_valid else np.nan
+                            std_dev = float(s_season.std()) if n_valid else np.nan
+                            iqr = float(s_season.quantile(0.75) - s_season.quantile(0.25)) if n_valid else np.nan
+                            period = _period_str(s_season.index)
+
+                            base_row = {
+                                "station_id": st,
+                                "period": period,
+                                "variable": var,
+                                "season": season_name,
+                                "unit_display": unit_display,
+                                "n_vals": n_valid,
+                                "first": first,
+                                "last": last,
+                                "mean": mean,
+                                "median": median,
+                                "std_dev": std_dev,
+                                "iqr": iqr,
+                                "frequency": freq,
+                            }
+
+                            full_period = _covers_full_period(
+                                s_season,
+                                start_year=start_year,
+                                end_year=end_year,
+                            )
+
+                            base_row["full_period"] = full_period
+
+                            if require_full_period and not full_period:
+                                mk_rows_all.append({
+                                    **base_row,
+                                    "mk_p_val": np.nan,
+                                    "mk_trend": "insufficient_data",
+                                    "sen_slp": np.nan,
+                                    "sen_incpt": np.nan,
+                                    "sen_trend": "insufficient_data",
+                                    "mk_mode_used": "n/a",
+                                })
+                                continue
+
+                            if n_valid < min_n:
+                                mk_rows_all.append({
+                                    **base_row,
+                                    "mk_p_val": np.nan,
+                                    "mk_trend": "insufficient_data",
+                                    "sen_slp": np.nan,
+                                    "sen_incpt": np.nan,
+                                    "sen_trend": "insufficient_data",
+                                    "mk_mode_used": "n/a",
+                                })
+                                continue
+
+                            res = _mk_test(s_season, frequency="seasonal_by_season", mk_mode="original", alpha=alpha)
+
+                            if res is None:
+                                continue
+
+                            if "error" in res:
+                                mk_rows_all.append({
+                                    **base_row,
+                                    "mk_p_val": np.nan,
+                                    "mk_trend": "error",
+                                    "sen_slp": np.nan,
+                                    "sen_incpt": np.nan,
+                                    "sen_trend": "error",
+                                    "mk_mode_used": res.get("mk_mode_used"),
+                                    "error": res.get("error"),
+                                })
+                                continue
+
+                            pval = res.get("p", np.nan)
+                            mk_trend = _mk_trend_label(res.get("trend"))
+
+                            x = _x_for_fit(s_season, "seasonal_by_season")
+                            sen_slp, sen_incpt = _sen_slope_intercept(s_season, x)
+                            sen_trend = _classify_sen_trend(
+                                sen_slp,
+                                float(pval) if np.isfinite(pval) else np.nan,
+                                alpha,
+                            )
+
+                            mk_rows_all.append({
+                                **base_row,
+                                "mk_p_val": float(pval) if np.isfinite(pval) else np.nan,
+                                "mk_trend": mk_trend,
+                                "sen_slp": sen_slp,
+                                "sen_incpt": sen_incpt,
+                                "sen_trend": sen_trend,
+                                "mk_mode_used": res.get("mk_mode_used"),
+                            })
+
+                        continue
+
+                    s = _aggregate_series(
+                        s,
+                        frequency=freq,
+                        how=aggregation,
+                        coverage=coverage,
+                    )
+
+                    s = _slice_years(
+                        s,
+                        start_year=start_year,
+                        end_year=end_year,
+                    )
+
+                    if s.empty:
+                        continue
+
+                    series_by_var[var] = s
+                    units_by_var[var] = unit_display
+
+                    n_valid = int(s.shape[0])
+                    min_n = int(min_points.get(freq, 5))
+
+                    first = float(s.iloc[0]) if n_valid else np.nan
+                    last = float(s.iloc[-1]) if n_valid else np.nan
+                    mean = float(s.mean()) if n_valid else np.nan
+                    median = float(s.median()) if n_valid else np.nan
+                    std_dev = float(s.std()) if n_valid else np.nan
+                    iqr = float(s.quantile(0.75) - s.quantile(0.25)) if n_valid else np.nan
+                    period = _period_str(s.index)
+
+                    base_row = {
                         "station_id": st,
                         "period": period,
                         "variable": var,
-                        "unit_display": units_by_var[var],
+                        "season": None,
+                        "unit_display": unit_display,
                         "n_vals": n_valid,
                         "first": first,
                         "last": last,
@@ -623,96 +1185,107 @@ def analyze_trends(
                         "median": median,
                         "std_dev": std_dev,
                         "iqr": iqr,
-                        "mk_p_val": np.nan,
-                        "mk_trend": "insufficient_data",
-                        "sen_slp": np.nan,
-                        "sen_incpt": np.nan,
-                        "sen_trend": "insufficient_data",
                         "frequency": freq,
-                        "mk_mode_used": "n/a",
-                        # "file": file_used,
-                    })
-                    continue
+                    }
 
-                res = _mk_test(s, frequency=freq, mk_mode=mk_mode, alpha=alpha)
-                if res is None:
-                    continue
+                    full_period = _covers_full_period(
+                        s,
+                        start_year=start_year,
+                        end_year=end_year,
+                    )
 
-                if "error" in res:
+                    base_row["full_period"] = full_period
+
+                    if require_full_period and not full_period:
+                        mk_rows_all.append({
+                            **base_row,
+                            "mk_p_val": np.nan,
+                            "mk_trend": "insufficient_data",
+                            "sen_slp": np.nan,
+                            "sen_incpt": np.nan,
+                            "sen_trend": "insufficient_data",
+                            "mk_mode_used": "n/a",
+                        })
+                        continue
+
+                    if n_valid < min_n:
+                        mk_rows_all.append({
+                            **base_row,
+                            "mk_p_val": np.nan,
+                            "mk_trend": "insufficient_data",
+                            "sen_slp": np.nan,
+                            "sen_incpt": np.nan,
+                            "sen_trend": "insufficient_data",
+                            "mk_mode_used": "n/a",
+                        })
+                        continue
+
+                    res = _mk_test(s, frequency=freq, mk_mode=mk_mode, alpha=alpha)
+
+                    if res is None:
+                        continue
+
+                    if "error" in res:
+                        mk_rows_all.append({
+                            **base_row,
+                            "mk_p_val": np.nan,
+                            "mk_trend": "error",
+                            "sen_slp": np.nan,
+                            "sen_incpt": np.nan,
+                            "sen_trend": "error",
+                            "mk_mode_used": res.get("mk_mode_used"),
+                            "error": res.get("error"),
+                        })
+                        continue
+
+                    pval = res.get("p", np.nan)
+                    mk_trend = _mk_trend_label(res.get("trend"))
+
+                    x = _x_for_fit(s, freq)
+                    sen_slp, sen_incpt = _sen_slope_intercept(s, x)
+                    sen_trend = _classify_sen_trend(
+                        sen_slp,
+                        float(pval) if np.isfinite(pval) else np.nan,
+                        alpha,
+                    )
+
                     mk_rows_all.append({
-                        "station_id": st,
-                        "period": period,
-                        "variable": var,
-                        "unit_display": units_by_var[var],
-                        "n_vals": n_valid,
-                        "first": first,
-                        "last": last,
-                        "mean": mean,
-                        "median": median,
-                        "std_dev": std_dev,
-                        "iqr": iqr,
-                        "mk_p_val": np.nan,
-                        "mk_trend": "error",
-                        "sen_slp": np.nan,
-                        "sen_incpt": np.nan,
-                        "sen_trend": "error",
-                        "frequency": freq,
+                        **base_row,
+                        "mk_p_val": float(pval) if np.isfinite(pval) else np.nan,
+                        "mk_trend": mk_trend,
+                        "sen_slp": sen_slp,
+                        "sen_incpt": sen_incpt,
+                        "sen_trend": sen_trend,
                         "mk_mode_used": res.get("mk_mode_used"),
-                        "error": res.get("error"),
-                        # "file": file_used,
                     })
-                    continue
+                if series_by_var:
+                    mk_df_station = pd.DataFrame(
+                        [
+                            r for r in mk_rows_all
+                            if r["station_id"] == st and r["frequency"] == freq
+                        ]
+                    )
 
-                pval = res.get("p", np.nan)
-                mk_trend = _mk_trend_label(res.get("trend"))
+                    out_png = out_root / figures_dir / freq / f"{st}.png"
 
-                x = _x_for_fit(s, freq)
-                sen_slp, sen_incpt = _sen_slope_intercept(s, x)
-                sen_trend = _classify_sen_trend(sen_slp, float(pval) if np.isfinite(pval) else np.nan, alpha)
-
-                mk_rows_all.append({
-                    "station_id": st,
-                    "period": period,
-                    "variable": var,
-                    "unit_display": units_by_var[var],
-                    "n_vals": n_valid,
-                    "first": first,
-                    "last": last,
-                    "mean": mean,
-                    "median": median,
-                    "std_dev": std_dev,
-                    "iqr": iqr,
-                    "mk_p_val": float(pval) if np.isfinite(pval) else np.nan,
-                    "mk_trend": mk_trend,
-                    "sen_slp": sen_slp,
-                    "sen_incpt": sen_incpt,
-                    "sen_trend": sen_trend,
-                    "frequency": freq,
-                    "mk_mode_used": res.get("mk_mode_used"),
-                })
-
-            if series_by_var:
-                mk_df_station = pd.DataFrame(
-                    [r for r in mk_rows_all if r["station_id"] == st and r["frequency"] == freq]
-                )
-                out_png = out_root / figures_dir / freq / f"{st}.png"
-                _plot_station_grid(
-                    station=st,
-                    frequency=freq,
-                    series_by_var=series_by_var,
-                    units_by_var=units_by_var,
-                    mk_df_station=mk_df_station,
-                    out_png=out_png,
-                    alpha=alpha,
-                    ncols=ncols,
-                )
+                    _plot_station_grid(
+                        station=st,
+                        frequency=freq,
+                        series_by_var=series_by_var,
+                        units_by_var=units_by_var,
+                        mk_df_station=mk_df_station,
+                        out_png=out_png,
+                        alpha=alpha,
+                        ncols=ncols,
+                    )
 
         if mk_rows_all:
             df_all = pd.DataFrame(mk_rows_all)
             all_rows.extend(mk_rows_all)
 
             preferred = [
-                "period", "station_id", "variable", "n_vals", "first", "last", "mean", "median", "std_dev", "iqr",
+                "period", "full_period", "station_id", "variable", "n_vals",
+                "first", "last", "mean", "median", "std_dev", "iqr",
                 "mk_p_val", "mk_trend", "sen_slp", "sen_incpt", "sen_trend",
             ]
             extras = [c for c in df_all.columns if c not in preferred]
@@ -722,14 +1295,49 @@ def analyze_trends(
                 results_by_station.setdefault(st, {})
                 results_by_station[st][freq] = df_all[df_all["station_id"] == st].copy()
 
-            stations_order = list(stations_local)
+            matrix_keys = []
+
             for var in vars_to_test:
-                out_png = out_root / figures_dir / freq / "trend_matrix" / f"{var}.png"
+                if freq == "seasonal_by_season":
+                    for season_name in ["winter", "spring", "summer", "autumn"]:
+                        matrix_keys.append((var, season_name))
+                else:
+                    matrix_keys.append((var, None))
+
+            for var, season_name in matrix_keys:
+                if season_name is None:
+                    df_var = df_all[df_all["variable"] == var].copy()
+                    plot_variable_name = var
+                    out_name = f"{var}.png"
+                else:
+                    df_var = df_all[
+                        (df_all["variable"] == var) &
+                        (df_all["season"] == season_name)
+                        ].copy()
+                    plot_variable_name = f"{var}_{season_name}"
+                    out_name = f"{var}_{season_name}.png"
+
+                    df_var = df_var.copy()
+                    df_var["variable"] = plot_variable_name
+
+                if df_var.empty:
+                    continue
+
+                stations_order_var = [
+                    st for st in stations_order_all
+                    if st in set(df_var["station_id"].astype(str))
+                ]
+
+                if not stations_order_var:
+                    continue
+
+                out_png = out_root / figures_dir / freq / "trend_matrix" / out_name
+
                 _plot_trend_matrix_for_variable(
-                    df_all,
-                    variable=var,
+                    df_var,
+                    variable=plot_variable_name,
                     frequency=freq,
-                    stations_order=stations_order,
+                    stations_order=stations_order_var,
                     out_png=out_png,
                     alpha=alpha,
                     non_sig_alpha=non_sig_alpha,
@@ -739,58 +1347,32 @@ def analyze_trends(
         df_new = pd.DataFrame(all_rows)
 
         out_all = out_root / tables_dir / combined_name
-        # _ensure_dir(out_all.parent)
         ensure_dirs(out_all.parent)
 
-        df_new_m = df_new[df_new["frequency"] == "monthly"].copy()
-        df_new_a = df_new[df_new["frequency"] == "annual"].copy()
-
-        if out_all.exists():
-            try:
-                existing = pd.read_excel(out_all, sheet_name=None, engine="openpyxl")
-            except Exception:
-                existing = {}
-
-            df_old_m = existing.get("monthly", pd.DataFrame())
-            df_old_a = existing.get("annual", pd.DataFrame())
-        else:
-            df_old_m = pd.DataFrame()
-            df_old_a = pd.DataFrame()
-
-        dedupe_cols = ["frequency", "station_id", "variable", "period"]
-
-        def _append_dedup(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
-            if old_df is None or old_df.empty:
-                out = new_df.copy()
-            elif new_df is None or new_df.empty:
-                out = old_df.copy()
-            else:
-                out = pd.concat([old_df, new_df], ignore_index=True)
-
-            for c in dedupe_cols:
-                if c not in out.columns:
-                    out[c] = np.nan
-            out = out.drop_duplicates(subset=dedupe_cols, keep="last")
-            return out
-
-        df_out_m = _append_dedup(df_old_m, df_new_m)
-        df_out_a = _append_dedup(df_old_a, df_new_a)
-
+        # Recreate the combined workbook for each run.
+        # One sheet is written for each requested trend frequency.
         with pd.ExcelWriter(out_all, engine="openpyxl") as xl:
-            if not df_out_m.empty:
-                df_out_m.to_excel(xl, sheet_name="monthly", index=False)
-            if not df_out_a.empty:
-                df_out_a.to_excel(xl, sheet_name="annual", index=False)
+            for freq in sorted(df_new["frequency"].unique()):
+                df_freq = df_new[df_new["frequency"] == freq].copy()
+                if not df_freq.empty:
+                    df_freq.to_excel(xl, sheet_name=freq, index=False)
 
-        print(f"[trends] Saved combined table (append): {out_all}")
+        print(f"[trends] Saved combined table: {out_all}")
 
     write_per_station = bool(cfg.get("results", {}).get("write_per_station_tables", True))
 
-    written_excels: Dict[str, Path] = {}
+    written_excels: dict[str, Path] = {}
+
     if write_per_station:
         for st, block in results_by_station.items():
             out_xlsx = out_root / tables_dir / f"{st}_mk_results.xlsx"
-            _write_station_excel(out_xlsx, monthly_df=block.get("monthly"), annual_df=block.get("annual"))
+
+            ensure_dirs(out_xlsx.parent)
+            with pd.ExcelWriter(out_xlsx, engine="openpyxl") as xl:
+                for freq, df_freq in block.items():
+                    if df_freq is not None and not df_freq.empty:
+                        df_freq.to_excel(xl, sheet_name=freq, index=False)
+
             written_excels[st] = out_xlsx
             print(f"[trends] Saved: {out_xlsx}")
 

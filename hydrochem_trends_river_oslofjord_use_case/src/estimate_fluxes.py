@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -10,9 +9,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from src.export_netcdf import export_dataset
-# from src.utils import ensure_dirs
-from src.utils import (
+from .export_netcdf import export_dataset
+
+from .utils import (
     ensure_dirs,
     resolve_path,
     netcdf_to_dataframe,
@@ -88,7 +87,7 @@ def compute_fluxes(
     *,
     param_unit_map: Dict[str, str],
     discharge_col: str = "discharge",
-    keep_cols: list[str] = None,
+    keep_cols: Optional[list[str]] = None
 ) -> pd.DataFrame:
     """
     Convert concentration time series + discharge into daily fluxes.
@@ -119,7 +118,7 @@ def compute_fluxes(
         # Concentration to kg/m3
         if unit.endswith(("mg/l", "mg/l C", "mg Pt/l")):
             conc_kg_m3 = df[var] * 1e-3
-        elif unit.endswith(("µg/l", "μg/l", "µg/l P")):
+        elif unit.endswith(("ug/l", "µg/l", "μg/l", "ug/l P", "µg/l P", "μg/l P")):
             conc_kg_m3 = df[var] * 1e-6
         elif unit.endswith("Abs/cm"):
             # not mass concentration; keep as-is (proxy)
@@ -310,10 +309,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
     date_col = cfg.get("date_col", "date")
     discharge_col = cfg.get("discharge_col", "discharge")
 
-    # Export metadata settings
-    # processed_namespace_uuid = uuid.UUID(cfg["processed_namespace_uuid"])
-    # global_metadata_config = cfg.get("global_metadata_config", {})
-    #
     # Export configuration
     export_cfg = cfg.get("export", {})
     engine = export_cfg.get("engine", "netcdf4")
@@ -321,7 +316,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
     time_enc_cfg = export_cfg.get("time", {})
     time_name = time_enc_cfg.get("name", "date")
     filename_template = export_cfg.get("filename_template", "{frequency}_water_chemistry_fluxes_{station_id_or_stem}.nc")
-    # id_prefix = export_cfg.get("id_prefix", "no.niva")
 
     # Variable metadata from config
     flux_metadata_df = pd.DataFrame(cfg.get("flux_metadata", {}))
@@ -352,7 +346,7 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         date_col_out=date_col,
         station_col_in="station_name",
         station_col_out=station_col,
-        station_rename_map=cfg.get("q_station_rename_map", {}),
+        station_rename_map=cfg.get("wc_station_rename_map", {}),
     )
 
     # Merge
@@ -387,10 +381,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
 
     monthly_flux = daily_idx_no_q.resample("ME").sum(min_count=25)
     annual_flux = daily_idx_no_q.resample("YE").sum(min_count=350)
-
-    # Annual needs year column for plotting
-    annual_plot = annual_flux.copy()
-    annual_plot["year"] = annual_plot.index.year
 
     daily_sorted = daily_flux.copy().sort_values(date_col)
     plot_flux_grid(
@@ -446,9 +436,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
         )
 
         gmeta = build_global_attrs_for_flux(cfg, station_id=river, frequency=frequency)
-        # gmeta = dict(global_metadata_config)
-        # gmeta.setdefault("title", f"{frequency.capitalize()} water chemistry fluxes for river {river}")
-        # gmeta.setdefault("summary", f"{frequency.capitalize()} fluxes derived from daily concentration estimates and discharge.")
 
         md = meta_cfg(cfg)
         md_id = (md.get("id") or {})
@@ -472,9 +459,6 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
             filename=filename,
             time_name=time_name,
             global_attrs=gmeta,
-            # namespace_uuid=str(processed_namespace_uuid),
-            # id_prefix=id_prefix,
-            # id_seed=f"{river}:{frequency}",
             namespace_uuid=namespace_uuid,
             id_prefix=id_prefix,
             id_seed=id_seed,

@@ -1,24 +1,16 @@
 import argparse
 import matplotlib.pyplot as plt
-
 from pathlib import Path
 
 from src.utils import load_json as load_cfg
-from src.preprocess import preprocess
 from src.interpolate import interpolate
 from src.estimate_fluxes import flux
 from src.mk_trend_test import analyze_trends
 
 plt.style.use("ggplot")
 
-# Choose exactly which steps to run (any combination), or use ["all"].
-STEPS_OVERRIDE = ["trends"] # e.g. ["interpolate", "fluxes", "trends"]
+WORKFLOW_CONFIG = "workflow.json"
 
-# Choose which rivers to run (any list), or ["all"], or None
-RIVERS_OVERRIDE = ["all"]  # e.g. ["drammenselva"] or ["all"] or None
-
-# Choose which marine datasets to run (any list), or ["all"], or None
-MARINE_OVERRIDE = None  # e.g. ["oslofjord"] or ["all"] or None
 
 def available_names(base_dir: Path) -> list[str]:
     if not base_dir.exists():
@@ -30,17 +22,9 @@ def run_river(
     river: str,
     steps: list[str],
     cfg_base: Path,
-    *,
-    trend_freq: str,
-    mk_mode: str,
-    trend_sites: list[str] | None,
 ) -> None:
     river_dir = cfg_base / river
     print(f"\n=== River: {river} ===")
-
-    if "preprocess" in steps:
-        cfg = load_cfg(river_dir / "preprocess.json")
-        preprocess(cfg)
 
     if "interpolate" in steps:
         cfg = load_cfg(river_dir / "interpolate.json")
@@ -50,115 +34,153 @@ def run_river(
         cfg = load_cfg(river_dir / "fluxes.json")
         flux(cfg)
 
-    if "trends" in steps:
-        trends_path = Path("config") / "mk_trend_test.json"
-        if not trends_path.exists():
-            raise FileNotFoundError(f"Missing trends config: {trends_path}")
-        cfg = load_cfg(trends_path)
-        analyze_trends(cfg, frequency=trend_freq, mk_mode=mk_mode, stations=trend_sites)
 
-# def run_marine(
-#     dataset: str,
-#     steps: list[str],
-#     cfg_base: Path,
-#     *,
-#     trend_freq: str,
-#     mk_mode: str,
-#     trend_sites: list[str] | None,
-# ) -> None:
-#     ds_dir = cfg_base / dataset
-#     print(f"\n=== Marine: {dataset} ===")
-#
-#     # For marine only trends!
-#
-#     if "trends" in steps:
-#         trends_path = ds_dir / "mk_trend_test.json"
-#         if not trends_path.exists():
-#             raise FileNotFoundError(f"Missing trends config: {trends_path}")
-#         cfg = load_cfg(trends_path)
-#         analyze_trends(cfg, frequency=trend_freq, mk_mode=mk_mode, stations=trend_sites)
-#
+def run_trends(
+    *,
+    trends_config: str,
+    trend_freq: str,
+    mk_mode: str,
+) -> None:
+    trends_path = Path("config") / trends_config
+
+    if not trends_path.exists():
+        raise FileNotFoundError(
+            f"Missing trends config: {trends_path}"
+        )
+
+    cfg = load_cfg(trends_path)
+
+    print("\n=== Combined river + marine trends ===")
+
+    analyze_trends(
+        cfg,
+        frequency=trend_freq,
+        mk_mode=mk_mode,
+    )
+
 
 def main():
     ap = argparse.ArgumentParser()
+
+    ap.add_argument(
+        "--workflow_config",
+        default=WORKFLOW_CONFIG,
+        help="Workflow config filename inside config/",
+    )
+
     ap.add_argument(
         "--step",
-        default="preprocess",
-        help="preprocess|interpolate|fluxes|trends|all OR comma-list like 'interpolate,fluxes,trends'",
-    )
-    ap.add_argument("--rivers", nargs="+", default=["drammenselva"], help="River folder names, or: all")
-    ap.add_argument("--marine", nargs="+", default=[], help="Marine dataset folder names, or: all")
-
-    ap.add_argument("--trend_freq", default="both", choices=["monthly", "annual", "both"])
-    ap.add_argument("--mk_mode", default="auto", choices=["auto", "original", "seasonal"])
-    ap.add_argument(
-        "--trend_sites",
-        nargs="*",
         default=None,
-        help="Optional override for sites used in trends (otherwise uses cfg['site_li'] or cfg['sites'])",
+        help="Optional override: interpolate|fluxes|trends|all or comma-list",
+    )
+
+    ap.add_argument(
+        "--rivers",
+        nargs="+",
+        default=None,
+        help="Optional river override: river folder names, or all",
+    )
+
+    ap.add_argument(
+        "--trends_config",
+        default=None,
+        help="Optional trend config override",
+    )
+
+    ap.add_argument(
+        "--trend_freq",
+        default=None,
+        choices=["config", "monthly", "annual", "seasonal_by_season", "both"],
+    )
+
+    ap.add_argument(
+        "--mk_mode",
+        default=None,
+        choices=["auto", "original", "seasonal"],
     )
 
     args = ap.parse_args()
 
-    if STEPS_OVERRIDE is not None:
-        if "all" in STEPS_OVERRIDE:
-            args.step = "all"
+    workflow_path = Path("config") / args.workflow_config
+    if not workflow_path.exists():
+        raise FileNotFoundError(
+            f"Missing workflow config: {workflow_path}"
+        )
+
+    workflow = load_cfg(workflow_path)
+
+    steps = workflow.get("steps", [])
+    rivers = workflow.get("rivers", ["all"])
+
+    trends_workflow = workflow.get("trends", {})
+    trends_config = trends_workflow.get("config", "mk_trend_test.json")
+    trend_freq = trends_workflow.get("frequency", "config")
+    mk_mode = trends_workflow.get("mk_mode", "auto")
+
+    if args.step is not None:
+        if args.step == "all":
+            steps = ["interpolate", "fluxes", "trends"]
         else:
-            args.step = ",".join(STEPS_OVERRIDE)
+            steps = [s.strip() for s in args.step.split(",") if s.strip()]
 
-    if RIVERS_OVERRIDE is not None:
-        args.rivers = RIVERS_OVERRIDE
+    if args.rivers is not None:
+        rivers = args.rivers
 
-    if MARINE_OVERRIDE is not None:
-        args.marine = MARINE_OVERRIDE
+    if args.trends_config is not None:
+        trends_config = args.trends_config
+
+    if args.trend_freq is not None:
+        trend_freq = args.trend_freq
+
+    if args.mk_mode is not None:
+        mk_mode = args.mk_mode
+
+    valid_steps = {"interpolate", "fluxes", "trends"}
+    unknown_steps = [step for step in steps if step not in valid_steps]
+
+    if unknown_steps:
+        raise SystemExit(
+            f"Unknown workflow steps: {unknown_steps}. "
+            f"Available: {sorted(valid_steps)}"
+        )
 
     cfg_river_base = Path("config/river")
-    cfg_marine_base = Path("config/marine")
-
     rivers_all = available_names(cfg_river_base)
-    marine_all = available_names(cfg_marine_base)
 
-    if args.step == "all":
-        steps = ["preprocess", "interpolate", "fluxes", "trends"]
-    else:
-        steps = [s.strip() for s in str(args.step).split(",") if s.strip()]
-
-    rivers = rivers_all if args.rivers == ["all"] else args.rivers
-
-    marine = marine_all if args.marine == ["all"] else args.marine
+    if rivers == ["all"]:
+        rivers = rivers_all
 
     missing_rivers = [r for r in rivers if r not in rivers_all]
     if missing_rivers:
-        raise SystemExit(f"Unknown rivers: {missing_rivers}. Available: {rivers_all}")
-
-    if marine:
-        missing_marine = [m for m in marine if m not in marine_all]
-        if missing_marine:
-            raise SystemExit(f"Unknown marine datasets: {missing_marine}. Available: {marine_all}")
-
-    for r in rivers:
-        run_river(
-            r,
-            steps,
-            cfg_river_base,
-            trend_freq=args.trend_freq,
-            mk_mode=args.mk_mode,
-            trend_sites=args.trend_sites,
+        raise SystemExit(
+            f"Unknown rivers: {missing_rivers}. Available: {rivers_all}"
         )
 
-    # # Run marine trends
-    # for ds in marine:
-    #     run_marine(
-    #         ds,
-    #         steps,
-    #         cfg_marine_base,
-    #         trend_freq=args.trend_freq,
-    #         mk_mode=args.mk_mode,
-    #         trend_sites=args.trend_sites,
-    #     )
+    print("\n=== Workflow ===")
+    print(f"Steps: {steps}")
+
+    if "interpolate" in steps or "fluxes" in steps:
+        print(f"Rivers: {rivers}")
+
+    if "trends" in steps:
+        print(f"Trend config: {trends_config}")
+        print(f"Trend frequency: {trend_freq}")
+        print(f"MK mode: {mk_mode}")
+
+    for river in rivers:
+        run_river(
+            river,
+            steps,
+            cfg_river_base,
+        )
+
+    if "trends" in steps:
+        run_trends(
+            trends_config=trends_config,
+            trend_freq=trend_freq,
+            mk_mode=mk_mode,
+        )
 
 
 if __name__ == "__main__":
     main()
-
-

@@ -1,31 +1,23 @@
-# from __future__ import annotations
-#
-# import json
-#
-# from pathlib import Path
-# from typing import Dict, Any, List
-#
-# def ensure_dirs(*paths: str | Path) -> None:
-#     for p in paths:
-#         Path(p).mkdir(parents=True, exist_ok=True)
-#
-# def load_json(path: str | Path) -> Dict[str, Any]:
-#     with open(path, "r", encoding="utf-8") as f:
-#         return json.load(f)
-#
-# def expand_globs(root: str | Path, pattern: str) -> List[Path]:
-#     root = Path(root)
-#     return sorted([Path(p) for p in root.glob(pattern)])
-
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 import pandas as pd
 import xarray as xr
 
+
+def _decode_text(value):
+    """Decode byte strings from NetCDF/OPeNDAP into normal Python strings."""
+    if not isinstance(value, (bytes, bytearray)):
+        return value
+
+    try:
+        return value.decode("utf-8")
+    except UnicodeDecodeError:
+        return value.decode("latin-1")
 
 # ---------------------------- filesystem ----------------------------
 
@@ -43,7 +35,11 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def resolve_path(p: str | Path, *, root: Optional[str | Path] = None) -> Path:
+def resolve_path(
+    p: str | Path,
+    *,
+    root: str | Path | None = None,
+) -> Path:
     """
     Resolve p to an absolute path.
     - If p is already absolute -> return it
@@ -56,13 +52,25 @@ def resolve_path(p: str | Path, *, root: Optional[str | Path] = None) -> Path:
     return (base / pp).resolve()
 
 
+def resolve_input_source(source: str | Path) -> str | Path:
+    """
+    Return remote URLs unchanged.
+    Resolve local file paths against the project root.
+    """
+    source_str = str(source)
+
+    if source_str.startswith(("http://", "https://")):
+        return source_str
+
+    return resolve_path(source)
+
 # ---------------------------- config/json ----------------------------
 
-def load_json(path: str | Path) -> Dict[str, Any]:
+def load_json(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def expand_globs(root: str | Path, pattern: str) -> List[Path]:
+def expand_globs(root: str | Path, pattern: str,) -> list[Path]:
     root = Path(root)
     return sorted(root.glob(pattern))
 
@@ -72,19 +80,29 @@ def expand_globs(root: str | Path, pattern: str) -> List[Path]:
 def netcdf_to_dataframe(
     nc_path: str | Path,
     *,
-    time_vars: Iterable[str] = ("time", "date", "sample_date", "datetime", "timestamp"),
+    time_vars: Iterable[str] = (
+        "time",
+        "date",
+        "sample_date",
+        "datetime",
+        "timestamp",
+    ),
 ) -> pd.DataFrame:
     """
-    Open NetCDF with xarray and return a flat DataFrame.
-    Also coerces any time-like columns listed in time_vars to datetime.
+    Open a local or remote NetCDF dataset and return a flat DataFrame.
+    Time-like columns are converted to pandas datetime.
     """
-    nc_path = Path(nc_path)
+
     with xr.open_dataset(nc_path) as ds:
         df = ds.to_dataframe().reset_index()
 
     for t in time_vars:
         if t in df.columns:
-            df[t] = pd.to_datetime(df[t], errors="coerce")
+            df[t] = pd.to_datetime(
+                df[t],
+                errors="coerce",
+            )
+
     return df
 
 
@@ -97,7 +115,7 @@ def standardize_time_and_station(
     date_col_out: str = "date",
     station_col_in: str = "station_name",
     station_col_out: str = "river_name",
-    station_rename_map: Optional[Dict[str, str]] = None,
+    station_rename_map: dict[str, str] | None = None,
     normalize_date: bool = True,
 ) -> pd.DataFrame:
     """
@@ -117,10 +135,18 @@ def standardize_time_and_station(
             out[date_col_out] = out[date_col_out].dt.normalize()
 
     if station_col_in in out.columns:
+
+        out[station_col_in] = out[station_col_in].map(_decode_text)
+
         if station_rename_map:
-            out[station_col_in] = out[station_col_in].replace(station_rename_map)
+            out[station_col_in] = out[station_col_in].replace(
+                station_rename_map
+            )
+
         if station_col_in != station_col_out:
-            out = out.rename(columns={station_col_in: station_col_out})
+            out = out.rename(
+                columns={station_col_in: station_col_out}
+            )
 
     return out
 
@@ -135,7 +161,7 @@ def merge_daily_discharge_and_chemistry(
     station_col: str = "river_name",
     date_col: str = "date",
     discharge_col: str = "discharge",
-    drop_wc_cols: Sequence[str] | bool = False,
+    drop_wc_cols: Sequence[str] | None = None,
 ) -> pd.DataFrame:
     """
     Creates a complete daily date range based on Q coverage, merges discharge and chemistry,
@@ -153,18 +179,24 @@ def merge_daily_discharge_and_chemistry(
     if q.empty:
         raise ValueError(f"No discharge rows for station '{station_name}'")
 
-    q = q.drop_duplicates(subset=[date_col]).copy()
+    q = (
+        q.groupby(date_col, as_index=False)[discharge_col]
+        .mean()
+    )
 
     full_dates = pd.date_range(q[date_col].min(), q[date_col].max(), freq="D")
     out = pd.DataFrame({date_col: full_dates})
     out = out.merge(q[[date_col, discharge_col]], on=date_col, how="left")
 
-    if isinstance(drop_wc_cols, list) or isinstance(drop_wc_cols, tuple):
-        wc = wc.drop(columns=list(drop_wc_cols), errors="ignore")
+    if drop_wc_cols:
+        wc = wc.drop(
+            columns=list(drop_wc_cols),
+            errors="ignore",
+        )
 
     out = out.merge(wc, on=date_col, how="left")
 
-    # average duplicates by day (numeric only)
+    # average duplicates by day
     num_cols = out.select_dtypes(include="number").columns.tolist()
     out_num = out.groupby(date_col)[num_cols].mean(numeric_only=True).reset_index()
     out_num[station_col] = station_name

@@ -1,0 +1,17 @@
+{
+  "steps": [
+    "interpolate",
+    "fluxes",
+    "trends"
+  ],
+
+  "rivers": [
+    "all"
+  ],
+
+  "trends": {
+    "config": "mk_trend_test.json",
+    "frequency": "config",
+    "mk_mode": "auto"
+  }
+}

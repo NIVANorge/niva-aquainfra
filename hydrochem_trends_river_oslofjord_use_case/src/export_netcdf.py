@@ -2,20 +2,12 @@ from __future__ import annotations
 
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import pandas as pd
 import xarray as xr
 
-# create directories if missing
-try:
-    from .utils import ensure_dirs
-except Exception:
-    def ensure_dirs(*paths: Union[str, Path]) -> None:
-        """mkdir -p for each given path."""
-
-        for p in paths:
-            Path(p).mkdir(parents=True, exist_ok=True)
+from .utils import ensure_dirs
 
 # ------------------------- small internal helpers -------------------------
 def _as_utc_string(ts) -> str:
@@ -25,7 +17,7 @@ def _as_utc_string(ts) -> str:
     return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _infer_time_name(ds: xr.Dataset, explicit: Optional[str]) -> Optional[str]:
+def _infer_time_name(ds: xr.Dataset, explicit: str | None) -> str | None:
     """
     Choose a time coordinate name:
     - return None if nothing fits (export will still work but won't set coverage)
@@ -41,13 +33,13 @@ def _infer_time_name(ds: xr.Dataset, explicit: Optional[str]) -> Optional[str]:
 
 def _build_encoding(
     ds: xr.Dataset,
-    time_name: Optional[str],
-    time_cfg: Optional[Dict[str, Any]],
-    var_overrides: Optional[Dict[str, Dict[str, Any]]],
-) -> Dict[str, Any]:
+    time_name: str | None,
+    time_cfg: dict[str, Any] | None,
+    var_overrides: dict[str, dict[str, Any]] | None,
+) -> dict[str, Any]:
     """Create an xarray encoding dict."""
 
-    enc: Dict[str, Any] = {}
+    enc: dict[str, Any] = {}
 
     # Time coordinate encoding
     tcfg = time_cfg or {}
@@ -73,7 +65,7 @@ def _build_encoding(
     return enc
 
 
-def _set_default_coord_attrs(ds: xr.Dataset, time_name: Optional[str]) -> xr.Dataset:
+def _set_default_coord_attrs(ds: xr.Dataset, time_name: str | None) -> xr.Dataset:
     """
     Ensure consistent coordinate metadata across all exported datasets.
     """
@@ -94,16 +86,6 @@ def _set_default_coord_attrs(ds: xr.Dataset, time_name: Optional[str]) -> xr.Dat
 
     return ds
 
-
-def _ensure_timeseries_id(ds: xr.Dataset) -> xr.Dataset:
-    """
-    If dataset contains a scalar station identifier variable, ensure cf_role=timeseries_id.
-    """
-    for cand in ("station_id", "station_name", "river_name"):
-        if cand in ds.variables and ds[cand].dims == ():
-            ds[cand].attrs.setdefault("cf_role", "timeseries_id")
-            break
-    return ds
 
 def _set_default_station_var_attrs(ds: xr.Dataset) -> xr.Dataset:
     """
@@ -138,18 +120,18 @@ def _set_default_station_var_attrs(ds: xr.Dataset) -> xr.Dataset:
 def export_dataset(
     ds: xr.Dataset,
     *,
-    output_dir: Union[str, Path],
+    output_dir: str | Path,
     filename: str,
-    time_name: Optional[str],
-    global_attrs: Dict[str, Any],
-    default_global_attrs: Optional[Dict[str, Any]] = None,
-    namespace_uuid: Optional[str] = None,
-    id_prefix: Optional[str] = None,
-    id_seed: Optional[str] = None,
+    time_name: str | None,
+    global_attrs: dict[str, Any],
+    default_global_attrs: dict[str, Any] | None = None,
+    namespace_uuid: str | None = None,
+    id_prefix: str | None = None,
+    id_seed: str | None = None,
     engine: str = "netcdf4",
     nc_format: str = "NETCDF4",
-    time_encoding_cfg: Optional[Dict[str, Any]] = None,
-    var_encoding_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    time_encoding_cfg: dict[str, Any] | None = None,
+    var_encoding_overrides: dict[str, dict[str, Any]] | None = None,
 ) -> Path:
     """
     Write an xarray.Dataset to NetCDF with consistent metadata and encodings.
@@ -168,11 +150,10 @@ def export_dataset(
 
     # Ensure consistent coordinate attrs across all exports
     ds = _set_default_coord_attrs(ds, tn)
-    ds = _ensure_timeseries_id(ds)
     ds = _set_default_station_var_attrs(ds)
 
     # Global attributes
-    attrs: Dict[str, Any] = dict(default_global_attrs or {})
+    attrs: dict[str, Any] = dict(default_global_attrs or {})
     attrs.update(global_attrs or {})
 
     # Stable dataset ID (optional)
@@ -199,7 +180,7 @@ def export_dataset(
         attrs["geospatial_lon_max"] = lon
 
     # date_created: keep user value if present; otherwise set to now (UTC)
-    attrs.setdefault("date_created", pd.Timestamp.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"))
+    attrs.setdefault("date_created", pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ"))
 
     # Attach final global attributes (NetCDF global attrs are typically strings)
     ds.attrs = {k: str(v) for k, v in attrs.items()}

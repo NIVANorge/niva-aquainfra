@@ -91,9 +91,7 @@
 
   "stations": {
     "river": [
-      "Drammenselva",
-      "Glomma",
-      "Numedalslagen"
+      "all"
     ],
     "marine": [
       "all"
@@ -119,8 +117,8 @@
     },
 
     "period": {
-      "start_year": 2010,
-      "end_year": 2023,
+      "start_year": null,
+      "end_year": null,
       "require_full_period": true
     }
   },
@@ -130,4 +128,3 @@
     "non_sig_alpha": 0.25
   }
 }
-
