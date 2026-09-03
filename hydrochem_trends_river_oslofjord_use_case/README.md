@@ -313,7 +313,7 @@ Command-line parameters supplied to `main_aquainfra.py` override the correspondi
 
 ## Authors and contact
 
-Developed by Areti Balkoni for the AquaINFRA hydrochemistry workflow.
+Developed by Areti Balkoni and Leah Jackson-Blake for the AquaINFRA hydrochemistry workflow.
 
 For technical issues, please use the repository's GitHub Issues page.
 For other questions, contact: areti.balkoni@niva.no
