@@ -286,6 +286,31 @@ def _find_site_file(folder: Path, site: str) -> Path | None:
     return None
 
 
+def _river_name_from_nc(nc_path: Path) -> str | None:
+    """Read the actual river name stored in a river flux NetCDF file."""
+    try:
+        with xr.open_dataset(nc_path) as ds:
+            if "river_name" not in ds:
+                return None
+
+            values = np.asarray(ds["river_name"].values).reshape(-1)
+
+            if values.size == 0:
+                return None
+
+            value = values[0]
+
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+
+            name = str(value).strip()
+
+            return name if name else None
+
+    except Exception:
+        return None
+
+
 def _open_series_and_unit_from_nc(
     nc_path: str | Path,
     var: str,
@@ -890,6 +915,17 @@ def analyze_trends(
                 if str(stations_local[0]).strip().lower() == "all":
                     stations_local = ["all"]
 
+            # River folder: "all" means discover all rivers from the NetCDF files.
+            if mode == "folder" and stations_local == ["all"]:
+                stations_local = []
+
+                for nc_path in sorted(src_path.glob("*.nc")):
+                    river_name = _river_name_from_nc(nc_path)
+
+                    if river_name is not None:
+                        stations_local.append(river_name)
+
+            # Single multi-station file, e.g. marine data.
             if mode == "file" and stations_local == ["all"]:
                 with xr.open_dataset(src_path) as ds:
                     if not station_dim:

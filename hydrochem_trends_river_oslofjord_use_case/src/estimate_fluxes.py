@@ -118,7 +118,7 @@ def compute_fluxes(
         # Concentration to kg/m3
         if unit.endswith(("mg/l", "mg/l C", "mg Pt/l")):
             conc_kg_m3 = df[var] * 1e-3
-        elif unit.endswith(("µg/l", "μg/l", "µg/l P")):
+        elif unit.endswith(("ug/l", "µg/l", "μg/l", "ug/l P", "µg/l P", "μg/l P")):
             conc_kg_m3 = df[var] * 1e-6
         elif unit.endswith("Abs/cm"):
             # not mass concentration; keep as-is (proxy)

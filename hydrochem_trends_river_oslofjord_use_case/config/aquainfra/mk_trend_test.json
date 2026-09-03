@@ -1,0 +1,130 @@
+{
+  "variables": [
+    "DOC", "Color", "NH4-N", "NO3-N", "TRP", "POC", "TOC_calc", "SPM",
+    "SiO2", "TOC", "TOTN", "TOTP", "TDP", "DIN", "DON", "PP", "TSM",
+    "UV_Abs_254nm", "UV_Abs_410nm", "CDOM_abs_443", "Chl-a",
+    "SSS", "SST", "secchi_depth"
+  ],
+
+  "unit_options": {
+    "non_mass_vars": [
+      "Color",
+      "UV_Abs_254nm",
+      "UV_Abs_410nm",
+      "CDOM_abs_443",
+      "SSS",
+      "SST",
+      "secchi_depth",
+      "Chl-a"
+    ],
+    "undefined_unit_label": "undefined"
+  },
+
+  "inputs": {
+    "daily": [
+      {
+        "name": "river_daily",
+        "data_type": "river",
+        "mode": "folder",
+        "path": "output/fluxes/data/daily",
+        "aggregation": "sum",
+
+        "aggregation_requirements": {
+          "monthly": {
+            "min_obs_per_period": 25
+          },
+          "annual": {
+            "min_obs_per_period": 330
+          },
+          "seasonal_by_season": {
+            "min_obs_per_period": 80
+          }
+        }
+      },
+
+      {
+        "name": "marine_daily",
+        "data_type": "marine",
+        "mode": "file",
+        "path": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
+
+        "variable_name_rules": {
+          "replace": {
+            "-": "_"
+          }
+        },
+
+        "station_dim": "station",
+        "station_coord": "station_name",
+
+        "depth_dim": "depth",
+        "depth_selection": {
+          "mode": "range",
+          "min": 0,
+          "max": 10
+        },
+
+        "aggregation": "median",
+
+        "aggregation_requirements": {
+          "monthly": {
+            "min_obs_per_period": 1
+          },
+          "annual": {
+            "min_obs_per_period": 1,
+            "require_all_seasons": true,
+            "min_seasons_per_year": 4
+          },
+          "seasonal_by_season": {
+            "min_obs_per_period": 3
+          }
+        }
+      }
+    ]
+  },
+
+  "trend_frequencies": [
+    "monthly",
+    "annual",
+    "seasonal_by_season"
+  ],
+
+  "stations": {
+    "river": [
+      "all"
+    ],
+    "marine": [
+      "all"
+    ]
+  },
+
+  "output_dir": "output/trends",
+
+  "results": {
+    "figures_dir": "figures",
+    "tables_dir": "tables",
+    "combined_table_name": "mk_results.xlsx",
+    "write_per_station_tables": false
+  },
+
+  "trend_options": {
+    "alpha": 0.05,
+
+    "min_points": {
+      "monthly": 36,
+      "annual": 10,
+      "seasonal_by_season": 10
+    },
+
+    "period": {
+      "start_year": null,
+      "end_year": null,
+      "require_full_period": true
+    }
+  },
+
+  "plot_options": {
+    "ncols": 3,
+    "non_sig_alpha": 0.25
+  }
+}
