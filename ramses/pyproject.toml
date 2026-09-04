@@ -1,0 +1,24 @@
+[project]
+name = "ramses-data-cleaning"
+version = "0.1.0"
+description = "Data analysis and cleaning for RAMSES dataset to share for the AquaINFRA project"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy (>=2.2.3,<3.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "scipy (>=1.15.2,<2.0.0)",
+    "netcdf4 (>=1.7.2,<2.0.0)",
+    "xarray (>=2025.1.2,<2026.0.0)",
+    "matplotlib (>=3.10.0,<4.0.0)",
+    "geopandas (>=1.0.1,<2.0.0)",
+    "nbformat (>=5.10.4,<6.0.0)",
+    "scikit-learn (>=1.6.1,<2.0.0)",
+    "cartopy (>=0.24.1,<0.25.0)",
+    "ipykernel (>=6.29.5,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
