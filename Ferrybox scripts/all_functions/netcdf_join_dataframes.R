@@ -1,18 +1,4 @@
-
 # Join ferrybox and station measurements by time and parameter
-library(dplyr)
-library(lubridate)
-
-as_posixct_safe <- function(x, tz = "UTC") {
-  if (inherits(x, "POSIXct")) return(x)
-  if (inherits(x, "Date"))   return(as.POSIXct(x, tz = tz))
-  if (is.character(x)) {
-    out <- parse_date_time(x, orders = c("Y-m-d HMS", "Y-m-d HM", "Y-m-d"), tz = tz)
-    return(out)
-  }
-  stop("Unsupported time class: ", paste(class(x), collapse = "/"))
-}
-
 library(dplyr)
 library(lubridate)
 
@@ -56,7 +42,7 @@ join_x_y <- function(df_x,
   
   # lowercase user input once
   station_ID <- tolower(station_ID)
- 
+  
   # maps original names safely
   x_map <- setNames(names(df_x), tolower(names(df_x)))
   y_map <- setNames(names(df_y), tolower(names(df_y)))
@@ -97,6 +83,10 @@ join_x_y <- function(df_x,
       "df_y: ", paste(miss_y, collapse = ", ")
     )
   }
+  
+  # Detect optional unit columns (present in both example datasets).
+  has_unit_x <- "unit" %in% col_names_x
+  has_unit_y <- "unit" %in% col_names_y
   
   # validate parameters
   param_vars_x <- unique(df_x$parameter)
@@ -154,18 +144,30 @@ join_x_y <- function(df_x,
     stop("Could not parse time in df_y. Example: ", df_y[[y_map[[time_col_y_lc]]]][1])
   }
   
+  # ------------------------------------------------------------------
+  # Aggregate df_x. Carry the unit through if a unit column exists.
+  # The unit is constant per parameter, so first() within the group is safe.
+  # ------------------------------------------------------------------
   data_x <- df_x %>%
     filter(parameter == parameter_x) %>%
     mutate(year = year(time), month = month(time), day = day(time)) %>%
     group_by(year, month, day, latitude, longitude, parameter) %>%
-    summarise(value_x = mean(value, na.rm = TRUE), .groups = "drop") %>%
+    summarise(
+      value_x = mean(value, na.rm = TRUE),
+      unit_x  = if (has_unit_x) dplyr::first(.data[[x_map[["unit"]]]]) else NA_character_,
+      .groups = "drop"
+    ) %>%
     rename(parameter_x = parameter)
   
   data_y <- df_y %>%
     filter(parameter == parameter_y, station_lower == station_ID) %>%
     mutate(year = year(time), month = month(time), day = day(time)) %>%
     group_by(year, month, day, station_lower, parameter) %>%
-    summarise(value_y = mean(value, na.rm = TRUE), .groups = "drop") %>%
+    summarise(
+      value_y = mean(value, na.rm = TRUE),
+      unit_y  = if (has_unit_y) dplyr::first(.data[[y_map[["unit"]]]]) else NA_character_,
+      .groups = "drop"
+    ) %>%
     rename(parameter_y = parameter)
   
   df_comb <- left_join(data_x, data_y, by = c("year", "month", "day")) %>%
@@ -173,6 +175,7 @@ join_x_y <- function(df_x,
   
   df_comb
 }
+
 # Args command for reading input
 args <- commandArgs(trailingOnly = TRUE)
 message("R Command line args: ", paste(args, collapse = " | "))
@@ -217,7 +220,7 @@ df_joined <- join_x_y(
 )
 
 
-# If .csv name is pased in save_path using that as saving name else default "joined.csv" is used. 
+# If .csv name is pased in save_path using that as saving name else default "joined.csv" is used.
 if (grepl("\\.csv$", save_path, ignore.case = TRUE)) {
   file_path <- save_path
   dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
