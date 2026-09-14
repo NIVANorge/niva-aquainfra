@@ -1,4 +1,3 @@
-
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -15,6 +14,21 @@ as_null_if_blank <- function(x) {
   if (is.null(x)) return(y)
   if (length(x) == 0) return(y)
   x
+}
+
+# Pick the single unique non-NA value of a column, or a fallback if the column
+# is missing / not unique. Used to derive parameter names and units for labels.
+pick_unique <- function(df, col, fallback = NA_character_) {
+  if (!col %in% names(df)) return(fallback)
+  vals <- unique(stats::na.omit(df[[col]]))
+  if (length(vals) == 1) as.character(vals) else fallback
+}
+
+# Build an axis label like "Temperature (°C)" — falls back gracefully when the
+# parameter name or unit is unavailable.
+axis_label <- function(param, unit, default_param) {
+  p <- if (!is.na(param) && nzchar(param)) param else default_param
+  if (!is.na(unit) && nzchar(unit)) paste0(p, " (", unit, ")") else p
 }
 
 scatter_from_joined <- function(
@@ -37,24 +51,44 @@ scatter_from_joined <- function(
   
   has_coords <- all(c("latitude", "longitude") %in% names(df_joined))
   
-  using_waterbodies <- !is.null(waterbodies) || !is.null(waterbody_ids) || !is.null(waterbody_id_col)
+  # ------------------------------------------------------------------
+  # Decide method robustly.
+  # Waterbody filtering requires ALL THREE of: waterbodies, ids, id_col.
+  # If any is missing we do NOT treat it as "using waterbodies" — we fall
+  # back to latitude range. This makes "NULL"/blank inputs behave sensibly
+  # regardless of which fields the user leaves empty.
+  # ------------------------------------------------------------------
+  using_waterbodies <- !is.null(waterbodies) &&
+    !is.null(waterbody_ids) &&
+    !is.null(waterbody_id_col)
+  
+  # If the user supplied SOME but not all waterbody inputs, be explicit rather
+  # than silently switching method.
+  partial_wb <- (!is.null(waterbodies) || !is.null(waterbody_ids) || !is.null(waterbody_id_col)) &&
+    !using_waterbodies
+  if (partial_wb) {
+    stop(
+      "Incomplete waterbody inputs. To filter by waterbodies you must provide ALL of: ",
+      "waterbody file, waterbody IDs, and waterbody ID column. ",
+      "To filter by latitude instead, leave all three empty (or NULL) and provide latitude_min/max."
+    )
+  }
   
   if (using_waterbodies) {
-    if (is.null(waterbodies) || is.null(waterbody_ids) || is.null(waterbody_id_col)) {
-      stop("If using waterbodies you must provide: waterbodies, waterbody_ids, waterbody_id_col.")
-    }
     if (!inherits(waterbodies, "sf")) {
       stop("waterbodies must be an sf object.")
     }
     if (!(waterbody_id_col %in% names(waterbodies))) {
-      stop("waterbody_id_col not found in waterbodies.")
+      stop("waterbody_id_col '", waterbody_id_col, "' not found in waterbodies. ",
+           "Available columns: ", paste(names(waterbodies), collapse = ", "))
     }
     if (!has_coords) {
       stop("To filter by waterbodies, df_joined must have latitude and longitude.")
     }
   } else {
     if (is.null(lat_range)) {
-      stop("Provide lat_range (e.g. c(59.0, 59.3)) when waterbodies is not provided.")
+      stop("No filtering method provided. Either supply waterbody inputs, ",
+           "or provide latitude_min and latitude_max.")
     }
     if (length(lat_range) != 2) {
       stop("lat_range must be length 2.")
@@ -97,60 +131,108 @@ scatter_from_joined <- function(
     stop("Too few points after filtering/aggregation (n = ", nrow(daily), ").")
   }
   
-  px <- if ("parameter_x" %in% names(df_joined)) unique(na.omit(df_joined$parameter_x)) else "x"
-  py <- if ("parameter_y" %in% names(df_joined)) unique(na.omit(df_joined$parameter_y)) else "y"
-  px <- if (length(px) == 1) px else "x"
-  py <- if (length(py) == 1) py else "y"
+  # ------------------------------------------------------------------
+  # Derive parameter names and units for axis labels.
+  # Units are optional: if unit_x / unit_y columns exist they are used,
+  # otherwise the axis shows just the parameter name.
+  # ------------------------------------------------------------------
+  px   <- pick_unique(df_joined, "parameter_x", "value_x")
+  py   <- pick_unique(df_joined, "parameter_y", "value_y")
+  ux   <- pick_unique(df_joined, "unit_x", NA_character_)
+  uy   <- pick_unique(df_joined, "unit_y", NA_character_)
   
+  x_lab <- axis_label(px, ux, "value_x")
+  y_lab <- axis_label(py, uy, "value_y")
+  
+  # ------------------------------------------------------------------
+  # Regression statistics for annotation.
+  # ------------------------------------------------------------------
   cor_val <- suppressWarnings(stats::cor(daily$x_value, daily$y_value, use = "complete.obs"))
   
-  title_txt <- if (using_waterbodies) {
-    paste0("Waterbody vs station (", paste(waterbody_ids, collapse = ", "), ")")
+  fit      <- stats::lm(y_value ~ x_value, data = daily)
+  coefs    <- stats::coef(fit)
+  intercept <- coefs[[1]]
+  slope     <- coefs[[2]]
+  r2        <- summary(fit)$r.squared
+  
+  eq_txt <- sprintf(
+    "y = %.3g \u00b7 x %s %.3g",
+    slope,
+    ifelse(intercept >= 0, "+", "\u2212"),
+    abs(intercept)
+  )
+  stats_txt <- sprintf("%s   |   R\u00b2 = %.3f   |   r = %.3f   |   n = %d",
+                       eq_txt, r2, cor_val, nrow(daily))
+  
+  # Method description for subtitle.
+  method_txt <- if (using_waterbodies) {
+    paste0("Aggregated over waterbodies: ", paste(waterbody_ids, collapse = ", "))
   } else {
-    paste0("Transect vs station (lat ", paste(range(lat_range), collapse = "–"), ")")
+    paste0("Aggregated over latitude ", sprintf("%.2f", min(lat_range)),
+           "\u2013", sprintf("%.2f", max(lat_range)), " \u00b0N")
   }
   
+  date_span <- paste0(format(min(df$date), "%Y-%m-%d"), " to ",
+                      format(max(df$date), "%Y-%m-%d"))
+  
+  # ------------------------------------------------------------------
+  # Build plot.
+  # ------------------------------------------------------------------
   p <- ggplot(daily, aes(x = x_value, y = y_value)) +
-    geom_point() +
+    { if (add_lm) geom_smooth(method = "lm", formula = y ~ x, se = TRUE,
+                              color = "#2c7fb8", fill = "#a6bddb", alpha = 0.3,
+                              linewidth = 0.9) } +
+    geom_point(aes(size = n_pairs), color = "#08306b", alpha = 0.65) +
+    scale_size_continuous(name = "Ferrybox obs. \nper day", range = c(1.5, 5)) +
     labs(
-      x = paste0(px, " (value_x)"),
-      y = paste0(py, " (value_y)"),
-      title = title_txt,
-      subtitle = paste0("n=", nrow(daily), ", cor=", round(cor_val, 3))
+      title    = paste0("Daily avg. FerryBox vs logger: ", px, " vs ", py),
+      subtitle = paste0(method_txt, "\nPeriod: ", date_span),
+      x        = x_lab,
+      y        = y_lab,
+      caption  = stats_txt
+    ) +
+    theme_bw(base_size = 13) +
+    theme(
+      plot.title      = element_text(face = "bold", size = 16),
+      plot.subtitle   = element_text(size = 11, color = "grey30"),
+      plot.caption    = element_text(size = 11, hjust = 0, color = "grey20",
+                                     margin = margin(t = 10)),
+      axis.title      = element_text(face = "bold"),
+      axis.text       = element_text(color = "grey20"),
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      plot.margin     = margin(15, 15, 15, 15)
     )
   
-  if (add_lm) {
-    p <- p + geom_smooth(method = "lm", se = TRUE)
-  }
-  
   list(
-    data = daily,
-    plot = p,
-    stats = list(n = nrow(daily), cor = cor_val)
+    data  = daily,
+    plot  = p,
+    stats = list(n = nrow(daily), cor = cor_val, r2 = r2,
+                 slope = slope, intercept = intercept)
   )
 }
 
 resolve_spatial_input_path <- function(input_path) {
   if (is.null(input_path)) return(NULL)
-
+  
   is_url <- startsWith(input_path, "http")
   if (!(is_url || file.exists(input_path))) {
     stop("Spatial input must be NULL, a valid file path, or a valid URL.")
   }
-
+  
   local_file <- input_path
   if (is_url) {
     local_file <- tempfile()
     download.file(input_path, local_file, mode = "wb")
   }
-
-  # Afgør type ud fra indhold, ikke endelse (Galaxy giver .dat-navne)
+  
+  # Determine type from CONTENT, not extension (Galaxy gives .dat names)
   con <- file(local_file, "rb")
   magic <- readBin(con, "raw", n = 4)
   close(con)
   is_zip <- length(magic) >= 2 &&
-            magic[1] == as.raw(0x50) && magic[2] == as.raw(0x4B)  # "PK"
-
+    magic[1] == as.raw(0x50) && magic[2] == as.raw(0x4B)  # "PK"
+  
   if (is_zip) {
     extract_dir <- tempfile(); dir.create(extract_dir)
     unzip(local_file, exdir = extract_dir)
@@ -161,15 +243,15 @@ resolve_spatial_input_path <- function(input_path) {
                                         paste(basename(spatial_files), collapse = ", "))
     return(spatial_files[1])
   }
-
-  # Ellers: geojson/json-indhold (også når filen hedder .dat)
+  
+  # Otherwise: geojson/json content (also when file is named .dat)
   first <- readLines(local_file, n = 50, warn = FALSE)
   if (any(grepl("FeatureCollection|\"type\"\\s*:", first))) {
     geojson_path <- tempfile(fileext = ".geojson")
     file.copy(local_file, geojson_path, overwrite = TRUE)
     return(geojson_path)
   }
-
+  
   local_file
 }
 
@@ -214,26 +296,31 @@ if (length(args) < 2) {
   stop("Provide source (URL/CSV) and path to save.")
 }
 
-joined_df_input_path          <- args[1]
-save_path           <- args[2]
-waterbodies_path    <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-waterbody_ids       <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-waterbody_id_col    <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-lat_range_min       <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
-lat_range_max       <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
-study_area_layer    <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+joined_df_input_path <- args[1]
+save_path            <- args[2]
+waterbodies_path     <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+waterbody_ids        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+waterbody_id_col     <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+lat_range_min        <- if (length(args) >= 6) as_null_if_blank(args[6]) else NULL
+lat_range_max        <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
+study_area_layer     <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
-# Numbers are passed as strings to this script from python/docker. And if they are
-# passed as numbers, the function "as_null_if_blank()" converts them to characters,
-# so we convert (back) to numeric:
-if (!is.null(lat_range_min)) {
-  lat_range_min <- as.numeric(lat_range_min)
-}
-if (!is.null(lat_range_max)) {
-  lat_range_max <- as.numeric(lat_range_max)
-}
 
-# Check file existance (unless passed as URL):
+joined_df_input_path <- df_joined
+save_path            <- args[2]
+waterbodies_path     <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
+waterbody_ids        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
+waterbody_id_col     <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
+lat_range_min        <-58.5
+lat_range_max        <- 59
+study_area_layer     <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
+
+
+# Numbers are passed as strings from python/docker; convert (back) to numeric.
+if (!is.null(lat_range_min)) lat_range_min <- as.numeric(lat_range_min)
+if (!is.null(lat_range_max)) lat_range_max <- as.numeric(lat_range_max)
+
+# Check file existence (unless passed as URL):
 if (startsWith(joined_df_input_path, "http")) {
   message("Input CSV provided as URL.")
 } else if (!file.exists(joined_df_input_path)) {
@@ -247,21 +334,24 @@ lat_range <- if (!is.null(lat_range_min) && !is.null(lat_range_max)) {
   NULL
 }
 
-
 message("Reading input CSV: ", joined_df_input_path)
 df_joined <- readr::read_csv(joined_df_input_path, show_col_types = FALSE)
 
+# Split comma-separated waterbody ids into a vector (handles the string that
+# python/docker passes). If the field was NULL/blank this stays NULL.
 if (!is.null(waterbody_ids) && length(waterbody_ids) == 1) {
   waterbody_ids <- strsplit(waterbody_ids, ",")[[1]]
   waterbody_ids <- trimws(waterbody_ids)
+  waterbody_ids <- waterbody_ids[nzchar(waterbody_ids)]        # drop empty pieces
+  if (length(waterbody_ids) == 0) waterbody_ids <- NULL        # all-empty -> NULL
 }
+
 # -------------------------------------------------------------------
 # Read waterbodies (optional)
 # -------------------------------------------------------------------
-
 waterbody_shp <- NULL
 if (!is.null(waterbodies_path)) {
-  input_path <- resolve_spatial_input_path(waterbodies_path)  # was: resolve_study_area_path
+  input_path <- resolve_spatial_input_path(waterbodies_path)
   
   message("DEBUG: Reading spatial data: ", input_path)
   
@@ -273,19 +363,18 @@ if (!is.null(waterbodies_path)) {
   message("DEBUG: st_read resulted in class: ", paste(class(waterbody_shp), collapse = ", "))
 }
 
-
 # -------------------------------------------------------------------
 # Run analysis
 # -------------------------------------------------------------------
 scatter_fb_stat <- scatter_from_joined(
-  df_joined = df_joined,
-  waterbodies = waterbody_shp,
+  df_joined        = df_joined,
+  waterbodies      = waterbody_shp,
   waterbody_id_col = waterbody_id_col,
-  waterbody_ids = waterbody_ids,
-  lat_range = lat_range,
-  tz = "UTC",
-  agg_fun = mean,
-  add_lm = TRUE
+  waterbody_ids    = waterbody_ids,
+  lat_range        = lat_range,
+  tz               = "UTC",
+  agg_fun          = mean,
+  add_lm           = TRUE
 )
 
 # Show plot in interactive sessions
@@ -307,12 +396,12 @@ if (grepl("\\.png$", save_path, ignore.case = TRUE)) {
 message("Saving PNG to: ", file_path)
 ggsave(
   filename = file_path,
-  plot = scatter_fb_stat$plot,
-  width = 18,
-  height = 22,
-  units = "cm",
-  dpi = 300,
-  bg = "white"
+  plot   = scatter_fb_stat$plot,
+  width  = 22,
+  height = 18,
+  units  = "cm",
+  dpi    = 300,
+  bg     = "white"
 )
 
 message("Saving PNG... done")
