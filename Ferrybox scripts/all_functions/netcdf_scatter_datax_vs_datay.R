@@ -305,17 +305,6 @@ lat_range_min        <- if (length(args) >= 6) as_null_if_blank(args[6]) else NU
 lat_range_max        <- if (length(args) >= 7) as_null_if_blank(args[7]) else NULL
 study_area_layer     <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
 
-
-joined_df_input_path <- df_joined
-save_path            <- args[2]
-waterbodies_path     <- if (length(args) >= 3) as_null_if_blank(args[3]) else NULL
-waterbody_ids        <- if (length(args) >= 4) as_null_if_blank(args[4]) else NULL
-waterbody_id_col     <- if (length(args) >= 5) as_null_if_blank(args[5]) else NULL
-lat_range_min        <-58.5
-lat_range_max        <- 59
-study_area_layer     <- if (length(args) >= 8) as_null_if_blank(args[8]) else NULL
-
-
 # Numbers are passed as strings from python/docker; convert (back) to numeric.
 if (!is.null(lat_range_min)) lat_range_min <- as.numeric(lat_range_min)
 if (!is.null(lat_range_max)) lat_range_max <- as.numeric(lat_range_max)
