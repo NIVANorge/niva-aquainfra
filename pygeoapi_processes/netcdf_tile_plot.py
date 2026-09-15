@@ -157,14 +157,24 @@ class NivaTilePlotProcessor(BaseProcessor):
         ### Run ###
         ###########
 
+        # Convert parameters to string first - used in filename and R args
+        if parameters is not None:
+            if isinstance(parameters, list):
+                params_string   = ','.join(parameters)   # til R args: "turbidity_avg,temperature"
+                params_filename = '-'.join(parameters)   # til filnavn: "turbidity_avg-temperature"
+            elif isinstance(parameters, str):
+                params_string   = parameters
+                params_filename = parameters.replace(',', '-')
+        else:
+            params_string   = None        
+        
         # Assemble R args:
-        params = ','.join(parameters)
         r_args = [
             url_input_csv,
             out_result_path,
             start_date,
             end_date,
-            params,
+            params_string,
             lat1,
             lat2,
             storm_date
