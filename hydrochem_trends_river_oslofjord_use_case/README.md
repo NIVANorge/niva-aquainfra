@@ -292,7 +292,7 @@ The following optional arguments specify exact paths, including filenames, for t
 
 Relative paths supplied through these five arguments are resolved from the current working directory. Parent directories are created automatically.
 
-Each selected main output is written directly to its specified path, without creating a second copy at the default location. Omitted arguments retain the default output paths and filenames. Diagnostics and figures remain under `--output-dir`.
+Each selected main output is written directly to its specified path. Omitted arguments retain the default output paths and filenames. Diagnostics and figures remain under `--output-dir`.
 
 When steps are combined, downstream steps automatically use the actual output paths returned by the preceding steps.
 
