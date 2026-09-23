@@ -1639,10 +1639,19 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
     id_seed = render_template(md_id.get("seed_template", "{station_id}"),
                               {"station_id": station_id, "time_name": time_name_out}) or station_id
 
+
+    export_dir = out_dir
+
+    if cfg.get("output_file"):
+        target = Path(cfg["output_file"]).expanduser().resolve()
+        export_dir = target.parent
+        filename = target.name
+
     out_path = export_dataset(
         ds=ds,
-        output_dir=out_dir,
+        output_dir=export_dir,
         filename=filename,
+
         time_name=time_name_out,
         global_attrs=ds.attrs,
         namespace_uuid=namespace_uuid,

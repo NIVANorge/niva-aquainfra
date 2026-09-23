@@ -1346,7 +1346,15 @@ def analyze_trends(
     if all_rows:
         df_new = pd.DataFrame(all_rows)
 
-        out_all = out_root / tables_dir / combined_name
+        custom_output = cfg.get("results", {}).get(
+            "combined_output_file"
+        )
+
+        if custom_output is not None:
+            out_all = Path(custom_output).expanduser().resolve()
+        else:
+            out_all = out_root / tables_dir / combined_name
+
         ensure_dirs(out_all.parent)
 
         # Recreate the combined workbook for each run.

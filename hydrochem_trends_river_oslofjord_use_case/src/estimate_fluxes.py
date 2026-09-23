@@ -453,9 +453,17 @@ def flux(cfg: Dict[str, Any]) -> list[Path]:
             station_id=river,
         )
 
+        export_dir = base_output_dir / frequency
+        custom_output = cfg.get("output_files", {}).get(frequency)
+
+        if custom_output is not None:
+            target = Path(custom_output).expanduser().resolve()
+            export_dir = target.parent
+            filename = target.name
+
         out_path = export_dataset(
             ds=ds,
-            output_dir=(base_output_dir / frequency),
+            output_dir=export_dir,
             filename=filename,
             time_name=time_name,
             global_attrs=gmeta,

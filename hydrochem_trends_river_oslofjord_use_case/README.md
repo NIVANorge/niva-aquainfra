@@ -17,7 +17,7 @@ For AquaINFRA/Galaxy integration, use `main_aquainfra.py`.
 
 This script is the user-facing command-line interface. It loads the generic templates in `config/aquainfra/` and overrides them with command-line arguments, so users do not need to edit JSON files.
 
-The existing `main.py`, `config/workflow.json`, `config/river/`, and `config/mk_trend_test.json` belong to the original/local workflow and are not required for the AquaINFRA/Galaxy interface.
+The original/local workflow entry point and its configuration files have been moved to `../hydrochem_trends_river_oslofjord_preprocessing/river_analysis_workflow/`. They are not required for the AquaINFRA/Galaxy interface. Running the relocated entry point requires updating its imports and configuration paths.
 
 
 
@@ -93,6 +93,20 @@ The full list of available parameters and their descriptions can always be displ
 python main_aquainfra.py --help
 ```
 
+### Combined workflow with explicit output paths
+
+Run commands from the `hydrochem_trends_river_oslofjord_use_case` directory. The local discharge dataset must be available at the path shown.
+
+The following smoke test was successfully run for Glomma using DOC and annual trend analysis. It uses one validation repeat to reduce runtime; this is a functional test, not a recommended scientific validation setting.
+
+```bash
+python main_aquainfra.py --steps interpolate,fluxes,trends --output-dir output_galaxy_test --waterchem "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc" --discharge "data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc" --river-name "Glomma" --wc-station-name "Glomma, Sarpsfossen" --q-station-name "Solbergfoss" --latitude 59.27980207 --longitude 11.13411158 --variables "DOC" --variable-units "DOC=mg/l" --validation-repeats 1 --trend-frequency annual --interpolation-output "galaxy_results/chemistry.nc" --daily-flux-output "galaxy_results/daily.nc" --monthly-flux-output "galaxy_results/monthly.nc" --annual-flux-output "galaxy_results/annual.nc" --trend-output "galaxy_results/results.xlsx"
+```
+
+The five main results are written under `galaxy_results/`; diagnostics and figures are written under `output_galaxy_test/`.
+
+This single-line command works in Bash and PowerShell. The multiline examples above use Bash `\` continuations; in PowerShell, enter those commands on one line or use PowerShell backticks.
+
 ## Main user parameters
 
 ### General parameters
@@ -149,7 +163,7 @@ Flux estimation can either use interpolated chemistry generated during the same 
 
 | Parameter | Format | Description |
 |---|---|---|
-| `--interpolated-waterchem` | path or URL | Existing daily interpolated river water-chemistry NetCDF. Required when `fluxes` is run without `interpolate`. |
+| `--interpolated-waterchem` | path | Existing daily interpolated river water-chemistry NetCDF. Required when `fluxes` is run without `interpolate`. |
 | `--discharge` | path or URL | Daily river-discharge NetCDF input. |
 | `--river-name` | string | River name/identifier. |
 | `--q-station-name` | string | Station name used in the discharge input. |
@@ -264,7 +278,25 @@ River and marine trend sources may be analysed together.
 
 ## Output data
 
-All results are written below the directory specified with `--output-dir`.
+By default, results are written below the directory specified with `--output-dir`.
+
+The following optional arguments specify exact paths, including filenames, for the main result files:
+
+| Argument | Main output |
+|---|---|
+| `--interpolation-output` | Daily modelled water-chemistry NetCDF |
+| `--daily-flux-output` | Daily flux NetCDF |
+| `--monthly-flux-output` | Monthly flux NetCDF |
+| `--annual-flux-output` | Annual flux NetCDF |
+| `--trend-output` | Combined trend Excel workbook |
+
+Relative paths supplied through these five arguments are resolved from the current working directory. Parent directories are created automatically.
+
+Each selected main output is written directly to its specified path, without creating a second copy at the default location. Omitted arguments retain the default output paths and filenames. Diagnostics and figures remain under `--output-dir`.
+
+When steps are combined, downstream steps automatically use the actual output paths returned by the preceding steps.
+
+Use a distinct path for each output, separate from all input files. Output-path arguments apply only when the corresponding processing step is selected.
 
 ### Interpolation
 

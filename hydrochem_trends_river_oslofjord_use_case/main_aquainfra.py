@@ -63,6 +63,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where workflow outputs will be written.",
     )
 
+    # Optional paths for the main result files.
+    parser.add_argument(
+        "--interpolation-output",
+        help="Exact output path for the interpolated chemistry NetCDF.",
+    )
+    parser.add_argument(
+        "--daily-flux-output",
+        help="Exact output path for the daily flux NetCDF.",
+    )
+    parser.add_argument(
+        "--monthly-flux-output",
+        help="Exact output path for the monthly flux NetCDF.",
+    )
+    parser.add_argument(
+        "--annual-flux-output",
+        help="Exact output path for the annual flux NetCDF.",
+    )
+    parser.add_argument(
+        "--trend-output",
+        help="Exact output path for the combined trend Excel workbook.",
+    )
+
     # River input
     parser.add_argument(
         "--waterchem",
@@ -581,6 +603,11 @@ def make_interpolation_config(
 ) -> dict:
     cfg = deepcopy(load_cfg(INTERPOLATION_TEMPLATE))
 
+    if args.interpolation_output is not None:
+        cfg["output_file"] = str(
+            Path(args.interpolation_output).expanduser().resolve()
+        )
+
     apply_user_metadata(cfg, args)
 
     if args.wc_time_col is not None:
@@ -719,6 +746,16 @@ def make_flux_config(
 ) -> dict:
     cfg = deepcopy(load_cfg(FLUX_TEMPLATE))
 
+    cfg["output_files"] = {
+        frequency: str(Path(value).expanduser().resolve())
+        for frequency, value in [
+            ("daily", args.daily_flux_output),
+            ("monthly", args.monthly_flux_output),
+            ("annual", args.annual_flux_output),
+        ]
+        if value is not None
+    }
+
     apply_user_metadata(cfg, args)
 
     non_mass_vars = parse_variable_list(args.non_mass_vars)
@@ -805,6 +842,11 @@ def make_trend_config(
     output_root: Path,
 ) -> dict:
     cfg = deepcopy(load_cfg(TREND_TEMPLATE))
+
+    if args.trend_output is not None:
+        cfg.setdefault("results", {})["combined_output_file"] = str(
+            Path(args.trend_output).expanduser().resolve()
+        )
 
     non_mass_vars = parse_variable_list(args.non_mass_vars)
 
@@ -977,6 +1019,7 @@ def main() -> None:
     output_root.mkdir(parents=True, exist_ok=True)
 
     interpolated_file = None
+    daily_flux_file = None
 
     if "interpolate" in args.steps:
         interpolation_cfg = make_interpolation_config(
@@ -984,14 +1027,14 @@ def main() -> None:
             output_root,
         )
 
-        interpolate(interpolation_cfg)
+        interpolation_outputs = interpolate(interpolation_cfg)
 
-        interpolated_file = (
-            output_root
-            / "daily_estimates"
-            / "data"
-            / f"daily_water_chemistry_modeled_{args.river_name}.nc"
-        )
+        if len(interpolation_outputs) != 1:
+            raise RuntimeError(
+                "Expected exactly one interpolation NetCDF output."
+            )
+
+        interpolated_file = Path(interpolation_outputs[0])
 
     if "fluxes" in args.steps:
         if interpolated_file is None:
@@ -1009,13 +1052,32 @@ def main() -> None:
             interpolated_file,
         )
 
-        flux(flux_cfg)
+        flux_outputs = flux(flux_cfg)
+
+        if len(flux_outputs) != 3:
+            raise RuntimeError(
+                "Expected daily, monthly and annual flux outputs."
+            )
+
+        daily_flux_file = Path(flux_outputs[0]).resolve()
 
     if "trends" in args.steps:
         trend_cfg = make_trend_config(
             args,
             output_root,
         )
+
+        if daily_flux_file is not None:
+            river_source = find_trend_source(trend_cfg, "river")
+
+            if river_source is None:
+                raise RuntimeError("River trend source is missing.")
+
+            river_source["mode"] = "file"
+            river_source["path"] = str(daily_flux_file)
+            trend_cfg.setdefault("stations", {})["river"] = [
+                args.river_name
+            ]
 
         analyze_trends(
             trend_cfg,
