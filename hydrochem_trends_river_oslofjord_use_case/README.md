@@ -35,10 +35,56 @@ python main_aquainfra.py --steps <steps> --output-dir <output_directory> [option
 - `fluxes`
 - `trends`
 
-For example:
+### Examples
+
+The following examples provide complete commands for running each processing step with the Glomma test data.
+
+### Interpolation
 
 ```bash
-python main_aquainfra.py --steps interpolate,fluxes --output-dir output
+python main_aquainfra.py \
+  --steps interpolate \
+  --output-dir output_aquainfra_glomma_test \
+  --waterchem "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc" \
+  --discharge "data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc" \
+  --river-name "Glomma" \
+  --wc-station-name "Glomma, Sarpsfossen" \
+  --q-station-name "Solbergfoss" \
+  --latitude 59.27980207 \
+  --longitude 11.13411158 \
+  --variables "DOC,TOTN,TOTP" \
+  --variable-units "DOC=mg/l,TOTN=ug/l,TOTP=ug/l"
+```
+
+### Flux estimation
+
+This example uses the interpolated water-chemistry file produced by the interpolation step above.
+
+```bash
+python main_aquainfra.py \
+  --steps fluxes \
+  --output-dir output_aquainfra_glomma_test \
+  --interpolated-waterchem "output_aquainfra_glomma_test/daily_estimates/data/daily_water_chemistry_modeled_Glomma.nc" \
+  --discharge "data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc" \
+  --river-name "Glomma" \
+  --q-station-name "Solbergfoss" \
+  --latitude 59.27980207 \
+  --longitude 11.13411158 \
+  --variables "DOC,TOTN,TOTP" \
+  --variable-units "DOC=mg/l,TOTN=ug/l,TOTP=ug/l"
+```
+
+### Trend analysis
+
+This example uses the daily river-flux output together with the marine input dataset.
+
+```bash
+python main_aquainfra.py \
+  --steps trends \
+  --output-dir output_aquainfra_glomma_test \
+  --river-flux-dir "output_aquainfra_glomma_test/fluxes/data/daily" \
+  --marine-input "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc" \
+  --variables "DOC,TOTN,TOTP,SST"
 ```
 
 The full list of available parameters and their descriptions can always be displayed with:
