@@ -389,6 +389,65 @@ These files contain workflow defaults. **Users do not need to edit these JSON fi
 
 Command-line parameters supplied to `main_aquainfra.py` override the corresponding internal configuration values.
 
+## Build Docker Image
+
+The environment to run the `main_aquainfra.py` R script can also be created using docker.
+This is how to build a Docker image:
+
+```
+cd hydrochem_trends_river_oslofjord_use_case
+
+today=$(date '+%Y%m%d')
+docker build . -t niva-hydrochem:${today}
+```
+
+Then, to run the **interpolation**:
+
+```
+docker run \
+  -v ./test_outputs_interpolate:/out \
+  niva-hydrochem:${today} \
+  --steps 'interpolate' \
+  --waterchem 'https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc' \
+  --discharge 'data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc' \
+  --river-name 'Glomma' \
+  --wc-station-name 'Glomma, Sarpsfossen' \
+  --q-station-name 'Solbergfoss' \
+  --latitude '59.27980207' \
+  --longitude '11.13411158' \
+  --variables 'DOC,TOTN,TOTP' \
+  --variable-units 'DOC=mg/l,TOTN=ug/l,TOTP=ug/l' \
+  --output-dir '/out' \
+  --interpolation-output '/out/test_interpolation_output.nc'; date
+```
+
+Now the output can be found in `./test_outputs_interpolate`.
+
+Now, to tun the **fluxes**, using the result from the interpolation:
+
+```
+docker run \
+  -v ./test_outputs_interpolate:/in:rw \
+  -v ./test_outputs_fluxes:/out:rw \
+  niva-hydrochem:${today} \
+  --steps 'fluxes' \
+  --interpolated-waterchem '/in/test_interpolation_output.nc' \
+  --discharge 'data/processed/river/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc' \
+  --river-name 'Glomma' \
+  --q-station-name 'Solbergfoss' \
+  --latitude '59.27980207' \
+  --longitude '11.13411158' \
+  --variables 'DOC,TOTN,TOTP' \
+  --variable-units 'DOC=mg/l,TOTN=ug/l,TOTP=ug/l' \
+  --output-dir '/out' \
+  --daily-flux-output '/out/flux_daily_test.nc' \
+  --monthly-flux-output '/out/flux_monthly_test.nc' \
+  --annual-flux-output '/out/flux_annual_test.nc'; date
+```
+
+Now the output can be found in `./test_outputs_fluxes`.
+
+
 ## Authors and contact
 
 Developed by Areti Balkoni and Leah Jackson-Blake for the AquaINFRA hydrochemistry workflow.

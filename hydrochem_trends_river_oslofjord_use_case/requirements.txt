@@ -8,3 +8,5 @@ pygam
 pymannkendall
 netCDF4
 openpyxl
+matplotlib
+
