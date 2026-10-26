@@ -9,4 +9,4 @@ pymannkendall
 netCDF4
 openpyxl
 matplotlib
-
+requests
