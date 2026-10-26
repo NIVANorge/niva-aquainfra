@@ -205,6 +205,7 @@ def compute_gam(
         n_splines_xy: tuple[int, int] = (10, 20),
         lam_grid: np.ndarray | None = None,
         verbose: bool = True,
+        progress: bool = True
 ) -> pd.DataFrame | None:
     """Fit a GAM using discharge and day-of-year and predict within the observed time range."""
 
@@ -226,7 +227,9 @@ def compute_gam(
 
     model = LinearGAM(te(0, 1, n_splines=list(n_splines_xy), spline_order=[3, 3]) + s(1, basis="cp"))
     try:
-        gam = model.gridsearch(X, y, lam=lam_grid)
+        if verbose and not progress:
+            print(f"Running slow step 'gridsearch', printing progress disabled.")
+        gam = model.gridsearch(X, y, lam=lam_grid, progress=progress)
     except Exception as e:
         if verbose:
             print(f"GAM failed for {station_name} → {var}: {e}")
@@ -260,6 +263,7 @@ def apply_gam_to_df(
         n_splines_xy=(10, 20),
         lam_grid=None,
         verbose: bool = True,
+        progress: bool = True,
 ) -> pd.DataFrame:
     out = df.copy()
     for var in variables:
@@ -272,6 +276,7 @@ def apply_gam_to_df(
                 n_splines_xy=n_splines_xy,
                 lam_grid=lam_grid,
                 verbose=verbose,
+                progress=progress,
             )
             if gdf is not None:
                 out = gdf
@@ -418,6 +423,7 @@ def _candidate_predictions_for_var(
         station_name: str,
         linear_cfg: dict[str, Any],
         gam_cfg: dict[str, Any],
+        progress: bool=True
 ) -> dict[str, pd.Series]:
     preds: dict[str, pd.Series] = {}
 
@@ -444,6 +450,7 @@ def _candidate_predictions_for_var(
         n_splines_xy=tuple(gam_cfg.get("n_splines_xy", [10, 20])),
         lam_grid=np.array(gam_cfg["lam_grid"]) if gam_cfg.get("lam_grid") else None,
         verbose=False,
+        progress=progress,
     )
     preds["annual_gam"] = _series_from_candidate(
         gam_df,
@@ -511,6 +518,7 @@ def validate_interpolation_methods(
         n_repeats: int,
         block_size: int,
         min_observations: int,
+        progress: bool=True,
 ) -> tuple[dict[str, dict[str, float]], pd.DataFrame]:
     tmp = station_df.copy()
     tmp["date"] = pd.to_datetime(tmp["date"])
@@ -553,6 +561,7 @@ def validate_interpolation_methods(
             station_name=station_name,
             linear_cfg=linear_cfg,
             gam_cfg=gam_cfg,
+            progress=progress
         )
 
         truth = obs.reindex(block)
@@ -772,7 +781,11 @@ def plot_qc(
 
 
 # ------------------------------- main --------------------------------
-def interpolate(cfg: dict[str, Any]) -> list[Path]:
+def interpolate(
+        cfg: dict[str, Any],
+        verbose: bool = True,
+        progress: bool = True,
+) -> list[Path]:
     """
     Run full daily interpolation for ONE river/station, driven by JSON.
     Returns list of NetCDF paths
@@ -913,6 +926,8 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
         station_name=station_id,
         n_splines_xy=tuple(gam_cfg.get("n_splines_xy", [10, 20])),
         lam_grid=np.array(gam_cfg["lam_grid"]) if gam_cfg.get("lam_grid") else None,
+        verbose=verbose,
+        progress=progress,
     )
 
     # 3) monthwise log–log(Q, var)
@@ -1015,6 +1030,7 @@ def interpolate(cfg: dict[str, Any]) -> list[Path]:
                 n_repeats=validation_n_repeats,
                 block_size=validation_block_size,
                 min_observations=validation_min_observations,
+                progress=progress,
             )
         else:
             metrics = {}

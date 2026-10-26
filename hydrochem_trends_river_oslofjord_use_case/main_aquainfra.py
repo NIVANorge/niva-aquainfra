@@ -1027,7 +1027,7 @@ def main() -> None:
             output_root,
         )
 
-        interpolation_outputs = interpolate(interpolation_cfg)
+        interpolation_outputs = interpolate(interpolation_cfg, verbose=True, progress=False)
 
         if len(interpolation_outputs) != 1:
             raise RuntimeError(
