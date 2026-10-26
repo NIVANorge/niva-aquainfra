@@ -16,6 +16,7 @@ from .utils import (
     ensure_dirs,
     resolve_input_source,
     resolve_path,
+    open_dataset,
 )
 
 plt.style.use("ggplot")
@@ -289,7 +290,7 @@ def _find_site_file(folder: Path, site: str) -> Path | None:
 def _river_name_from_nc(nc_path: Path) -> str | None:
     """Read the actual river name stored in a river flux NetCDF file."""
     try:
-        with xr.open_dataset(nc_path) as ds:
+        with open_dataset(nc_path) as ds:
             if "river_name" not in ds:
                 return None
 
@@ -322,7 +323,7 @@ def _open_series_and_unit_from_nc(
     depth_selection: dict[str, Any] | None = None,
 ) -> tuple[pd.Series | None, str | None]:
 
-    ds = xr.open_dataset(nc_path)
+    ds = open_dataset(nc_path)
 
     if var not in ds.data_vars:
         return None, None
@@ -927,7 +928,7 @@ def analyze_trends(
 
             # Single multi-station file, e.g. marine data.
             if mode == "file" and stations_local == ["all"]:
-                with xr.open_dataset(src_path) as ds:
+                with open_dataset(src_path) as ds:
                     if not station_dim:
                         raise ValueError(
                             "station_dim is required when mode='file'"

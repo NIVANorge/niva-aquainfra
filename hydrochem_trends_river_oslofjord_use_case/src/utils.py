@@ -77,6 +77,28 @@ def expand_globs(root: str | Path, pattern: str,) -> list[Path]:
 
 # ---------------------------- netcdf / io ----------------------------
 
+def open_dataset(source: str | Path, **kwargs: Any) -> xr.Dataset:
+    """
+    Open a NetCDF dataset from a local path or a remote URL.
+
+    OPeNDAP endpoints (URLs containing ``/dodsC/``) are opened directly by
+    xarray. Plain HTTP(S) URLs to a ``.nc`` file do not support OPeNDAP range
+    requests, so the file is fetched with an HTTP GET and opened from memory.
+    """
+    source_str = str(source)
+
+    if source_str.startswith(("http://", "https://")) and "/dodsC/" not in source_str:
+        import netCDF4
+        import requests
+
+        resp = requests.get(source_str)
+        resp.raise_for_status()
+        nc = netCDF4.Dataset("in-memory", memory=resp.content)
+        return xr.open_dataset(xr.backends.NetCDF4DataStore(nc), **kwargs)
+
+    return xr.open_dataset(source, **kwargs)
+
+
 def netcdf_to_dataframe(
     nc_path: str | Path,
     *,
@@ -93,7 +115,7 @@ def netcdf_to_dataframe(
     Time-like columns are converted to pandas datetime.
     """
 
-    with xr.open_dataset(nc_path) as ds:
+    with open_dataset(nc_path) as ds:
         df = ds.to_dataframe().reset_index()
 
     for t in time_vars:

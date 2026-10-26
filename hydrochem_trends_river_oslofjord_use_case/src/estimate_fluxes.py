@@ -17,7 +17,8 @@ from .utils import (
     netcdf_to_dataframe,
     standardize_time_and_station,
     merge_daily_discharge_and_chemistry,
-    save_or_show_plot
+    save_or_show_plot,
+    open_dataset,
 )
 
 plt.style.use("ggplot")
@@ -72,7 +73,7 @@ def build_global_attrs_for_flux(
 def extract_units_from_netcdf(netcdf_path: Path, skip_vars=("date", "latitude", "longitude", "river_name")) -> pd.DataFrame:
     """ Read variable units from the *modeled/interpolated* chemistry NetCDF. """
 
-    with xr.open_dataset(netcdf_path) as ds:
+    with open_dataset(netcdf_path) as ds:
         metadata = []
         for var in ds.data_vars:
             if var in skip_vars:
