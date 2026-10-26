@@ -8,6 +8,10 @@ from typing import Any
 import pandas as pd
 import xarray as xr
 
+# for identifying URLs as opposed to paths:
+from urllib.parse import urlparse
+_URL_SCHEMES = {"http", "https", "ftp", "s3"}
+
 
 def _decode_text(value):
     """Decode byte strings from NetCDF/OPeNDAP into normal Python strings."""
@@ -35,17 +39,33 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def is_url(p: str | Path) -> bool:
+    # A Path can never be a valid URL, so only inspect strings.
+    # Explicit scheme set avoids treating Windows "C:\..." as a URL.
+    return isinstance(p, str) and urlparse(p).scheme.lower() in _URL_SCHEMES
+
 def resolve_path(
     p: str | Path,
     *,
     root: str | Path | None = None,
-) -> Path:
+) -> Path | str:
     """
     Resolve p to an absolute path.
     - If p is already absolute -> return it
     - Else join with root (defaults to project_root()).
     """
+
+    # If it is a URL, don't apply Path(), to avoid getting paths like this:
+    # '/app/https:/aquainfra.de/exampledata/niva/test_interpolation_output.nc'
+    if is_url(p):
+        return p
+
     pp = Path(p)
+
+    # Catch URLs that were already mangled by an earlier Path() call
+    if str(pp).lower().startswith(("http:/", "https:/")):
+        raise ValueError(f"Looks like a URL mangled by pathlib: {pp}")
+
     if pp.is_absolute():
         return pp
     base = Path(root) if root is not None else project_root()

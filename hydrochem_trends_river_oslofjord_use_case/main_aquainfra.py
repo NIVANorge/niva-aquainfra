@@ -742,7 +742,7 @@ def make_interpolation_config(
 def make_flux_config(
     args: argparse.Namespace,
     output_root: Path,
-    interpolated_file: Path,
+    interpolated_file: str,
 ) -> dict:
     cfg = deepcopy(load_cfg(FLUX_TEMPLATE))
 
@@ -796,7 +796,8 @@ def make_flux_config(
 
     river = args.river_name
 
-    cfg["wc_interp_data_path"] = str(interpolated_file)
+    # Can be URL or file system path, that's why it is str not Path:
+    cfg["wc_interp_data_path"] = interpolated_file
     cfg["q_cleaned_data_path"] = args.discharge
 
     cfg["q_station_rename_map"] = {
@@ -1043,8 +1044,10 @@ def main() -> None:
                     "--interpolated-waterchem is required when fluxes "
                     "are run without the interpolation step."
                 )
-
-            interpolated_file = Path(args.interpolated_waterchem)
+            # This can be URL or filesystem path, so not using Path(), to avoid
+            # errors such as: FileNotFoundError: [Errno 2] No such file or directory:
+            # '/app/https:/aquainfra.de/exampledata/niva/test_interpolation_output.nc'
+            interpolated_file = args.interpolated_waterchem
 
         flux_cfg = make_flux_config(
             args,

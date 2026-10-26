@@ -423,6 +423,13 @@ docker run \
 
 Now the output can be found in `./test_outputs_interpolate`.
 
+Note that you can also use a discharge file stored in a server, which can be
+accessed via URL, by using this line instead:
+
+```
+  --discharge 'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc' \
+```
+
 Now, to tun the **fluxes**, using the result from the interpolation:
 
 ```
@@ -446,6 +453,17 @@ docker run \
 ```
 
 Now the output can be found in `./test_outputs_fluxes`.
+
+Note that you can use again a discharge file stored in a server, which can be
+accessed via URL, and you can also use a remote interpolation result, by using
+these lines instead:
+
+```
+  --interpolated-waterchem 'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/inputs_fluxes/test_interpolation_output.nc' \
+  --discharge 'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc' \
+```
+
+In this case, you can also remove the line `-v ./test_outputs_interpolate:/in:rw \`, as you don't need to mount the inputs from file system anymore.
 
 
 ## Authors and contact
