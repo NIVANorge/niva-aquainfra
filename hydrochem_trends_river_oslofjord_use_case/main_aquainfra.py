@@ -10,6 +10,9 @@ from src.interpolate import interpolate
 from src.mk_trend_test import analyze_trends
 from src.utils import load_json as load_cfg
 
+import logging
+LOGGER = logging.getLogger(__name__)
+
 
 REPO_ROOT = Path(__file__).resolve().parent
 
@@ -1023,7 +1026,7 @@ def main() -> None:
     daily_flux_file = None
 
     if "interpolate" in args.steps:
-        print("Step: interpolate...")
+        LOGGER.debug("Step: interpolate...")
         interpolation_cfg = make_interpolation_config(
             args,
             output_root,
@@ -1037,12 +1040,13 @@ def main() -> None:
             )
 
         interpolated_file = Path(interpolation_outputs[0])
-        print("Step: interpolate... done.")
+
+        LOGGER.debug("Step: interpolate... done.")
 
     if "fluxes" in args.steps:
-        print("Step: fluxes...")
+        LOGGER.debug("Step: fluxes...")
         if interpolated_file is None:
-            print(f"Parameter interpolated-file not found, using interpolated-waterchem: {args.interpolated_waterchem}")
+            LOGGER.debug(f"Parameter interpolated-file not found, using interpolated-waterchem: {args.interpolated_waterchem}")
             if not args.interpolated_waterchem:
                 raise ValueError(
                     "--interpolated-waterchem is required when fluxes "
@@ -1067,10 +1071,11 @@ def main() -> None:
             )
 
         daily_flux_file = Path(flux_outputs[0]).resolve()
-        print("Step: fluxes... done.")
+
+        LOGGER.debug("Step: fluxes... done.")
 
     if "trends" in args.steps:
-        print("Step: trends...")
+        LOGGER.debug("Step: trends...")
         trend_cfg = make_trend_config(
             args,
             output_root,
@@ -1094,8 +1099,22 @@ def main() -> None:
             mk_mode=args.mk_mode,
         )
 
-        print("Step: trends... done.")
+        LOGGER.debug("Step: trends... done")
 
 
 if __name__ == "__main__":
+
+    # Setting matplotlib logger to WARNING to silence very frequent DEBUG messages like:
+    # findfont: score(FontEntry(fname='/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizThreeSymBol.ttf', index=0, name='STIXSizeThreeSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+    # Making sure log messages get printed to console and end up in docker log:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="[%(levelname)s] %(asctime)s %(message)s",
+        datefmt='%H:%M:%S'
+    )
+
+    # Run actual main:
     main()
+
