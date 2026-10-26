@@ -1023,6 +1023,7 @@ def main() -> None:
     daily_flux_file = None
 
     if "interpolate" in args.steps:
+        print("Step: interpolate...")
         interpolation_cfg = make_interpolation_config(
             args,
             output_root,
@@ -1036,9 +1037,12 @@ def main() -> None:
             )
 
         interpolated_file = Path(interpolation_outputs[0])
+        print("Step: interpolate... done.")
 
     if "fluxes" in args.steps:
+        print("Step: fluxes...")
         if interpolated_file is None:
+            print(f"Parameter interpolated-file not found, using interpolated-waterchem: {args.interpolated_waterchem}")
             if not args.interpolated_waterchem:
                 raise ValueError(
                     "--interpolated-waterchem is required when fluxes "
@@ -1063,8 +1067,10 @@ def main() -> None:
             )
 
         daily_flux_file = Path(flux_outputs[0]).resolve()
+        print("Step: fluxes... done.")
 
     if "trends" in args.steps:
+        print("Step: trends...")
         trend_cfg = make_trend_config(
             args,
             output_root,
@@ -1087,6 +1093,8 @@ def main() -> None:
             frequency=args.trend_frequency,
             mk_mode=args.mk_mode,
         )
+
+        print("Step: trends... done.")
 
 
 if __name__ == "__main__":
