@@ -1,0 +1,229 @@
+{
+  "version": "0.1.0",
+  "id": "hydrochem-interpolation",
+  "use_case": "NIVA Hydrochemistry Scripts",
+  "title": {
+    "en": "Hydrochemistry Interpolation"
+  },
+  "description": {
+    "en": "Coastal hydrochemistry analysis, interpolation step: Generates daily river chemistry time series by filling gaps in observed water-chemistry data."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case"],
+  "inputs": {
+    "variables": {
+      "title": "Variables",
+      "description": "List of variable names to process.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "variable_units": {
+      "title": "Variable units",
+      "description": "List of variable=unit pairs giving the unit of each variable.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "non_mass_vars": {
+      "title": "Non-mass variables",
+      "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "url_waterchem": {
+      "title": "Water chemistry input",
+      "description": "URL of the input water chemistry file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_discharge": {
+      "title": "Discharge input",
+      "description": "URL of the input river discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "river_name": {
+      "title": "River name",
+      "description": "Name of the river for which the interpolation is performed.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "wc_station_name": {
+      "title": "Water chemistry station name",
+      "description": "Name of the water chemistry monitoring station to select from the water chemistry file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "q_station_name": {
+      "title": "Discharge station name",
+      "description": "Name of the discharge gauging station to select from the discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "latitude": {
+      "title": "Latitude",
+      "description": "Latitude of the location in decimal degrees (-90 to 90).",
+      "schema": { "type": "number", "minimum": -90, "maximum": 90 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "longitude": {
+      "title": "Longitude",
+      "description": "Longitude of the location in decimal degrees (-180 to 180).",
+      "schema": { "type": "number", "minimum": -180, "maximum": 180 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "wc_time_col": {
+      "title": "Water chemistry time column",
+      "description": "Name of the column containing timestamps in the water chemistry file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "q_time_col": {
+      "title": "Discharge time column",
+      "description": "Name of the column containing timestamps in the discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "wc_station_col": {
+      "title": "Water chemistry station column",
+      "description": "Name of the column containing station names in the water chemistry file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "q_station_col": {
+      "title": "Discharge station column",
+      "description": "Name of the column containing station names in the discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "discharge_var": {
+      "title": "Discharge variable",
+      "description": "Name of the column containing the discharge values in the discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "linear_max_gap": {
+      "title": "Maximum gap for linear interpolation",
+      "description": "Maximum gap length (in time steps) that is bridged by linear interpolation. Must be a non-negative integer.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "gam_n_splines_q": {
+      "title": "GAM splines for discharge",
+      "description": "Number of spline basis functions used for the discharge term of the GAM interpolation model. Must be a positive integer.",
+      "schema": { "type": "integer", "minimum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "gam_n_splines_doy": {
+      "title": "GAM splines for day of year",
+      "description": "Number of spline basis functions used for the seasonal (day-of-year) term of the GAM interpolation model. Must be a positive integer.",
+      "schema": { "type": "integer", "minimum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "validation_repeats": {
+      "title": "Validation repeats",
+      "description": "Number of repetitions of the validation procedure. Must be a positive integer.",
+      "schema": { "type": "integer", "minimum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "validation_block_size": {
+      "title": "Validation block size",
+      "description": "Size of the blocks of consecutive observations withheld in each validation run. Must be a positive integer.",
+      "schema": { "type": "integer", "minimum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "validation_min_observations": {
+      "title": "Minimum observations for validation",
+      "description": "Minimum number of observations a variable needs for validation to be performed. Must be a non-negative integer.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "validation_min_points": {
+      "title": "Minimum validation points",
+      "description": "Minimum number of withheld points required for a validation run to be considered valid. Must be a non-negative integer.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "validation_min_coverage": {
+      "title": "Minimum validation coverage",
+      "description": "Minimum fraction (0 to 1) of the data that must be covered by valid validation results.",
+      "schema": { "type": "number", "minimum": 0, "maximum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "selection_min_r2": {
+      "title": "Minimum R² for model selection",
+      "description": "Minimum R² (-1 to 1) a candidate interpolation method must reach in validation to be eligible for selection.",
+      "schema": { "type": "number", "minimum": -1, "maximum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "selection_r2_tolerance": {
+      "title": "R² tolerance for model selection",
+      "description": "Tolerance on the R² difference within which candidate methods are considered equally good, so that secondary criteria (e.g. simplicity) decide. Must be non-negative.",
+      "schema": { "type": "number", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "selection_max_bias_fraction": {
+      "title": "Maximum bias fraction for model selection",
+      "description": "Maximum allowed bias, expressed as a fraction of the observed mean, for a candidate method to be eligible. Must be non-negative.",
+      "schema": { "type": "number", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "selection_extreme_ratio_limit": {
+      "title": "Extreme value ratio limit for model selection",
+      "description": "Maximum allowed ratio between predicted and observed extreme values; methods exceeding it are rejected. Must be non-negative.",
+      "schema": { "type": "number", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "interpolation_output": {
+      "title": "Daily modelled water-chemistry NetCDF",
+      "description": "Daily chemistry time series with observations preserved and missing values filled using the selected interpolation and fallback methods.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_waterchem": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc",
+      "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
+      "river_name": "Glomma",
+      "wc_station_name": "Glomma, Sarpsfossen",
+      "q_station_name": "Solbergfoss",
+      "latitude": 59.27980207,
+      "longitude": 11.13411158,
+      "variables": ["DOC", "TOTN", "TOTP"],
+      "variable_units": ["DOC=mg/l", "TOTN=ug/l", "TOTP=ug/l"]
+    }
+  }
+}
+
+

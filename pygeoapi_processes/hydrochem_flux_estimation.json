@@ -1,0 +1,140 @@
+{
+  "version": "0.1.0",
+  "id": "hydrochem-flux-estimation",
+  "use_case": "NIVA Hydrochemistry Scripts",
+  "title": {
+    "en": "Hydrochemistry Flux Estimation"
+  },
+  "description": {
+    "en": "Coastal hydrochemistry analysis, flux estimation step: Calculates daily, monthly, and annual river constituent fluxes using daily chemistry and discharge data."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case"],
+  "inputs": {
+    "variables": {
+      "title": "Variables",
+      "description": "List of variable names to process.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "variable_units": {
+      "title": "Variable units",
+      "description": "List of variable=unit pairs giving the unit of each variable.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "non_mass_vars": {
+      "title": "Non-mass variables",
+      "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "url_discharge": {
+      "title": "Discharge input",
+      "description": "URL of the input river discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "river_name": {
+      "title": "River name",
+      "description": "Name of the river for which the interpolation is performed.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "q_station_name": {
+      "title": "Discharge station name",
+      "description": "Name of the discharge gauging station to select from the discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "latitude": {
+      "title": "Latitude",
+      "description": "Latitude of the location in decimal degrees (-90 to 90).",
+      "schema": { "type": "number", "minimum": -90, "maximum": 90 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "longitude": {
+      "title": "Longitude",
+      "description": "Longitude of the location in decimal degrees (-180 to 180).",
+      "schema": { "type": "number", "minimum": -180, "maximum": 180 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "url_interpolated_waterchem": {
+      "title": "Interpolated chemistry input",
+      "description": "URL of daily interpolated river water-chemistry NetCDF file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "flux_date_col": {
+      "title": "Interpolated chemistry date column",
+      "description": "Name of the date coordinate/column in the interpolated chemistry input.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "flux_station_col": {
+      "title": "Station column",
+      "description": "Name of the station coordinate/column used in flux processing.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "flux_discharge_col": {
+      "title": "Discharge column",
+      "description": "Name of the discharge variable/column used in flux processing.",
+      "schema": { "type": "string" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "daily_flux": {
+      "title": "Daily flux NetCDF",
+      "description": "Daily constituent flux estimates.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    },
+    "monthly_flux": {
+      "title": "Monthly flux NetCDF",
+      "description": "Monthly constituent flux estimates, aggregated from daily estimates.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    },
+    "annual_flux": {
+      "title": "Annual flux NetCDF",
+      "description": "Annual constituent flux estimates, aggregated from daily estimates.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "url_interpolated_waterchem": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/inputs_fluxes/test_interpolation_output.nc",
+      "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
+      "river_name": "Glomma",
+      "q_station_name": "Solbergfoss",
+      "latitude": 59.27980207,
+      "longitude": 11.13411158,
+      "variables": ["DOC", "TOTN", "TOTP"],
+      "variable-units": ["DOC=mg/l", "TOTN=ug/l", "TOTP=ug/l"]
+    }
+  }
+}
+
+
+
