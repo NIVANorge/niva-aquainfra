@@ -306,7 +306,8 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
             self.image_name,
             "not_needed",
             output_dir,
-            r_args
+            r_args,
+            style="py"
         )
 
         # Return R error message if exit code not 0:

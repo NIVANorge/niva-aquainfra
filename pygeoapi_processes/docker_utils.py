@@ -197,9 +197,13 @@ def run_docker_container3(
         image_name,
         script_name,
         output_dir_on_host,
-        script_args
+        script_args,
+        style="R"
     ):
     # Same as run_docker_container2, but simplified: Only output directory is passed!
+    # And added param "style" to extract R-style or python-style error messages
+    # from stderr. Defaults to "R", as the Ferrybox scripts have to work with R-style
+    # and I don't want to change and redeploy them now.
 
     # Create container name
     # Note: Only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed
@@ -242,7 +246,7 @@ def run_docker_container3(
 
         # All args, even the ones that did not change, have to be appended (as it is a new list):
         sanitized_args.append(newarg)
-    
+
     LOGGER.debug('Script args (after sanitizing): %s' % sanitized_args)
 
     # Prepare container command
@@ -285,7 +289,7 @@ def run_docker_container3(
         stderr = e.stderr.decode()
         LOGGER.error('Failed running docker container (exit code %s)' % returncode)
         log_all_docker_output(stdout, stderr)
-        user_err_msg = get_error_message_from_docker_stderr(stderr, log_all_lines = False)
+        user_err_msg = get_error_message_from_docker_stderr(stderr, style=style, log_all_lines = False)
         LOGGER.info(f'Extracted this error message: {user_err_msg}')
         return returncode, stdout, stderr, user_err_msg
 
@@ -299,6 +303,7 @@ def log_all_docker_output(stdout, stderr):
         if line:
             LOGGER.debug('Docker stdout: %s' % line)
             # output of print() in R-script
+            # output of print() in python
 
     LOGGER.debug('______________')
     LOGGER.debug('Docker sterr:')
@@ -306,10 +311,46 @@ def log_all_docker_output(stdout, stderr):
         if line:
             LOGGER.debug('Docker stderr: %s' % line)
             # output of message() in R-script
+            # output of log messages from logging library in python
 
 
-def get_error_message_from_docker_stderr(stderr, log_all_lines = True):
+
+# Different ways of extracting error messages from all the stuff that gets
+# printed into stderr, for R and for python code.
+# (Hopefully no error messages get hidden to stdout...)
+
+def get_error_message_from_docker_stderr(stderr, style="R", log_all_lines = True):
+    if style == "R":
+        return get_error_message_from_docker_stderr_R(stderr, log_all_lines=log_all_lines)
+    elif style == "py":
+        return get_error_message_from_docker_stderr_py(stderr, log_all_lines=log_all_lines)
+    else:
+        raise ValueError(f"Docker error message extraction: Unknown style={style}, expected R or py")
+
+
+def get_error_message_from_docker_stderr_py(stderr, log_all_lines=True):
+    user_err_msg = ""
+    for line in stderr.split('\n'):
+
+        # Skip empty lines:
+        if not line:
+            continue
+
+        # Print all non-empty lines to log:
+        if log_all_lines:
+            LOGGER.error('Docker stderr: %s' % line)
+
+        # Python error messages usually contain the word "Error"
+        if "Error" in line:
+            user_err_msg += line.strip()
+
+    return user_err_msg
+
+
+def get_error_message_from_docker_stderr_R(stderr, log_all_lines = True):
     '''
+    Note: This one is for R-style error output!
+
     We would like to return meaningful messages to users. For example, by
     printing ALL stderr lines, we get the following:
 
