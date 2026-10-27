@@ -1,0 +1,222 @@
+{
+  "version": "0.1.0",
+  "id": "hydrochem-trend-analysis",
+  "use_case": "NIVA Hydrochemistry Scripts",
+  "title": {
+    "en": "Hydrochemistry Trend Analysis"
+  },
+  "description": {
+    "en": "Coastal hydrochemistry analysis, trend analysis step: performs Mann–Kendall trend tests and Sen's slope estimation for river and marine time series."
+  },
+  "jobControlOptions": ["sync-execute", "async-execute"],
+  "keywords": ["AquaINFRA", "NIVA use case"],
+  "inputs": {
+    "variables": {
+      "title": "Variables",
+      "description": "List of variable names to process.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "variable_units": {
+      "title": "Variable units",
+      "description": "List of variable=unit pairs giving the unit of each variable.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "non_mass_vars": {
+      "title": "Non-mass variables",
+      "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
+      "schema": { "type": "array", "items": { "type": "string" } },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "river_flux_dir": {
+      "title": "River flux directory",
+      "description": "TODO: How to pass this? Folder containing daily river-flux NetCDF files, used when trends are run without the flux estimation step.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_input": {
+      "title": "Marine input",
+      "description": "Marine chemistry NetCDF file or OPeNDAP URL.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_frequency": {
+      "title": "Trend frequency",
+      "description": "Temporal resolution of the trend analysis: 'config', 'monthly', 'annual' or 'seasonal_by_season'.",
+      "schema": { "type": "string", "enum": ["config", "monthly", "annual", "seasonal_by_season"] },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "mk_mode": {
+      "title": "Mann-Kendall mode",
+      "description": "Mode of the Mann-Kendall trend test: 'auto', 'original' or 'seasonal'.",
+      "schema": { "type": "string", "enum": ["auto", "original", "seasonal"] },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_start_year": {
+      "title": "Trend start year",
+      "description": "Optional first year of the trend-analysis period.",
+      "schema": { "type": "integer" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_end_year": {
+      "title": "Trend end year",
+      "description": "Optional last year of the trend-analysis period.",
+      "schema": { "type": "integer" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_require_full_period": {
+      "title": "Require full trend period",
+      "description": "If true, the complete requested trend period must be covered by the data.",
+      "schema": { "type": "boolean" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_alpha": {
+      "title": "Trend significance level",
+      "description": "Significance level (alpha) of the Mann-Kendall test. Must be strictly between 0 and 1.",
+      "schema": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_min_points_monthly": {
+      "title": "Minimum points for monthly trends",
+      "description": "Minimum number of points required for monthly trend analysis.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_min_points_annual": {
+      "title": "Minimum points for annual trends",
+      "description": "Minimum number of points required for annual trend analysis.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "trend_min_points_seasonal": {
+      "title": "Minimum points for seasonal trends",
+      "description": "Minimum number of points required for seasonal trend analysis.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "river_min_obs_monthly": {
+      "title": "River: minimum observations per month",
+      "description": "Minimum number of daily river values required to create a monthly value. River flux values are aggregated by summation.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "river_min_obs_annual": {
+      "title": "River: minimum observations per year",
+      "description": "Minimum number of daily river values required to create an annual value. River flux values are aggregated by summation.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "river_min_obs_seasonal": {
+      "title": "River: minimum observations per season",
+      "description": "Minimum number of daily river values required to create a seasonal value. River flux values are aggregated by summation.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_depth_min": {
+      "title": "Marine minimum depth",
+      "description": "Minimum marine sampling depth in metres. The default AquaINFRA configuration selects measurements from 0-10 m unless the depth limits are overridden.",
+      "schema": { "type": "number", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_depth_max": {
+      "title": "Marine maximum depth",
+      "description": "Maximum marine sampling depth in metres. The default AquaINFRA configuration selects measurements from 0-10 m unless the depth limits are overridden.",
+      "schema": { "type": "number", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_min_obs_monthly": {
+      "title": "Marine: minimum observations per month",
+      "description": "Minimum number of marine observations required to create a monthly value. Marine chemistry values are aggregated using the median.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_min_obs_annual": {
+      "title": "Marine: minimum observations per year",
+      "description": "Minimum number of marine observations required to create an annual value. Marine chemistry values are aggregated using the median.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_min_obs_seasonal": {
+      "title": "Marine: minimum observations per season",
+      "description": "Minimum number of marine observations required to create a seasonal value. Marine chemistry values are aggregated using the median.",
+      "schema": { "type": "integer", "minimum": 0 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_require_all_seasons": {
+      "title": "Marine: require all seasons",
+      "description": "If true, all seasons are required when creating annual marine values.",
+      "schema": { "type": "boolean" },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_min_seasons_per_year": {
+      "title": "Marine: minimum seasons per year",
+      "description": "Minimum number of seasons (0 to 4) required to create an annual marine value.",
+      "schema": { "type": "integer", "minimum": 0, "maximum": 4 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_station_dim": {
+      "title": "Marine station dimension",
+      "description": "Name of the station dimension in the marine input.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_station_coord": {
+      "title": "Marine station coordinate",
+      "description": "Name of the station-name coordinate in the marine input.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "marine_depth_dim": {
+      "title": "Marine depth dimension",
+      "description": "Name of the depth dimension or coordinate in the marine input.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    }
+  },
+  "outputs": {
+    "trend_output": {
+      "title": "Daily flux NetCDF",
+      "description": "Daily constituent flux estimates.",
+      "schema": {
+        "type": "object",
+        "contentMediaType": "application/json"
+      }
+    }
+  },
+  "example": {
+    "inputs": {
+      "river_flux_input": "https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/fluxes/data/daily",
+      "marine_input": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
+      "variables": ["DOC", "TOTN", "TOTP", "SST"]
+    }
+  }
+}
+

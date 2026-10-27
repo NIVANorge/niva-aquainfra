@@ -430,7 +430,7 @@ accessed via URL, by using this line instead:
   --discharge 'https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc' \
 ```
 
-Now, to tun the **fluxes**, using the result from the interpolation:
+Now, to run the **fluxes**, using the result from the interpolation:
 
 ```
 docker run \
@@ -464,6 +464,22 @@ these lines instead:
 ```
 
 In this case, you can also remove the line `-v ./test_outputs_interpolate:/in:rw \`, as you don't need to mount the inputs from file system anymore.
+
+Now, to run the **trends**:
+
+```
+
+date; docker run \
+  -v ./test_outputs_fluxes:/in:rw \
+  -v ./test_outputs_trends:/out:rw \
+  niva-hydrochem:${today} \
+  --steps 'trends' \
+  --river-flux-dir "/in/fluxes/data/daily" \
+  --marine-input "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc" \
+  --variables 'DOC,TOTN,TOTP,SST' \
+  --trend-output '/out/trend_test_output.xlsx' \
+  --output-dir '/out'; date
+```
 
 
 ## Authors and contact
