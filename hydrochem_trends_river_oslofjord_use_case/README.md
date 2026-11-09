@@ -82,9 +82,10 @@ This example uses the daily river-flux output together with the marine input dat
 python main_aquainfra.py \
   --steps trends \
   --output-dir output_aquainfra_glomma_test \
-  --river-flux-dir "output_aquainfra_glomma_test/fluxes/data/daily" \
+  --inputfiles_rivers "https://server/river1.nc,https://server/river2.nc" \
   --marine-input "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc" \
-  --variables "DOC,TOTN,TOTP,SST"
+  --variables "DOC,TOTN,TOTP,SST" \
+  --trend-frequency monthly
 ```
 
 The full list of available parameters and their descriptions can always be displayed with:

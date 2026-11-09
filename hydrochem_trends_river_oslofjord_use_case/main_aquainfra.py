@@ -148,6 +148,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--inputfiles_rivers",
+        help=(
+            "Comma-separated local paths or URLs to daily river flux "
+            "NetCDF files. Supports one or multiple rivers."
+        ),
+    )
+
+    parser.add_argument(
         "--trend-frequency",
         default="config",
         choices=["config", "monthly", "annual", "seasonal_by_season"],
@@ -840,6 +848,16 @@ def find_trend_source(cfg: dict, data_type: str) -> dict | None:
 
     return None
 
+def parse_river_input_files(value: str | None) -> list[str]:
+    if not value:
+        return []
+
+    files = [item.strip() for item in value.split(",") if item.strip()]
+
+    if len(files) != len(set(files)):
+        raise ValueError("Duplicate river input files are not allowed.")
+
+    return files
 
 def make_trend_config(
     args: argparse.Namespace,
@@ -903,22 +921,64 @@ def make_trend_config(
         args.marine_min_obs_seasonal,
     )
 
-    use_river = "fluxes" in args.steps or bool(args.river_flux_dir)
+    river_files = parse_river_input_files(args.inputfiles_rivers)
+
+    use_river = (
+            "fluxes" in args.steps
+            or bool(args.river_flux_dir)
+            or bool(river_files)
+    )
     use_marine = bool(args.marine_input)
 
     if not use_river and not use_marine:
         raise ValueError(
-            "Trend analysis requires either --river-flux-dir, "
+            "Trend analysis requires at least one input: "
+            "--inputfiles_rivers, --river-flux-dir, "
             "--marine-input, or the fluxes step in the same run."
         )
 
-    if use_river:
-        if "fluxes" in args.steps:
-            river_source["path"] = str(
-                output_root / "fluxes" / "data" / "daily"
+    if river_files:
+        if "fluxes" in args.steps or args.river_flux_dir:
+            raise ValueError(
+                "--inputfiles_rivers cannot be combined with "
+                "--river-flux-dir or the fluxes step."
             )
-        else:
-            river_source["path"] = args.river_flux_dir
+
+        river_sources = []
+
+        for i, file_path in enumerate(river_files, start=1):
+            source = deepcopy(river_source)
+            source["name"] = f"river_daily_{i}"
+            source["mode"] = "river_file"
+            source["path"] = file_path
+            river_sources.append(source)
+
+        cfg["inputs"]["daily"] = (
+                river_sources
+                + ([marine_source] if use_marine else [])
+        )
+
+    else:
+        if use_river:
+            if "fluxes" in args.steps:
+                river_source["path"] = str(
+                    output_root / "fluxes" / "data" / "daily"
+                )
+            else:
+                river_source["path"] = args.river_flux_dir
+
+        if use_marine:
+            marine_source["path"] = args.marine_input
+
+        cfg["inputs"]["daily"] = [
+            source
+            for source in cfg["inputs"]["daily"]
+            if (
+                       source.get("data_type") == "river" and use_river
+               ) or (
+                       source.get("data_type") == "marine" and use_marine
+               )
+        ]
 
     if use_marine:
         marine_source["path"] = args.marine_input
@@ -1011,12 +1071,17 @@ def main() -> None:
         require_river_arguments(args)
 
     if "trends" in args.steps:
-        use_river = "fluxes" in args.steps or bool(args.river_flux_dir)
+        use_river = (
+                "fluxes" in args.steps
+                or bool(args.river_flux_dir)
+                or bool(parse_river_input_files(args.inputfiles_rivers))
+        )
         use_marine = bool(args.marine_input)
 
         if not use_river and not use_marine:
             raise ValueError(
-                "Trend analysis requires either --river-flux-dir, "
+                "Trend analysis requires at least one input: "
+                "--inputfiles_rivers, --river-flux-dir, "
                 "--marine-input, or the fluxes step in the same run."
             )
 

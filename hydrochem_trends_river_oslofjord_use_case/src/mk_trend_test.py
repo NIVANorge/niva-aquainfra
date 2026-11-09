@@ -287,8 +287,8 @@ def _find_site_file(folder: Path, site: str) -> Path | None:
     return None
 
 
-def _river_name_from_nc(nc_path: Path) -> str | None:
-    """Read the actual river name stored in a river flux NetCDF file."""
+def _river_name_from_nc(nc_path: str | Path) -> str | None:
+    """Read the river name from a local or remote NetCDF file."""
     try:
         with open_dataset(nc_path) as ds:
             if "river_name" not in ds:
@@ -305,10 +305,12 @@ def _river_name_from_nc(nc_path: Path) -> str | None:
                 value = value.decode("utf-8")
 
             name = str(value).strip()
-
             return name if name else None
 
-    except Exception:
+    except Exception as exc:
+        print(
+            f"[trends] Could not read river name from {nc_path}: {exc}"
+        )
         return None
 
 
@@ -926,6 +928,23 @@ def analyze_trends(
                     if river_name is not None:
                         stations_local.append(river_name)
 
+            # One river NetCDF file, local or remote.
+            if mode == "river_file":
+                river_name = _river_name_from_nc(src_path)
+
+                if river_name is None:
+                    raise ValueError(
+                        f"Could not identify river_name in input: {src_path}"
+                    )
+
+                if stations_local == ["all"]:
+                    stations_local = [river_name]
+                else:
+                    stations_local = [
+                        st for st in stations_local
+                        if st == river_name
+                    ]
+
             # Single multi-station file, e.g. marine data.
             if mode == "file" and stations_local == ["all"]:
                 with open_dataset(src_path) as ds:
@@ -960,6 +979,12 @@ def analyze_trends(
 
                         s, unit = _open_series_and_unit_from_nc(
                             nc_path,
+                            source_var,
+                        )
+
+                    elif mode == "river_file":
+                        s, unit = _open_series_and_unit_from_nc(
+                            src_path,
                             source_var,
                         )
 
