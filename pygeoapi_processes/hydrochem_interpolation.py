@@ -53,7 +53,7 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
             self.download_dir = config["download_dir"].rstrip('/')
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
-        self.image_name = "niva-hydrochem:20261026"
+        self.image_name = "niva-hydrochem:20261109-d0c9f6f"
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id

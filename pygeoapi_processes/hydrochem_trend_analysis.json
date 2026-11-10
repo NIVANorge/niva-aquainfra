@@ -32,10 +32,10 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "river_flux_dir": {
-      "title": "River flux directory",
-      "description": "TODO: How to pass this? Folder containing daily river-flux NetCDF files, used when trends are run without the flux estimation step.",
-      "schema": { "type": "string", "minLength": 1 },
+    "urls_rivers_daily_flux": {
+      "title": "River flux files",
+      "description": "List of URLs of daily river-flux NetCDF files, used when trends are run without the flux estimation step.",
+      "schema": { "type": "array", "items": { "type": "string" }, "minLength": 1 },
       "minOccurs": 0,
       "maxOccurs": 1
     },
@@ -213,7 +213,7 @@
   },
   "example": {
     "inputs": {
-      "river_flux_input": "https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/fluxes/data/daily",
+      "urls_rivers_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
       "marine_input": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
       "variables": ["DOC", "TOTN", "TOTP", "SST"]
     }

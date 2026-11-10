@@ -19,7 +19,7 @@ curl -i -X POST https://${PYSERVER}/processes/hydrochem-trend-analysis/execution
 --header 'Prefer: respond-async' \
 --data '{
     "inputs": {
-        "river-flux-input": "https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/fluxes/data/daily",
+        "urls_river_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
         "marine_input": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
         "variables": ["DOC", "TOTN", "TOTP", "SST"]
     }
@@ -48,6 +48,7 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
             self.download_url = config["download_url"].rstrip('/')
             self.docker_executable = config["docker_executable"]
         self.image_name = "niva-hydrochem:20261026"
+        self.image_name = "niva-hydrochem:20261109-d0c9f6f"
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id
@@ -111,13 +112,30 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
         # Trend-analysis parameters
         # ============================================================
 
-        river_flux_dir = data.get('river_flux_dir')
-        if river_flux_dir is not None:
-            if not isinstance(river_flux_dir, str) or not river_flux_dir:
+        # instead of: river_flux_dir
+        urls_rivers_daily_flux = data.get('urls_rivers_daily_flux')
+        if urls_rivers_daily_flux is not None:
+            if not isinstance(urls_rivers_daily_flux, list) or not urls_rivers_daily_flux:
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'river_flux_dir', got {river_flux_dir}, "
-                    "expecting a non-empty path string."
+                    f"Malformed parameter 'urls_rivers_daily_flux'",
+                    " expected a list of URLs (as a list)",
+                    f" received: {type(urls_rivers_daily_flux)}."
                 )
+            if not all(isinstance(item, str) for item in urls_rivers_daily_flux):
+                raise ProcessorExecuteError(
+                    f"Malformed parameter 'urls_rivers_daily_flux'",
+                    " expected a list of URLs (list items must be strings)",
+                    f" received: {urls_rivers_daily_flux}."
+                )
+            if not all(item.startswith('http') for item in urls_rivers_daily_flux):
+                raise ProcessorExecuteError(
+                    f"Malformed parameter 'urls_rivers_daily_flux'",
+                    " expected a list of URLs (list items must start with http)",
+                    f" received: {urls_rivers_daily_flux}."
+                )
+            if len(urls_rivers_daily_flux) != len(set(urls_rivers_daily_flux)):
+                raise ProcessorExecuteError("Duplicate river input files are not allowed.")
+
 
         marine_input = data.get('marine_input')
         if marine_input is not None:
@@ -376,8 +394,11 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
 
         # Trend-analysis parameters
 
-        if river_flux_dir is not None:
-            r_args += ['--river-flux-dir', river_flux_dir]
+        # instead of: river_flux_dir
+        # (river-flux-dir works with local files, but we're dealing with URLs of remote files)
+        if urls_rivers_daily_flux is not None:
+            urls_rivers_daily_flux_concat = ','.join(urls_rivers_daily_flux)
+            r_args += ['--inputfiles_rivers', urls_rivers_daily_flux_concat]
 
         if marine_input is not None:
             r_args += ['--marine-input', marine_input]
