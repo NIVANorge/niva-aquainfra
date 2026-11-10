@@ -53,14 +53,14 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "wc_station_name": {
+    "waterchem_station_name": {
       "title": "Water chemistry station name",
       "description": "Name of the water chemistry monitoring station to select from the water chemistry file.",
       "schema": { "type": "string" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "q_station_name": {
+    "discharge_station_name": {
       "title": "Discharge station name",
       "description": "Name of the discharge gauging station to select from the discharge file.",
       "schema": { "type": "string" },
@@ -81,28 +81,28 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "wc_time_col": {
+    "waterchem_time_col": {
       "title": "Water chemistry time column",
       "description": "Name of the column containing timestamps in the water chemistry file.",
       "schema": { "type": "string" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "q_time_col": {
+    "discharge_time_col": {
       "title": "Discharge time column",
       "description": "Name of the column containing timestamps in the discharge file.",
       "schema": { "type": "string" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "wc_station_col": {
+    "waterchem_station_col": {
       "title": "Water chemistry station column",
       "description": "Name of the column containing station names in the water chemistry file.",
       "schema": { "type": "string" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "q_station_col": {
+    "discharge_station_col": {
       "title": "Discharge station column",
       "description": "Name of the column containing station names in the discharge file.",
       "schema": { "type": "string" },
@@ -216,8 +216,8 @@
       "url_waterchem": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc",
       "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
       "river_name": "Glomma",
-      "wc_station_name": "Glomma, Sarpsfossen",
-      "q_station_name": "Solbergfoss",
+      "waterchem_station_name": "Glomma, Sarpsfossen",
+      "discharge_station_name": "Solbergfoss",
       "latitude": 59.27980207,
       "longitude": 11.13411158,
       "variables": ["DOC", "TOTN", "TOTP"],

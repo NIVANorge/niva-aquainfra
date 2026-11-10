@@ -23,8 +23,8 @@ curl -i -X POST https://${PYSERVER}/processes/hydrochem-interpolation/execution 
         "url_waterchem": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc",
         "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
         "river_name": "Glomma",
-        "wc_station_name": "Glomma, Sarpsfossen",
-        "q_station_name": "Solbergfoss",
+        "waterchem_station_name": "Glomma, Sarpsfossen",
+        "discharge_station_name": "Solbergfoss",
         "latitude": 59.27980207,
         "longitude": 11.13411158,
         "variables": ["DOC", "TOTN", "TOTP"],
@@ -150,17 +150,17 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
                 "expecting a non-empty string."
             )
 
-        wc_station_name = data.get('wc_station_name')
-        if wc_station_name is not None and not isinstance(wc_station_name, str):
+        waterchem_station_name = data.get('waterchem_station_name')
+        if waterchem_station_name is not None and not isinstance(waterchem_station_name, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'wc_station_name', got {wc_station_name}, "
+                f"Malformed parameter 'waterchem_station_name', got {waterchem_station_name}, "
                 "expecting a non-empty string."
             )
 
-        q_station_name = data.get('q_station_name')
-        if q_station_name is not None and not isinstance(q_station_name, str):
+        discharge_station_name = data.get('discharge_station_name')
+        if discharge_station_name is not None and not isinstance(discharge_station_name, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'q_station_name', got {q_station_name}, "
+                f"Malformed parameter 'discharge_station_name', got {discharge_station_name}, "
                 "expecting a non-empty string."
             )
 
@@ -180,31 +180,31 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
                     "expecting a number between -180 and 180."
                 )
 
-        wc_time_col = data.get('wc_time_col')
-        if wc_time_col is not None and not isinstance(wc_time_col, str):
+        waterchem_time_col = data.get('waterchem_time_col')
+        if waterchem_time_col is not None and not isinstance(waterchem_time_col, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'wc_time_col', got {wc_time_col}, "
+                f"Malformed parameter 'waterchem_time_col', got {waterchem_time_col}, "
                 "expecting a non-empty string."
             )
 
-        q_time_col = data.get('q_time_col')
-        if q_time_col is not None and not isinstance(q_time_col, str):
+        discharge_time_col = data.get('discharge_time_col')
+        if discharge_time_col is not None and not isinstance(discharge_time_col, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'q_time_col', got {q_time_col}, "
+                f"Malformed parameter 'discharge_time_col', got {discharge_time_col}, "
                 "expecting a non-empty string."
             )
 
-        wc_station_col = data.get('wc_station_col')
-        if wc_station_col is not None and not isinstance(wc_station_col, str):
+        waterchem_station_col = data.get('waterchem_station_col')
+        if waterchem_station_col is not None and not isinstance(waterchem_station_col, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'wc_station_col', got {wc_station_col}, "
+                f"Malformed parameter 'waterchem_station_col', got {waterchem_station_col}, "
                 "expecting a non-empty string."
             )
 
-        q_station_col = data.get('q_station_col')
-        if q_station_col is not None and not isinstance(q_station_col, str):
+        discharge_station_col = data.get('discharge_station_col')
+        if discharge_station_col is not None and not isinstance(discharge_station_col, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'q_station_col', got {q_station_col}, "
+                f"Malformed parameter 'discharge_station_col', got {discharge_station_col}, "
                 "expecting a non-empty string."
             )
 
@@ -381,11 +381,11 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
         if river_name is not None:
             r_args += ['--river-name', river_name]
 
-        if wc_station_name is not None:
-            r_args += ['--wc-station-name', wc_station_name]
+        if waterchem_station_name is not None:
+            r_args += ['--wc-station-name', waterchem_station_name]
 
-        if q_station_name is not None:
-            r_args += ['--q-station-name', q_station_name]
+        if discharge_station_name is not None:
+            r_args += ['--q-station-name', discharge_station_name]
 
         if latitude is not None:
             r_args += ['--latitude', latitude]
@@ -393,17 +393,17 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
         if longitude is not None:
             r_args += ['--longitude', longitude]
 
-        if wc_time_col is not None:
-            r_args += ['--wc-time-col', wc_time_col]
+        if waterchem_time_col is not None:
+            r_args += ['--wc-time-col', waterchem_time_col]
 
-        if q_time_col is not None:
-            r_args += ['--q-time-col', q_time_col]
+        if discharge_time_col is not None:
+            r_args += ['--q-time-col', discharge_time_col]
 
-        if wc_station_col is not None:
-            r_args += ['--wc-station-col', wc_station_col]
+        if waterchem_station_col is not None:
+            r_args += ['--wc-station-col', waterchem_station_col]
 
-        if q_station_col is not None:
-            r_args += ['--q-station-col', q_station_col]
+        if discharge_station_col is not None:
+            r_args += ['--q-station-col', discharge_station_col]
 
         if discharge_var is not None:
             r_args += ['--discharge-var', discharge_var]

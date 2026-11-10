@@ -22,7 +22,7 @@ curl -X POST https://${PYSERVER}/processes/hydrochem-flux-estimation/execution \
         "url_interpolated_waterchem": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/inputs_fluxes/test_interpolation_output.nc",
         "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
         "river_name": "Glomma",
-        "q_station_name": "Solbergfoss",
+        "discharge_station_name": "Solbergfoss",
         "latitude": 59.27980207,
         "longitude": 11.13411158,
         "variables": ["DOC", "TOTN", "TOTP"],
@@ -138,10 +138,10 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
                 "expecting a non-empty string."
             )
 
-        q_station_name = data.get('q_station_name')
-        if q_station_name is not None and not isinstance(q_station_name, str):
+        discharge_station_name = data.get('discharge_station_name')
+        if discharge_station_name is not None and not isinstance(discharge_station_name, str):
             raise ProcessorExecuteError(
-                f"Malformed parameter 'q_station_name', got {q_station_name}, "
+                f"Malformed parameter 'discharge_station_name', got {discharge_station_name}, "
                 "expecting a non-empty string."
             )
 
@@ -179,7 +179,7 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
             )
 
         # already validated above:
-        # discharge, river_name, q_station_name, latitude and longitude
+        # discharge, river_name, discharge_station_name, latitude and longitude
 
         flux_date_col = data.get('flux_date_col')
         if flux_date_col is not None:
@@ -274,8 +274,8 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
         if river_name is not None:
             r_args += ['--river-name', river_name]
 
-        if q_station_name is not None:
-            r_args += ['--q-station-name', q_station_name]
+        if discharge_station_name is not None:
+            r_args += ['--q-station-name', discharge_station_name]
 
         if latitude is not None:
             r_args += ['--latitude', latitude]

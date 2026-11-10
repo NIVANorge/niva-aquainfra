@@ -46,7 +46,7 @@
       "minOccurs": 0,
       "maxOccurs": 1
     },
-    "q_station_name": {
+    "discharge_station_name": {
       "title": "Discharge station name",
       "description": "Name of the discharge gauging station to select from the discharge file.",
       "schema": { "type": "string" },
@@ -127,7 +127,7 @@
       "url_interpolated_waterchem": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/inputs_fluxes/test_interpolation_output.nc",
       "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
       "river_name": "Glomma",
-      "q_station_name": "Solbergfoss",
+      "discharge_station_name": "Solbergfoss",
       "latitude": 59.27980207,
       "longitude": 11.13411158,
       "variables": ["DOC", "TOTN", "TOTP"],
