@@ -19,9 +19,10 @@ curl -i -X POST https://${PYSERVER}/processes/hydrochem-trend-analysis/execution
 --header 'Prefer: respond-async' \
 --data '{
     "inputs": {
-        "urls_river_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
+        "urls_rivers_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
         "marine_input": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
-        "variables": ["DOC", "TOTN", "TOTP", "SST"]
+        "variables": ["DOC", "TOTN", "TOTP", "SST"],
+        "trend_frequency": "monthly"
     }
 }'; date
 '''

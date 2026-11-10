@@ -62,7 +62,7 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
 
 
     def execute(self, data):
-        LOGGER.info(f'Starting process NIVA Hydrochemistry (Interpolation)')
+        LOGGER.info(f'Starting process NIVA Hydrochemistry (Flux estimation)')
         try:
             mimetype, result = self._execute(data)
             return mimetype, result

@@ -15,8 +15,9 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 '''
 # TESTED 2026-10-26
-curl -X POST https://${PYSERVER}/processes/hydrochem-interpolation/execution \
+curl -i -X POST https://${PYSERVER}/processes/hydrochem-interpolation/execution \
 --header 'Content-Type: application/json' \
+--header 'Prefer: respond-async' \
 --data '{
     "inputs": {
         "url_waterchem": "https://thredds.niva.no/thredds/dodsC/datasets/samples/cleaned_riverchem_40356.nc",
