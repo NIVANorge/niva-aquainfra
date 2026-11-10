@@ -20,7 +20,7 @@ curl -i -X POST https://${PYSERVER}/processes/hydrochem-trend-analysis/execution
 --data '{
     "inputs": {
         "urls_rivers_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
-        "marine_input": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
+        "url_marine_chemistry": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
         "variables": ["DOC", "TOTN", "TOTP", "SST"],
         "trend_frequency": "monthly"
     }
@@ -138,12 +138,13 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
                 raise ProcessorExecuteError("Duplicate river input files are not allowed.")
 
 
-        marine_input = data.get('marine_input')
-        if marine_input is not None:
-            if not isinstance(marine_input, str) or not marine_input:
+        url_marine_chemistry = data.get('url_marine_chemistry')
+        if url_marine_chemistry is not None:
+            if not isinstance(url_marine_chemistry, str) or not url_marine_chemistry:
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'marine_input', got {marine_input}, "
-                    "expecting a non-empty path or URL string."
+                    f"Malformed parameter 'url_marine_chemistry',",
+                    " expected a URL,",
+                    f" received: {url_marine_chemistry}"
                 )
 
         trend_frequency = data.get('trend_frequency')
@@ -401,8 +402,8 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
             urls_rivers_daily_flux_concat = ','.join(urls_rivers_daily_flux)
             r_args += ['--inputfiles_rivers', urls_rivers_daily_flux_concat]
 
-        if marine_input is not None:
-            r_args += ['--marine-input', marine_input]
+        if url_marine_chemistry is not None:
+            r_args += ['--marine-input', url_marine_chemistry]
 
         if trend_frequency is not None:
             r_args += ['--trend-frequency', trend_frequency]
@@ -501,9 +502,9 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
         # Return link to output file wrapped in JSON:
         outputs = {
             "outputs": {
-                "trend_output": {
-                    "title": PROCESS_METADATA['outputs']['trend_output']['title'],
-                    "description": PROCESS_METADATA['outputs']['trend_output']['description'],
+                "combined_trends": {
+                    "title": PROCESS_METADATA['outputs']['combined_trends']['title'],
+                    "description": PROCESS_METADATA['outputs']['combined_trends']['description'],
                     "href": out_result_url
                 }
             }

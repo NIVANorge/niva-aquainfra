@@ -472,9 +472,9 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
         # Return link to output file wrapped in JSON:
         outputs = {
             "outputs": {
-                "interpolation_output": {
-                    "title": PROCESS_METADATA['outputs']['interpolation_output']['title'],
-                    "description": PROCESS_METADATA['outputs']['interpolation_output']['description'],
+                "interpolated_waterchem": {
+                    "title": PROCESS_METADATA['outputs']['interpolated_waterchem']['title'],
+                    "description": PROCESS_METADATA['outputs']['interpolated_waterchem']['description'],
                     "href": out_result_url
                 }
             }

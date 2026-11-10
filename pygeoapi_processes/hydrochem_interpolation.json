@@ -202,7 +202,7 @@
     }
   },
   "outputs": {
-    "interpolation_output": {
+    "interpolated_waterchem": {
       "title": "Daily modelled water-chemistry NetCDF",
       "description": "Daily chemistry time series with observations preserved and missing values filled using the selected interpolation and fallback methods.",
       "schema": {
