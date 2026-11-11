@@ -117,12 +117,16 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
         # instead of: river_flux_dir
         urls_rivers_daily_flux = data.get('urls_rivers_daily_flux')
         if urls_rivers_daily_flux is not None:
-            if not isinstance(urls_rivers_daily_flux, list) or not urls_rivers_daily_flux:
+            if not isinstance(urls_rivers_daily_flux, list):
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'urls_rivers_daily_flux'",
-                    " expected a list of URLs (as a list)",
-                    f" received: {type(urls_rivers_daily_flux)}."
-                )
+                    f"Malformed parameter 'urls_rivers_daily_flux': "
+                    f"expected a list of URLs, received {type(urls_rivers_daily_flux).__name__}."
+               )
+            if not urls_rivers_daily_flux:
+                raise ProcessorExecuteError(
+                    f"Malformed parameter 'urls_rivers_daily_flux': "
+                    f"expected a list of URLs, received empty list."
+               )
             if not all(isinstance(item, str) for item in urls_rivers_daily_flux):
                 raise ProcessorExecuteError(
                     f"Malformed parameter 'urls_rivers_daily_flux'",
