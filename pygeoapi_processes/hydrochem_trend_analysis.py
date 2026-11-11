@@ -148,6 +148,22 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
                     f" received: {url_marine_chemistry}"
                 )
 
+        # Either marine or freshwater has to be given:
+        marine_provided = (url_marine_chemistry is not None)
+        rivers_provided = (urls_rivers_daily_flux is not None) and (len(urls_rivers_daily_flux)>0)
+        LOGGER.debug(f"Input data passed: Marine {marine_provided} and Rivers {rivers_provided}")
+        if marine_provided and not rivers_provided:
+            LOGGER.debug('Inputs: Using only marine!')
+        elif rivers_provided and not marine_provided:
+            LOGGER.debug('Inputs: Using only rivers!')
+        elif marine_provided and rivers_provided:
+            LOGGER.debug('Inputs: Using marine and rivers!')
+        elif not marine_provided and not rivers_provided:
+            err_msg = "You have to provide either marine input data ('url_marine_chemistry') or river input data ('urls_rivers_daily_flux') or both!"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+
         trend_frequency = data.get('trend_frequency')
         accepted_trend_frequency = [
             'config',
