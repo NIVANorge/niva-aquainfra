@@ -6,7 +6,7 @@
     "en": "Hydrochemistry Trend Analysis"
   },
   "description": {
-    "en": "Coastal hydrochemistry analysis, trend analysis step: performs Mann–Kendall trend tests and Sen's slope estimation for river and marine time series."
+    "en": "Coastal hydrochemistry analysis, trend analysis step: performs Mann-Kendall trend tests and Sen's slope estimation for river and marine time series."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
@@ -203,8 +203,8 @@
   },
   "outputs": {
     "combined_trends": {
-      "title": "Combined trend Excel workbook",
-      "description": "Combined trend Excel workbook",
+      "title": "Trend analysis results (Excel)",
+      "description": "Mann-Kendall trend and Sen's slope results for the selected stations, variables and time periods",
       "schema": {
         "type": "object",
         "contentMediaType": "application/json"

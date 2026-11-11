@@ -50,35 +50,35 @@
       "title": "River name",
       "description": "Name of the river for which the interpolation is performed.",
       "schema": { "type": "string" },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "waterchem_station_name": {
       "title": "Water chemistry station name",
       "description": "Name of the water chemistry monitoring station to select from the water chemistry file.",
       "schema": { "type": "string" },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "discharge_station_name": {
       "title": "Discharge station name",
       "description": "Name of the discharge gauging station to select from the discharge file.",
       "schema": { "type": "string" },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "latitude": {
       "title": "Latitude",
       "description": "Latitude of the location in decimal degrees (-90 to 90).",
       "schema": { "type": "number", "minimum": -90, "maximum": 90 },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "longitude": {
       "title": "Longitude",
       "description": "Longitude of the location in decimal degrees (-180 to 180).",
       "schema": { "type": "number", "minimum": -180, "maximum": 180 },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "waterchem_time_col": {
@@ -188,15 +188,16 @@
     },
     "selection_max_bias_fraction": {
       "title": "Maximum bias fraction for model selection",
-      "description": "Maximum allowed bias, expressed as a fraction of the observed mean, for a candidate method to be eligible. Must be non-negative.",
+      "description": "Maximum allowed bias, expressed as a fraction of the observed median, for a candidate method to be eligible. Must be non-negative.",
       "schema": { "type": "number", "minimum": 0 },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "selection_extreme_ratio_limit": {
       "title": "Extreme value ratio limit for model selection",
-      "description": "Maximum allowed ratio between predicted and observed extreme values; methods exceeding it are rejected. Must be non-negative.",
+      "description": "Ratio used to identify implausible extreme predictions when filling missing values, based on the observed reference range. Must be greater than zero. Default: 2.0.",
       "schema": { "type": "number", "minimum": 0 },
+      "default": 2.0,
       "minOccurs": 0,
       "maxOccurs": 1
     }

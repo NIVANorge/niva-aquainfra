@@ -27,7 +27,7 @@
     },
     "non_mass_vars": {
       "title": "Non-mass variables",
-      "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
+      "description": "List of variables that do not represent mass concentrations (e.g. Color, UV_Abs_254nm, UV_Abs_410nm). Their discharge-related outputs are treated as qualitative proxies and must not be interpreted as actual mass loads or fluxes.",
       "schema": { "type": "array", "items": { "type": "string" } },
       "minOccurs": 0,
       "maxOccurs": 1
@@ -41,30 +41,30 @@
     },
     "river_name": {
       "title": "River name",
-      "description": "Name of the river for which the interpolation is performed.",
+      "description": "River for which fluxes are estimated.",
       "schema": { "type": "string" },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "discharge_station_name": {
       "title": "Discharge station name",
       "description": "Name of the discharge gauging station to select from the discharge file.",
       "schema": { "type": "string" },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "latitude": {
       "title": "Latitude",
       "description": "Latitude of the location in decimal degrees (-90 to 90).",
       "schema": { "type": "number", "minimum": -90, "maximum": 90 },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "longitude": {
       "title": "Longitude",
       "description": "Longitude of the location in decimal degrees (-180 to 180).",
       "schema": { "type": "number", "minimum": -180, "maximum": 180 },
-      "minOccurs": 0,
+      "minOccurs": 1,
       "maxOccurs": 1
     },
     "url_interpolated_waterchem": {
@@ -131,7 +131,7 @@
       "latitude": 59.27980207,
       "longitude": 11.13411158,
       "variables": ["DOC", "TOTN", "TOTP"],
-      "variable-units": ["DOC=mg/l", "TOTN=ug/l", "TOTP=ug/l"]
+      "variable_units": ["DOC=mg/l", "TOTN=ug/l", "TOTP=ug/l"]
     }
   }
 }
