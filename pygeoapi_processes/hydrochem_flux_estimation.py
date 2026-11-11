@@ -14,13 +14,13 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
-# TESTED 2026-10-26
+# TESTED by Merret 2026-11-10
 curl -X POST https://${PYSERVER}/processes/hydrochem-flux-estimation/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "url_interpolated_waterchem": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/inputs_fluxes/test_interpolation_output.nc",
-        "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
+        "url_interpolated_waterchem": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/outputs_interpolation/test_interpolation_output.nc",
+        "url_discharge": "https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/from_niva/Q_daily_mean_Glomma_Solbergfoss_2_605_0_cleaned.nc",
         "river_name": "Glomma",
         "discharge_station_name": "Solbergfoss",
         "latitude": 59.27980207,

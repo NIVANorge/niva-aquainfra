@@ -14,12 +14,13 @@ docker_utils = importlib.import_module("pygeoapi.process.niva-aquainfra.pygeoapi
 
 
 '''
+# TESTED by Merret 2026-11-10
 curl -i -X POST https://${PYSERVER}/processes/hydrochem-trend-analysis/execution \
 --header 'Content-Type: application/json' \
 --header 'Prefer: respond-async' \
 --data '{
     "inputs": {
-        "urls_rivers_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/download/out/hydrochem-flux-estimation/job_9cc52724-d190-11f1-a5e4-fa163e42fba0/flux_daily_9cc52724-d190-11f1-a5e4-fa163e42fba0.nc"],
+        "urls_rivers_daily_flux": ["https://aquainfra.ogc.igb-berlin.de/exampledata/niva/hydrochem/outputs_fluxes/fluxes_daily_example.nc"],
         "url_marine_chemistry": "https://thredds.niva.no/thredds/dodsC/datasets/samples/oslofjord_cleaned_standardized_data.nc",
         "variables": ["DOC", "TOTN", "TOTP", "SST"],
         "trend_frequency": "monthly"
