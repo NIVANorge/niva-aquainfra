@@ -11,6 +11,20 @@
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
   "inputs": {
+    "url_waterchem": {
+      "title": "Water chemistry input",
+      "description": "URL of the input water chemistry file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_discharge": {
+      "title": "Discharge input",
+      "description": "URL of the input river discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
     "variables": {
       "title": "Variables",
       "description": "List of variable names to process.",
@@ -30,20 +44,6 @@
       "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
       "schema": { "type": "array", "items": { "type": "string" } },
       "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "url_waterchem": {
-      "title": "Water chemistry input",
-      "description": "URL of the input water chemistry file.",
-      "schema": { "type": "string" },
-      "minOccurs": 1,
-      "maxOccurs": 1
-    },
-    "url_discharge": {
-      "title": "Discharge input",
-      "description": "URL of the input river discharge file.",
-      "schema": { "type": "string" },
-      "minOccurs": 1,
       "maxOccurs": 1
     },
     "river_name": {

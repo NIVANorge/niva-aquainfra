@@ -11,6 +11,20 @@
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
   "inputs": {
+    "urls_rivers_daily_flux": {
+      "title": "River flux files",
+      "description": "Optional list of HTTP(S) URLs pointing to daily river-flux NetCDF files used as input for trend analysis. At least one URL must be provided when this input is used. If omitted, no external river-flux files are specified.",
+      "schema": { "type": "array", "items": { "type": "string" }, "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
+    "url_marine_chemistry": {
+      "title": "Marine input",
+      "description": "Optional URL of the marine water-chemistry NetCDF dataset used for trend analysis. Supports HTTP(S) and OPeNDAP access. If omitted, no external marine dataset is specified.",
+      "schema": { "type": "string", "minLength": 1 },
+      "minOccurs": 0,
+      "maxOccurs": 1
+    },
     "variables": {
       "title": "Variables",
       "description": "Optional list of water-chemistry variable names to include in the trend analysis. If omitted, the variables specified in the AquaINFRA trend configuration are used.",
@@ -30,20 +44,6 @@
       "description": "List of variables that are not mass concentrations, such as colour, absorbance, temperature and salinity. These variables are excluded from mass-based unit conversions. Default: Color, UV_Abs_254nm, UV_Abs_410nm, CDOM_abs_443, SSS, SST, secchi_depth, Chl-a.",
       "schema": { "type": "array", "items": { "type": "string" } },
       "default": ["Color", "UV_Abs_254nm", "UV_Abs_410nm", "CDOM_abs_443", "SSS", "SST", "secchi_depth", "Chl-a"],
-      "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "urls_rivers_daily_flux": {
-      "title": "River flux files",
-      "description": "Optional list of HTTP(S) URLs pointing to daily river-flux NetCDF files used as input for trend analysis. At least one URL must be provided when this input is used. If omitted, no external river-flux files are specified.",
-      "schema": { "type": "array", "items": { "type": "string" }, "minLength": 1 },
-      "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "url_marine_chemistry": {
-      "title": "Marine input",
-      "description": "Optional URL of the marine water-chemistry NetCDF dataset used for trend analysis. Supports HTTP(S) and OPeNDAP access. If omitted, no external marine dataset is specified.",
-      "schema": { "type": "string", "minLength": 1 },
       "minOccurs": 0,
       "maxOccurs": 1
     },

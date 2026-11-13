@@ -123,11 +123,15 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
                 f"Missing parameter 'url_discharge', "
                 "expecting a URL string."
             )
-
         elif not isinstance(url_discharge, str):
             raise ProcessorExecuteError(
                 f"Malformed parameter 'url_discharge', got {url_discharge}, "
                 "expecting a URL string."
+            )
+        elif not url_discharge.startswith('http'):
+            raise ProcessorExecuteError(
+                f"Malformed parameter 'url_discharge', got {url_discharge}, "
+                "expecting a URL."
             )
 
 
@@ -177,6 +181,12 @@ class NivaHydrochemistryFluxEstimationProcessor(BaseProcessor):
                 f"Malformed parameter 'url_interpolated_waterchem', got {url_interpolated_waterchem}, "
                 "expecting a URL string."
             )
+        elif not url_interpolated_waterchem.startswith('http'):
+            raise ProcessorExecuteError(
+                f"Malformed parameter 'url_interpolated_waterchem', got {url_interpolated_waterchem}, "
+                "expecting a URL."
+            )
+
 
         # already validated above:
         # discharge, river_name, discharge_station_name, latitude and longitude

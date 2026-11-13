@@ -86,6 +86,7 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
         # ============================================================
 
         variables = data.get('variables')
+        # TODO do we have to check for empty list?
         if variables is not None:
             if not isinstance(variables, list) or not all(isinstance(v, str) for v in variables):
                 raise ProcessorExecuteError(
@@ -94,6 +95,7 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
                 )
 
         variable_units = data.get('variable_units')
+        # TODO do we have to check for empty list?
         if variable_units is not None:
             if not isinstance(variable_units, list) or not all(isinstance(v, str) for v in variable_units):
                 raise ProcessorExecuteError(
@@ -102,6 +104,7 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
                 )
 
         non_mass_vars = data.get('non_mass_vars')
+        # TODO do we have to check for empty list?
         if non_mass_vars is not None:
             if not isinstance(non_mass_vars, list) or not all(isinstance(v, str) for v in non_mass_vars):
                 raise ProcessorExecuteError(
@@ -129,14 +132,14 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
                )
             if not all(isinstance(item, str) for item in urls_rivers_daily_flux):
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'urls_rivers_daily_flux'",
-                    " expected a list of URLs (list items must be strings)",
+                    f"Malformed parameter 'urls_rivers_daily_flux'"
+                    " expected a list of URLs (list items must be strings)"
                     f" received: {urls_rivers_daily_flux}."
                 )
             if not all(item.startswith('http') for item in urls_rivers_daily_flux):
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'urls_rivers_daily_flux'",
-                    " expected a list of URLs (list items must start with http)",
+                    f"Malformed parameter 'urls_rivers_daily_flux'"
+                    " expected a list of URLs (list items must start with http)"
                     f" received: {urls_rivers_daily_flux}."
                 )
             if len(urls_rivers_daily_flux) != len(set(urls_rivers_daily_flux)):
@@ -147,10 +150,17 @@ class NivaHydrochemistryTrendAnalysisProcessor(BaseProcessor):
         if url_marine_chemistry is not None:
             if not isinstance(url_marine_chemistry, str) or not url_marine_chemistry:
                 raise ProcessorExecuteError(
-                    f"Malformed parameter 'url_marine_chemistry',",
-                    " expected a URL,",
+                    f"Malformed parameter 'url_marine_chemistry',"
+                    " expected a URL,"
                     f" received: {url_marine_chemistry}"
                 )
+            if not url_marine_chemistry.startswith('http'):
+                raise ProcessExecuteError(
+                    f"Malformed parameter 'url_marine_chemistry',"
+                    " expected a URL,"
+                    f" received: {url_marine_chemistry}"
+                )
+
 
         # Either marine or freshwater has to be given:
         marine_provided = (url_marine_chemistry is not None)

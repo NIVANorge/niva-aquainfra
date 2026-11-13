@@ -11,6 +11,20 @@
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
   "inputs": {
+    "url_discharge": {
+      "title": "Discharge input",
+      "description": "URL of the input river discharge file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
+    "url_interpolated_waterchem": {
+      "title": "Interpolated chemistry input",
+      "description": "URL of daily interpolated river water-chemistry NetCDF file.",
+      "schema": { "type": "string" },
+      "minOccurs": 1,
+      "maxOccurs": 1
+    },
     "variables": {
       "title": "Variables",
       "description": "List of variable names to process.",
@@ -31,13 +45,6 @@
       "schema": { "type": "array", "items": { "type": "string" } },
       "default": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
       "minOccurs": 0,
-      "maxOccurs": 1
-    },
-    "url_discharge": {
-      "title": "Discharge input",
-      "description": "URL of the input river discharge file.",
-      "schema": { "type": "string" },
-      "minOccurs": 1,
       "maxOccurs": 1
     },
     "river_name": {
@@ -65,13 +72,6 @@
       "title": "Longitude",
       "description": "Longitude of the location in decimal degrees (-180 to 180).",
       "schema": { "type": "number", "minimum": -180, "maximum": 180 },
-      "minOccurs": 1,
-      "maxOccurs": 1
-    },
-    "url_interpolated_waterchem": {
-      "title": "Interpolated chemistry input",
-      "description": "URL of daily interpolated river water-chemistry NetCDF file.",
-      "schema": { "type": "string" },
       "minOccurs": 1,
       "maxOccurs": 1
     },

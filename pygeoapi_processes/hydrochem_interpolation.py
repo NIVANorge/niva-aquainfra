@@ -28,7 +28,7 @@ curl -i -X POST https://${PYSERVER}/processes/hydrochem-interpolation/execution 
         "latitude": 59.27980207,
         "longitude": 11.13411158,
         "variables": ["DOC", "TOTN", "TOTP"],
-        "variable-units": ["DOC=mg/l","TOTN=ug/l","TOTP=ug/l"]
+        "variable_units": ["DOC=mg/l","TOTN=ug/l","TOTP=ug/l"]
     }
 }'; date
 '''
@@ -129,6 +129,11 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
                 f"Malformed parameter 'url_waterchem', got {url_waterchem}, "
                 "expecting a URL string."
             )
+        elif not url_waterchem.startswith('http'):
+            raise ProcessorExecuteError(
+                f"Malformed parameter 'url_waterchem', got {url_waterchem}, "
+                "expecting a URL."
+            )
 
         url_discharge = data.get('url_discharge')
         if url_discharge is None:
@@ -141,6 +146,11 @@ class NivaHydrochemistryInterpolationProcessor(BaseProcessor):
             raise ProcessorExecuteError(
                 f"Malformed parameter 'url_discharge', got {url_discharge}, "
                 "expecting a URL string."
+            )
+        elif not url_discharge.startswith('http'):
+            raise ProcessorExecuteError(
+                f"Malformed parameter 'url_discharge', got {url_discharge}, "
+                "expecting a URL."
             )
 
         river_name = data.get('river_name')
