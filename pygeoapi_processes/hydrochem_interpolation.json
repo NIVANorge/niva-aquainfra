@@ -6,7 +6,7 @@
     "en": "Hydrochemistry Interpolation"
   },
   "description": {
-    "en": "Coastal hydrochemistry analysis, interpolation step: Generates daily river chemistry time series by filling gaps in observed water-chemistry data."
+    "en": "Generates daily river water-chemistry time series by preserving observed values and estimating missing values using linear interpolation, Generalized Additive Models (GAM), monthly discharge regressions, and monthly-median interpolation. Candidate methods are evaluated using blocked holdout validation and screened for sufficient validation points, coverage, R² and relative bias. Methods with similar R² are compared using normalized prediction error, relative bias and R². Remaining gaps may be filled using gap-limited linear interpolation or model-based fallback methods, with an observed-range plausibility check used to rank the latter."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
@@ -83,120 +83,136 @@
     },
     "waterchem_time_col": {
       "title": "Water chemistry time column",
-      "description": "Name of the column containing timestamps in the water chemistry file.",
+      "description": "Name of the time coordinate or column in the input water-chemistry dataset. Default: sample_date.",
       "schema": { "type": "string" },
+      "default": "sample_date",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "discharge_time_col": {
       "title": "Discharge time column",
-      "description": "Name of the column containing timestamps in the discharge file.",
+      "description": "Name of the time coordinate or column in the input river-discharge dataset. Default: time.",
       "schema": { "type": "string" },
+      "default": "time",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "waterchem_station_col": {
       "title": "Water chemistry station column",
-      "description": "Name of the column containing station names in the water chemistry file.",
+      "description": "Name of the station coordinate or column in the input water-chemistry dataset. Default: station_name.",
       "schema": { "type": "string" },
+      "default": "station_name",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "discharge_station_col": {
       "title": "Discharge station column",
-      "description": "Name of the column containing station names in the discharge file.",
+      "description": "Name of the station coordinate or column in the input river-discharge dataset. Default: station_name.",
       "schema": { "type": "string" },
+      "default": "station_name",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "discharge_var": {
       "title": "Discharge variable",
-      "description": "Name of the column containing the discharge values in the discharge file.",
+      "description": "Name of the river-discharge variable in the input NetCDF dataset. Default: discharge.",
       "schema": { "type": "string" },
+      "default": "discharge",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "linear_max_gap": {
       "title": "Maximum gap for linear interpolation",
-      "description": "Maximum gap length (in time steps) that is bridged by linear interpolation. Must be a non-negative integer.",
+      "description": "Maximum number of consecutive missing daily values that may be filled by linear interpolation. Longer gaps are not filled by this method. Must be a non-negative integer. Default: 90.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 90,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "gam_n_splines_q": {
       "title": "GAM splines for discharge",
-      "description": "Number of spline basis functions used for the discharge term of the GAM interpolation model. Must be a positive integer.",
+      "description": "Number of spline basis functions used for the discharge term of the Generalized Additive Model (GAM). Must be a positive integer. Default: 10.",
       "schema": { "type": "integer", "minimum": 1 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "gam_n_splines_doy": {
       "title": "GAM splines for day of year",
-      "description": "Number of spline basis functions used for the seasonal (day-of-year) term of the GAM interpolation model. Must be a positive integer.",
+      "description": "Number of spline basis functions used for the seasonal (day-of-year) term of the Generalized Additive Model (GAM). Must be a positive integer. Default: 20.",
       "schema": { "type": "integer", "minimum": 1 },
+      "default": 20,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "validation_repeats": {
       "title": "Validation repeats",
-      "description": "Number of repetitions of the validation procedure. Must be a positive integer.",
+      "description": "Number of blocked holdout validation repetitions used to evaluate candidate interpolation methods. Must be a positive integer. Default: 10.",
       "schema": { "type": "integer", "minimum": 1 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "validation_block_size": {
       "title": "Validation block size",
-      "description": "Size of the blocks of consecutive observations withheld in each validation run. Must be a positive integer.",
+      "description": "Number of consecutive observed data points withheld together in each blocked holdout validation block. Must be a positive integer. Default: 2.",
       "schema": { "type": "integer", "minimum": 1 },
+      "default": 2,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "validation_min_observations": {
       "title": "Minimum observations for validation",
-      "description": "Minimum number of observations a variable needs for validation to be performed. Must be a non-negative integer.",
+      "description": "Minimum number of observed water-chemistry values required to perform blocked holdout validation for an interpolation method. Must be a positive integer. Default: 20.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 20,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "validation_min_points": {
       "title": "Minimum validation points",
-      "description": "Minimum number of withheld points required for a validation run to be considered valid. Must be a non-negative integer.",
+      "description": "Minimum number of valid observed-predicted pairs required for an interpolation method to be eligible for selection. Must be a positive integer. Default: 10.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "validation_min_coverage": {
       "title": "Minimum validation coverage",
-      "description": "Minimum fraction (0 to 1) of the data that must be covered by valid validation results.",
+      "description": "Minimum fraction of withheld validation observations for which a candidate interpolation method must produce valid predictions to be eligible for selection. Must be between 0 and 1. Default: 0.50.",
       "schema": { "type": "number", "minimum": 0, "maximum": 1 },
+      "default": 0.5,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "selection_min_r2": {
       "title": "Minimum R² for model selection",
-      "description": "Minimum R² (-1 to 1) a candidate interpolation method must reach in validation to be eligible for selection.",
+      "description": "Minimum validation R² required for a candidate interpolation method to be eligible for selection. Must be between -1 and 1. Default: 0.45.",
       "schema": { "type": "number", "minimum": -1, "maximum": 1 },
+      "default": 0.45,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "selection_r2_tolerance": {
       "title": "R² tolerance for model selection",
-      "description": "Tolerance on the R² difference within which candidate methods are considered equally good, so that secondary criteria (e.g. simplicity) decide. Must be non-negative.",
+      "description": "Maximum R² difference for treating candidate methods as similarly performing. Among these methods, selection prioritizes lower normalized RMSE, then lower relative bias, and finally higher R². Must be non-negative. Default: 0.05.",
       "schema": { "type": "number", "minimum": 0 },
+      "default": 0.05,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "selection_max_bias_fraction": {
       "title": "Maximum bias fraction for model selection",
-      "description": "Maximum allowed bias, expressed as a fraction of the observed median, for a candidate method to be eligible. Must be non-negative.",
+      "description": "Maximum allowed absolute validation bias, expressed as a fraction of the absolute median of observed values. Must be non-negative. Default: 0.20.",
       "schema": { "type": "number", "minimum": 0 },
+      "default": 0.20,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "selection_extreme_ratio_limit": {
       "title": "Extreme value ratio limit for model selection",
       "description": "Ratio used to identify implausible extreme predictions when filling missing values, based on the observed reference range. Must be greater than zero. Default: 2.0.",
-      "schema": { "type": "number", "minimum": 0 },
+      "schema": { "type": "number", "exclusiveMinimum": 0 },
       "default": 2.0,
       "minOccurs": 0,
       "maxOccurs": 1

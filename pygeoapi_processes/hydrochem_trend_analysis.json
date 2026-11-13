@@ -6,197 +6,218 @@
     "en": "Hydrochemistry Trend Analysis"
   },
   "description": {
-    "en": "Coastal hydrochemistry analysis, trend analysis step: performs Mann-Kendall trend tests and Sen's slope estimation for river and marine time series."
+    "en": "Performs trend analysis on river-flux and marine water-chemistry time series using Mann-Kendall tests and Sen's slope estimation. Supports monthly, annual and season-specific analyses, with configurable minimum observation requirements, analysis periods and significance levels. River and marine data are aggregated by time period before trend testing, and marine annual aggregation can require observations from all four seasons."
   },
   "jobControlOptions": ["sync-execute", "async-execute"],
   "keywords": ["AquaINFRA", "NIVA use case"],
   "inputs": {
     "variables": {
       "title": "Variables",
-      "description": "List of variable names to process.",
+      "description": "Optional list of water-chemistry variable names to include in the trend analysis. If omitted, the variables specified in the AquaINFRA trend configuration are used.",
       "schema": { "type": "array", "items": { "type": "string" } },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "variable_units": {
       "title": "Variable units",
-      "description": "List of variable=unit pairs giving the unit of each variable.",
+      "description": "Optional list of variable=unit pairs specifying the measurement unit for each variable, for example 'DOC=mg/L'. If omitted, no explicit unit overrides are provided.",
       "schema": { "type": "array", "items": { "type": "string" } },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "non_mass_vars": {
       "title": "Non-mass variables",
-      "description": "List of variable names that are not mass concentrations (e.g. pH, temperature) and therefore must not be converted to loads or fluxes.",
+      "description": "List of variables that are not mass concentrations, such as colour, absorbance, temperature and salinity. These variables are excluded from mass-based unit conversions. Default: Color, UV_Abs_254nm, UV_Abs_410nm, CDOM_abs_443, SSS, SST, secchi_depth, Chl-a.",
       "schema": { "type": "array", "items": { "type": "string" } },
+      "default": ["Color", "UV_Abs_254nm", "UV_Abs_410nm", "CDOM_abs_443", "SSS", "SST", "secchi_depth", "Chl-a"],
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "urls_rivers_daily_flux": {
       "title": "River flux files",
-      "description": "List of URLs of daily river-flux NetCDF files, used when trends are run without the flux estimation step.",
+      "description": "Optional list of HTTP(S) URLs pointing to daily river-flux NetCDF files used as input for trend analysis. At least one URL must be provided when this input is used. If omitted, no external river-flux files are specified.",
       "schema": { "type": "array", "items": { "type": "string" }, "minLength": 1 },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "url_marine_chemistry": {
       "title": "Marine input",
-      "description": "Marine chemistry NetCDF file or OPeNDAP URL.",
+      "description": "Optional URL of the marine water-chemistry NetCDF dataset used for trend analysis. Supports HTTP(S) and OPeNDAP access. If omitted, no external marine dataset is specified.",
       "schema": { "type": "string", "minLength": 1 },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_frequency": {
       "title": "Trend frequency",
-      "description": "Temporal resolution of the trend analysis: 'config', 'monthly', 'annual' or 'seasonal_by_season'.",
+      "description": "Temporal frequency for Mann-Kendall trend analysis. Use 'config' to run all frequencies specified in the internal configuration (monthly, annual and seasonal_by_season). Alternatively, select one frequency. Default: config.",
       "schema": { "type": "string", "enum": ["config", "monthly", "annual", "seasonal_by_season"] },
+      "default": "config",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "mk_mode": {
       "title": "Mann-Kendall mode",
-      "description": "Mode of the Mann-Kendall trend test: 'auto', 'original' or 'seasonal'.",
+      "description": "Mann-Kendall test mode. 'auto' uses the seasonal Mann-Kendall test for monthly data and the original Mann-Kendall test for annual data. Seasonal-by-season analyses use the original test for each season. 'original' and 'seasonal' allow explicit selection for monthly and annual analyses. Default: auto.",
       "schema": { "type": "string", "enum": ["auto", "original", "seasonal"] },
+      "default": "auto",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_start_year": {
       "title": "Trend start year",
-      "description": "Optional first year of the trend-analysis period.",
+      "description": "Optional first year of the trend-analysis period. If not specified, the analysis period is determined from the available data. Default: not specified.",
       "schema": { "type": "integer" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_end_year": {
       "title": "Trend end year",
-      "description": "Optional last year of the trend-analysis period.",
+      "description": "Optional last year of the trend-analysis period. If not specified, the analysis period is determined from the available data. Default: not specified.",
       "schema": { "type": "integer" },
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_require_full_period": {
       "title": "Require full trend period",
-      "description": "If true, the complete requested trend period must be covered by the data.",
+      "description": "Whether the aggregated trend series must cover both boundary years of the requested analysis period. If true, series that do not reach the specified start and end years are marked as insufficient data. Default: true.",
       "schema": { "type": "boolean" },
+      "default": true,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_alpha": {
       "title": "Trend significance level",
-      "description": "Significance level (alpha) of the Mann-Kendall test. Must be strictly between 0 and 1.",
+      "description": "Significance level (alpha) used for the Mann-Kendall trend test. Must be greater than 0 and less than 1. Default: 0.05.",
       "schema": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+      "default": 0.05,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_min_points_monthly": {
       "title": "Minimum points for monthly trends",
-      "description": "Minimum number of points required for monthly trend analysis.",
+      "description": "Minimum number of valid monthly aggregated values required to perform the Mann-Kendall trend test. Must be a positive integer. Default: 36.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 36,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_min_points_annual": {
       "title": "Minimum points for annual trends",
-      "description": "Minimum number of points required for annual trend analysis.",
+      "description": "Minimum number of valid annual aggregated values required to perform the Mann-Kendall trend test. Must be a positive integer. Default: 10.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "trend_min_points_seasonal": {
       "title": "Minimum points for seasonal trends",
-      "description": "Minimum number of points required for seasonal trend analysis.",
+      "description": "Minimum number of valid seasonal aggregated values required to perform the Mann-Kendall trend test separately for each season. Must be a positive integer. Default: 10.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "river_min_obs_monthly": {
       "title": "River: minimum observations per month",
-      "description": "Minimum number of daily river values required to create a monthly value. River flux values are aggregated by summation.",
+      "description": "Minimum number of valid daily river observations required to calculate a monthly aggregated value for trend analysis. Must be a positive integer. Default: 25.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 25,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "river_min_obs_annual": {
       "title": "River: minimum observations per year",
-      "description": "Minimum number of daily river values required to create an annual value. River flux values are aggregated by summation.",
+      "description": "Minimum number of valid daily river observations required to calculate an annual aggregated value for trend analysis. Must be a positive integer. Default: 330.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 330,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "river_min_obs_seasonal": {
       "title": "River: minimum observations per season",
-      "description": "Minimum number of daily river values required to create a seasonal value. River flux values are aggregated by summation.",
+      "description": "Minimum number of valid daily river observations required to calculate a seasonal aggregated value for trend analysis. Must be a positive integer. Default: 80.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 80,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_depth_min": {
       "title": "Marine minimum depth",
-      "description": "Minimum marine sampling depth in metres. The default AquaINFRA configuration selects measurements from 0-10 m unless the depth limits are overridden.",
+      "description": "Minimum sampling depth in metres for selecting marine observations used in trend analysis. Default: 0 m.",
       "schema": { "type": "number", "minimum": 0 },
+      "default": 0,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_depth_max": {
       "title": "Marine maximum depth",
-      "description": "Maximum marine sampling depth in metres. The default AquaINFRA configuration selects measurements from 0-10 m unless the depth limits are overridden.",
+      "description": "Maximum sampling depth in metres for selecting marine observations used in trend analysis. Default: 10 m.",
       "schema": { "type": "number", "minimum": 0 },
+      "default": 10,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_min_obs_monthly": {
       "title": "Marine: minimum observations per month",
-      "description": "Minimum number of marine observations required to create a monthly value. Marine chemistry values are aggregated using the median.",
+      "description": "Minimum number of valid marine observations within a month required for monthly aggregation. Default: 1.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 1,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_min_obs_annual": {
       "title": "Marine: minimum observations per year",
-      "description": "Minimum number of marine observations required to create an annual value. Marine chemistry values are aggregated using the median.",
+      "description": "Minimum number of valid marine observations within a year required for annual aggregation. Additional seasonal coverage requirements may apply. Default: 1.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 1,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_min_obs_seasonal": {
       "title": "Marine: minimum observations per season",
-      "description": "Minimum number of marine observations required to create a seasonal value. Marine chemistry values are aggregated using the median.",
+      "description": "Minimum number of valid marine observations within a season required for seasonal aggregation. Default: 3.",
       "schema": { "type": "integer", "minimum": 0 },
+      "default": 3,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_require_all_seasons": {
       "title": "Marine: require all seasons",
-      "description": "If true, all seasons are required when creating annual marine values.",
+      "description": "Whether marine observations must cover all four seasons of a year for annual aggregation. Default: true.",
       "schema": { "type": "boolean" },
+      "default": true,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_min_seasons_per_year": {
       "title": "Marine: minimum seasons per year",
-      "description": "Minimum number of seasons (0 to 4) required to create an annual marine value.",
+      "description": "Minimum number of distinct seasons with valid marine observations required within a year for annual aggregation. Must be an integer between 0 and 4. Default: 4.",
       "schema": { "type": "integer", "minimum": 0, "maximum": 4 },
+      "default": 4,
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_station_dim": {
       "title": "Marine station dimension",
-      "description": "Name of the station dimension in the marine input.",
+      "description": "Name of the station dimension in the input marine NetCDF dataset. Default: station.",
       "schema": { "type": "string", "minLength": 1 },
+      "default": "station",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_station_coord": {
       "title": "Marine station coordinate",
-      "description": "Name of the station-name coordinate in the marine input.",
+      "description": "Name of the station-name coordinate in the input marine NetCDF dataset. Default: station_name.",
       "schema": { "type": "string", "minLength": 1 },
+      "default": "station_name",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "marine_depth_dim": {
       "title": "Marine depth dimension",
-      "description": "Name of the depth dimension or coordinate in the marine input.",
+      "description": "Name of the depth dimension or coordinate in the input marine NetCDF dataset. Default: depth.",
       "schema": { "type": "string", "minLength": 1 },
+      "default": "depth",
       "minOccurs": 0,
       "maxOccurs": 1
     }

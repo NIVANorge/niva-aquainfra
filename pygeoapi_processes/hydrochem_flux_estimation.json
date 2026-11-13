@@ -29,6 +29,7 @@
       "title": "Non-mass variables",
       "description": "List of variables that do not represent mass concentrations (e.g. Color, UV_Abs_254nm, UV_Abs_410nm). Their discharge-related outputs are treated as qualitative proxies and must not be interpreted as actual mass loads or fluxes.",
       "schema": { "type": "array", "items": { "type": "string" } },
+      "default": ["Color", "UV_Abs_254nm", "UV_Abs_410nm"],
       "minOccurs": 0,
       "maxOccurs": 1
     },
@@ -76,22 +77,25 @@
     },
     "flux_date_col": {
       "title": "Interpolated chemistry date column",
-      "description": "Name of the date coordinate/column in the interpolated chemistry input.",
+      "description": "Name of the date coordinate or column used during river flux estimation. Default: date.",
       "schema": { "type": "string" },
+      "default": "date",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "flux_station_col": {
       "title": "Station column",
-      "description": "Name of the station coordinate/column used in flux processing.",
+      "description": "Name of the station or river identifier column used during river flux estimation. Default: river_name.",
       "schema": { "type": "string" },
+      "default": "river_name",
       "minOccurs": 0,
       "maxOccurs": 1
     },
     "flux_discharge_col": {
       "title": "Discharge column",
-      "description": "Name of the discharge variable/column used in flux processing.",
+      "description": "Name of the river-discharge variable or column used during flux estimation. Default: discharge.",
       "schema": { "type": "string" },
+      "default": "discharge",
       "minOccurs": 0,
       "maxOccurs": 1
     }
